@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+   Rules of the cloud backup and of the transfer to a new device from API 31.
+   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- The token of the AniList login stays on the device -->
+        <exclude domain="sharedpref" path="kaisou_session.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="kaisou_session.xml" />
+    </device-transfer>
+</data-extraction-rules>

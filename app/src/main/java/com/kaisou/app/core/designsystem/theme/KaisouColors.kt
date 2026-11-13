@@ -28,11 +28,11 @@ data class KaisouColors(
     // Soft glow at the top of full screens, blending from one side to the other
     val glowStart: Color,
     val glowEnd: Color,
-    // Brand gradient from blue to violet to red
+    // Brand gradient from blue to violet to pink, the colors of the logo
     val gradientStart: Color,
     val gradientMiddle: Color,
     val gradientEnd: Color,
-    // Main buttons, blue fading to a darker blue
+    // Main buttons, violet fading to a darker violet
     val buttonStart: Color,
     val buttonEnd: Color
 )
@@ -41,19 +41,19 @@ data class KaisouColors(
 val KaisouPalette = KaisouColors(
     onMedia = OnFilled,
     mediaScrim = Color(0xCC000000),
-    accentFill = Color(0xFF0070E0),
+    accentFill = Color(0xFF7C4DEB),
     onAccentFill = OnFilled,
     elevated = ContainerHigh,
     navBar = Color(0xFF09090D),
     navUnselected = Color(0xFF676D75),
-    navSelected = Color(0xFF539DF3),
+    navSelected = Color(0xFFAB7DFF),
     skeleton = Color(0xFF2E2E2E),
     skeletonHighlight = Color(0xFF4A4A4A),
-    glowStart = Color(0x380081FF),
-    glowEnd = Color(0x388D44FF),
-    gradientStart = Accent,
-    gradientMiddle = Color(0xFF9B72CB),
-    gradientEnd = Color(0xFFD96570),
-    buttonStart = Accent,
-    buttonEnd = Color(0xFF004FB3)
+    glowStart = Color(0x388A5CF2),
+    glowEnd = Color(0x384B8DFF),
+    gradientStart = Color(0xFF4B8DFF),
+    gradientMiddle = Accent,
+    gradientEnd = Color(0xFFFA597F),
+    buttonStart = Color(0xFF7C4DEB),
+    buttonEnd = Color(0xFF6A3FD8)
 )

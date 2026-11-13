@@ -1,0 +1,45 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Ações -->
+    <string name="action_close">Fechar</string>
+
+    <!-- Navegação -->
+    <string name="nav_home">Início</string>
+    <string name="nav_explore">Explorar</string>
+    <string name="nav_calendar">Calendário</string>
+    <string name="nav_library">Biblioteca</string>
+
+    <!-- Login -->
+    <string name="login_tagline">Todos os seus animes e mangás favoritos em um só lugar, com integração ao AniList e suporte a extensões!</string>
+    <string name="login_button">Entrar com o AniList</string>
+    <string name="login_signup">Criar conta</string>
+    <string name="login_no_account">Não tem conta?</string>
+    <string name="login_token_button">Entrar com token</string>
+    <string name="login_loading">Entrando…</string>
+    <string name="login_privacy">O Kaisou nunca vê suas credenciais.</string>
+    <string name="login_learn_more">Saiba mais</string>
+    <string name="login_failed">Não foi possível entrar. Tente de novo.</string>
+    <string name="login_expired">Sua sessão expirou. Entre de novo.</string>
+    <string name="login_network">Sem conexão com o AniList. Verifique a internet e tente de novo.</string>
+    <string name="login_token_invalid">Esse token não funcionou. Confira se você copiou ele inteiro.</string>
+    <string name="login_missing_client">Falta configurar o cliente do AniList (anilist.clientId).</string>
+
+    <!-- Login, com token -->
+    <string name="login_token_title">Entrar com token</string>
+    <string name="login_token_description">Cole abaixo um token de acesso do AniList. Esse jeito serve para quem prefere não usar a janela do navegador, ou quando o retorno ao app não funciona.</string>
+    <string name="login_token_label">Token de acesso</string>
+    <string name="login_token_submit">Entrar</string>
+    <string name="login_token_steps_title">Como conseguir um token</string>
+    <string name="login_token_steps">1. Em anilist.co/settings/developer, crie um aplicativo e use https://anilist.co/api/v2/oauth/pin como URL de redirecionamento.\n2. Abra https://anilist.co/api/v2/oauth/authorize?client_id=SEU_ID&amp;response_type=token e autorize.\n3. Copie o token que aparece na página e cole aqui.</string>
+
+    <!-- Login, como funciona -->
+    <string name="login_info_title">Como funciona o seu login?</string>
+    <string name="login_info_password_title">Sua senha fica protegida no AniList!</string>
+    <string name="login_info_password">O login é feito diretamente no site oficial do AniList, em uma janela do navegador. Você digita a sua senha por lá e o Kaisou nunca tem acesso a ela!</string>
+    <string name="login_info_access_title">O que o Kaisou pode fazer?</string>
+    <string name="login_info_access">O sistema do AniList não separa as permissões por partes, então a autorização liberada abrange quase toda a conta. Mas fique tranquilo: o Kaisou usa esse acesso apenas para exibir e atualizar as suas listas, o seu progresso e as atividades de quem você segue.</string>
+    <string name="login_info_storage_title">Onde fica a sua chave de acesso?</string>
+    <string name="login_info_storage">Ela fica salva exclusivamente neste aparelho! O Kaisou não utiliza servidores próprios e esse dado não entra nos backups do Android.</string>
+    <string name="login_info_revoke_title">Você está no controle!</string>
+    <string name="login_info_revoke" tools:ignore="Typos">Quer desconectar? Você pode revogar o acesso do Kaisou a qualquer momento, direto nas configurações da sua conta no AniList.</string>
+</resources>

@@ -1,6 +1,7 @@
 package com.kaisou.app
 
 // Android application
+import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -9,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.ViewModelProvider
 // Window styling
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -16,6 +18,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 // Project resources
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.core.navigation.KaisouApp
+import com.kaisou.app.features.auth.ui.AuthViewModel
 
 // Single activity of the app, immersive with the content under the cutout
 class MainActivity : ComponentActivity() {
@@ -27,11 +30,25 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
         )
         setupImmersiveMode()
+        // The login can start the app, when it was closed while the user was in the browser. A rebuilt activity
+        // already handled it, so it does not do it twice
+        if (savedInstanceState == null) handleLoginRedirect(intent)
         setContent {
             KaisouTheme {
                 KaisouApp()
             }
         }
+    }
+
+    // The browser brings the user back here with the token of AniList
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleLoginRedirect(intent)
+    }
+
+    private fun handleLoginRedirect(intent: Intent?) {
+        ViewModelProvider(this)[AuthViewModel::class.java].handleRedirect(intent?.data)
     }
 
     // The bars go back into hiding whenever the window gets the focus again

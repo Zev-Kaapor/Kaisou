@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -5,6 +7,13 @@ plugins {
 
 // App version: bumping it makes the release workflow publish a new GitHub release
 val appVersionName = "0.0.1"
+
+// Keys of the services come from the environment of the CI or from the ignored local.properties, never from the code
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+fun keyOf(env: String, property: String): String = System.getenv(env) ?: localProperties.getProperty(property).orEmpty()
 
 android {
     namespace = "com.kaisou.app"
@@ -21,6 +30,8 @@ android {
             major.toInt() * 10000 + minor.toInt() * 100 + patch.toInt()
         }
         versionName = appVersionName
+        // Id of the API client registered on AniList for this app, empty until it is set the login says so
+        buildConfigField("String", "ANILIST_CLIENT_ID", "\"${keyOf("ANILIST_CLIENT_ID", "anilist.clientId")}\"")
     }
 
     // Release signing comes from environment variables set by the CI
@@ -63,15 +74,23 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+    androidResources {
+        // Supported app languages: English is the fallback
+        localeFilters += listOf("en", "pt-rBR")
     }
 }
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.browser)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
