@@ -1,0 +1,16 @@
+# Scratch, notes and reference material
+.tests/
+
+# Gradle and Android Studio
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.jks
+*.keystore

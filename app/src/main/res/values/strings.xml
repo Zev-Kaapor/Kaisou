@@ -1,0 +1,175 @@
+<resources>
+    <string name="app_name">Kaisou</string>
+
+    <!-- Navegação -->
+    <string name="nav_home">Início</string>
+    <string name="nav_explore">Explorar</string>
+    <string name="nav_calendar">Calendário</string>
+    <string name="nav_library">Biblioteca</string>
+    <string name="tab_coming_soon">%1$s em breve</string>
+
+    <!-- Ações -->
+    <string name="action_more">Mais opções</string>
+
+    <!-- Login -->
+    <string name="login_tagline">Anime e mangá do seu AniList, num só lugar.</string>
+    <string name="login_button">Entrar com o AniList</string>
+    <string name="login_loading">Entrando…</string>
+    <string name="login_hint">Você faz o login no site do AniList. O Kaisou nunca vê a sua senha.</string>
+    <string name="login_failed">Não foi possível entrar. Tente de novo.</string>
+    <string name="login_expired">Sua sessão expirou. Entre de novo.</string>
+    <string name="login_network">Sem conexão com o AniList. Verifique a internet e tente de novo.</string>
+    <string name="login_missing_client">Falta configurar o cliente do AniList (anilist.clientId).</string>
+
+    <!-- Início -->
+    <string name="home_notifications">Notificações</string>
+    <string name="home_search">Pesquisar</string>
+    <string name="home_profile">Perfil</string>
+    <string name="home_hero_meta">• %1$d, %2$s • %3$s</string>
+    <string name="home_hero_meta_no_year">• %1$s • %2$s</string>
+    <string name="home_cta_continue">Continuar E%1$d</string>
+    <string name="home_cta_watch">Assistir E%1$d</string>
+    <string name="home_error">Não foi possível carregar a Home</string>
+    <string name="home_retry">Tentar de novo</string>
+    <string name="episode_tag">E%1$d</string>
+    <string name="continue_anime">E%1$d • %2$d de %3$d</string>
+    <plurals name="continue_anime_open">
+        <item quantity="one">E%1$d • %2$d visto</item>
+        <item quantity="many">E%1$d • %2$d vistos</item>
+        <item quantity="other">E%1$d • %2$d vistos</item>
+    </plurals>
+    <string name="continue_manga">Cap. %1$d • %2$d de %3$d</string>
+    <string name="continue_manga_open">Cap. %1$d</string>
+    <string name="activity_watched">Assistiu ao ep. %1$s · %2$s</string>
+    <string name="activity_rewatched">Reassistiu ao ep. %1$s · %2$s</string>
+    <string name="activity_read">Leu o cap. %1$s · %2$s</string>
+    <string name="activity_reread">Releu o cap. %1$s · %2$s</string>
+    <string name="activity_plans_watch">Planeja assistir · %1$s</string>
+    <string name="activity_plans_read">Planeja ler · %1$s</string>
+    <string name="activity_completed">Completou · %1$s</string>
+    <string name="activity_dropped">Largou · %1$s</string>
+    <string name="activity_paused">Pausou · %1$s</string>
+    <string name="poster_details_year_format">%1$d, %2$s</string>
+    <string name="home_add_to_list">Adicionar à minha lista</string>
+    <string name="home_stories_title">Atividade dos amigos</string>
+    <string name="home_your_status">Seu status</string>
+    <string name="home_watching_title">Continuar assistindo</string>
+    <string name="home_reading_title">Continuar lendo</string>
+    <string name="home_planned_anime">Animes planejados</string>
+    <string name="home_planned_manga">Mangás planejados</string>
+    <string name="home_missing_sequels">Sequências perdidas</string>
+    <string name="home_recommended_anime">Animes recomendados</string>
+    <string name="home_recommended_manga">Mangás recomendados</string>
+    <string name="home_next_season">Próxima temporada</string>
+    <string name="home_new_anime">Animes recém-adicionados</string>
+    <string name="home_new_manga">Mangás recém-adicionados</string>
+    <string name="home_new_episodes_title">Novos episódios</string>
+    <string name="home_trending_title">Em alta</string>
+    <string name="poster_details_with_rating">• %1$s</string>
+    <!-- Names AniList gives to the genres and the formats, and how they are shown -->
+    <string-array name="genre_keys">
+        <item>Action</item>
+        <item>Adventure</item>
+        <item>Comedy</item>
+        <item>Drama</item>
+        <item>Ecchi</item>
+        <item>Fantasy</item>
+        <item>Horror</item>
+        <item>Mahou Shoujo</item>
+        <item>Mecha</item>
+        <item>Music</item>
+        <item>Mystery</item>
+        <item>Psychological</item>
+        <item>Romance</item>
+        <item>Sci-Fi</item>
+        <item>Slice of Life</item>
+        <item>Sports</item>
+        <item>Supernatural</item>
+        <item>Thriller</item>
+    </string-array>
+    <string-array name="genre_names">
+        <item>Ação</item>
+        <item>Aventura</item>
+        <item>Comédia</item>
+        <item>Drama</item>
+        <item>Ecchi</item>
+        <item>Fantasia</item>
+        <item>Terror</item>
+        <item>Garota mágica</item>
+        <item>Mecha</item>
+        <item>Música</item>
+        <item>Mistério</item>
+        <item>Psicológico</item>
+        <item>Romance</item>
+        <item>Ficção científica</item>
+        <item>Cotidiano</item>
+        <item>Esportes</item>
+        <item>Sobrenatural</item>
+        <item>Suspense</item>
+    </string-array>
+    <string-array name="format_keys">
+        <item>TV</item>
+        <item>TV_SHORT</item>
+        <item>MOVIE</item>
+        <item>SPECIAL</item>
+        <item>OVA</item>
+        <item>ONA</item>
+        <item>MUSIC</item>
+        <item>MANGA</item>
+        <item>NOVEL</item>
+        <item>ONE_SHOT</item>
+    </string-array>
+    <string-array name="format_names">
+        <item>TV</item>
+        <item>TV curta</item>
+        <item>Filme</item>
+        <item>Especial</item>
+        <item>OVA</item>
+        <item>ONA</item>
+        <item>Música</item>
+        <item>Mangá</item>
+        <item>Novel</item>
+        <item>One-shot</item>
+    </string-array>
+
+    <!-- Lançamento semanal -->
+    <string name="weekly_release_description">Lançamento semanal: %1$s</string>
+    <string-array name="weekday_short">
+        <item>Seg</item>
+        <item>Ter</item>
+        <item>Qua</item>
+        <item>Qui</item>
+        <item>Sex</item>
+        <item>Sáb</item>
+        <item>Dom</item>
+    </string-array>
+    <string-array name="weekday_full">
+        <item>segunda-feira</item>
+        <item>terça-feira</item>
+        <item>quarta-feira</item>
+        <item>quinta-feira</item>
+        <item>sexta-feira</item>
+        <item>sábado</item>
+        <item>domingo</item>
+    </string-array>
+
+    <!-- Classificação indicativa -->
+    <string name="age_rating_free">Livre para todos os públicos</string>
+    <string name="age_rating_10">Não recomendado para menores de 10 anos</string>
+    <string name="age_rating_12">Não recomendado para menores de 12 anos</string>
+    <string name="age_rating_14">Não recomendado para menores de 14 anos</string>
+    <string name="age_rating_16">Não recomendado para menores de 16 anos</string>
+    <string name="age_rating_18">Não recomendado para menores de 18 anos</string>
+
+    <!-- Classificação do MyAnimeList -->
+    <string name="mal_rating_g" translatable="false">G</string>
+    <string name="mal_rating_pg" translatable="false">PG</string>
+    <string name="mal_rating_pg13" translatable="false">PG-13</string>
+    <string name="mal_rating_r" translatable="false">R-17+</string>
+    <string name="mal_rating_r_plus" translatable="false">R+</string>
+    <string name="mal_rating_g_description">Classificação do MyAnimeList: todas as idades</string>
+    <string name="mal_rating_pg_description">Classificação do MyAnimeList: crianças</string>
+    <string name="mal_rating_pg13_description">Classificação do MyAnimeList: a partir de 13 anos</string>
+    <string name="mal_rating_r_description">Classificação do MyAnimeList: a partir de 17 anos, com violência e palavrões</string>
+    <string name="mal_rating_r_plus_description">Classificação do MyAnimeList: nudez leve</string>
+</resources>

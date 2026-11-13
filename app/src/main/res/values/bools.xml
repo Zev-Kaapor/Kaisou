@@ -1,0 +1,4 @@
+<resources>
+    <!-- The advisory ratings show in the Brazilian symbols, the languages of other countries set it to false -->
+    <bool name="brazilian_rating">true</bool>
+</resources>
