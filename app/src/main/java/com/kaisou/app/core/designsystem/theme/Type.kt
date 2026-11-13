@@ -11,78 +11,101 @@ import androidx.compose.ui.unit.sp
 // Project resources
 import com.kaisou.app.R
 
-// Medium reuses the semibold file, there are only three weights
+// App font family, three files cover every weight
 val Poppins = FontFamily(
     Font(R.font.poppins_regular, FontWeight.Normal),
     Font(R.font.poppins_semibold, FontWeight.Medium),
     Font(R.font.poppins_semibold, FontWeight.SemiBold),
-    Font(R.font.poppins_bold, FontWeight.Bold)
+    Font(R.font.poppins_bold, FontWeight.Bold),
+    Font(R.font.poppins_bold, FontWeight.ExtraBold),
+    Font(R.font.poppins_bold, FontWeight.Black)
 )
 
-val KaisouTypography = Typography(
-    // Title of the hero when it has no logo
-    displayLarge = TextStyle(
+// All sizes in sp so text follows the system font size
+val Typography = Typography(
+    // Large text on welcome screens
+    displaySmall = TextStyle(
         fontFamily = Poppins,
         fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
-        lineHeight = 34.sp,
-        letterSpacing = 1.sp
+        fontSize = 36.sp,
+        lineHeight = 44.sp,
+        letterSpacing = 0.sp
     ),
-    // Section titles
+    // Wordmark in the header
+    headlineMedium = TextStyle(
+        fontFamily = Poppins,
+        fontWeight = FontWeight.Bold,
+        fontSize = 26.sp,
+        lineHeight = 34.sp,
+        letterSpacing = (-0.5).sp
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = Poppins,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        lineHeight = 30.sp,
+        letterSpacing = 0.sp
+    ),
+    // Section and screen titles
     titleLarge = TextStyle(
         fontFamily = Poppins,
         fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.sp
+        fontSize = 20.sp,
+        lineHeight = 28.sp,
+        letterSpacing = (-0.5).sp
     ),
+    // Titles inside big cards
     titleMedium = TextStyle(
         fontFamily = Poppins,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp,
+        lineHeight = 26.sp,
+        letterSpacing = 0.sp
+    ),
+    // Titles on small cards
+    titleSmall = TextStyle(
+        fontFamily = Poppins,
+        fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.sp
     ),
-    titleSmall = TextStyle(
+    bodyLarge = TextStyle(
         fontFamily = Poppins,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
-        letterSpacing = 0.sp
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.2.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = Poppins,
         fontWeight = FontWeight.Normal,
-        fontSize = 13.sp,
-        lineHeight = 17.sp,
-        letterSpacing = 0.sp
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp
     ),
-    bodySmall = TextStyle(
-        fontFamily = Poppins,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 14.sp,
-        letterSpacing = 0.sp
-    ),
+    // Buttons
     labelLarge = TextStyle(
         fontFamily = Poppins,
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
-        lineHeight = 22.sp,
-        letterSpacing = 0.sp
+        lineHeight = 24.sp,
+        letterSpacing = 0.1.sp
     ),
+    // Chips and subtitles
     labelMedium = TextStyle(
         fontFamily = Poppins,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 14.sp,
-        letterSpacing = 0.sp
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.3.sp
     ),
+    // Badges and small captions
     labelSmall = TextStyle(
         fontFamily = Poppins,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
+        fontWeight = FontWeight.Bold,
+        fontSize = 10.sp,
         lineHeight = 14.sp,
-        letterSpacing = 0.sp
+        letterSpacing = 0.2.sp
     )
 )
