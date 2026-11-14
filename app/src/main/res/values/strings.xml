@@ -12,6 +12,103 @@
     <string name="home_cta_watch_season">Watch S%1$d E%2$d</string>
     <string name="home_cta_continue_season">Continue S%1$d E%2$d</string>
     <string name="home_cta_watch_movie">Watch movie</string>
+    <string name="home_shelf_watching">Continue watching</string>
+    <string name="home_shelf_reading">Continue reading</string>
+    <string name="home_shelf_new_episodes">New episodes</string>
+    <string name="home_shelf_planned_anime">Planned anime</string>
+    <string name="home_shelf_planned_manga">Planned manga</string>
+    <string name="home_shelf_missing_sequels">Missing sequels</string>
+    <string name="home_shelf_recommended_anime">Recommended anime</string>
+    <string name="home_shelf_recommended_manga">Recommended manga</string>
+    <string name="home_shelf_trending">Trending anime</string>
+    <string name="home_shelf_trending_manga">Trending manga</string>
+    <string name="home_shelf_popular">Popular this season</string>
+    <string name="home_shelf_upcoming">Coming next season</string>
+    <string name="home_shelf_new_anime">New anime</string>
+    <string name="home_shelf_new_manga">New manga</string>
+    <string name="home_card_episode" translatable="false">E%1$d</string>
+    <plurals name="home_card_episodes">
+        <item quantity="one">%d ep</item>
+        <item quantity="other">%d eps</item>
+    </plurals>
+    <plurals name="home_card_chapters">
+        <item quantity="one">%d ch</item>
+        <item quantity="other">%d chs</item>
+    </plurals>
+    <string name="home_card_separator" translatable="false">" · "</string>
+    <string name="home_card_progress_separator" translatable="false">" | "</string>
+    <string name="home_card_progress_unknown" translatable="false">~</string>
+    <string name="home_card_soon">Coming soon</string>
+    <string name="home_card_ongoing">Ongoing</string>
+    <string name="home_card_hiatus">On hiatus</string>
+    <string name="home_card_cancelled">Cancelled</string>
+    <string name="home_card_no_score">-.-</string>
+    <string name="home_your_status">Your status</string>
+    <string name="status_title">New status</string>
+    <string name="status_learn_more">Learn more</string>
+    <string name="status_discard_title">Discard the status?</string>
+    <string name="status_discard_text">What you wrote will be lost.</string>
+    <string name="status_discard_confirm">Discard</string>
+    <string name="status_discard_cancel">Keep writing</string>
+    <string name="status_preview">Preview</string>
+    <string name="status_confirm_title">Post to AniList</string>
+    <string name="status_confirm_text">This will be posted on your AniList profile and shown to the people who follow you. Follow the rules of AniList.</string>
+    <string name="status_address_title">Paste the address here</string>
+    <string name="status_address_label">Address</string>
+    <string name="status_address_add">Add</string>
+    <string name="md_bold">Bold</string>
+    <string name="md_italic">Italic</string>
+    <string name="md_strikethrough">Strikethrough</string>
+    <string name="md_spoiler">Spoiler</string>
+    <string name="md_link">Link</string>
+    <string name="md_image">Image</string>
+    <string name="md_youtube">YouTube</string>
+    <string name="md_ordered">Numbered list</string>
+    <string name="md_bulleted">Bulleted list</string>
+    <string name="md_heading">Heading</string>
+    <string name="md_center">Center</string>
+    <string name="md_quote">Quote</string>
+    <string name="md_code">Code</string>
+    <string name="md_video">Video</string>
+    <string name="status_hint">Write a status</string>
+    <string name="status_post">Post</string>
+    <string name="status_failed">Could not post the status</string>
+    <string name="reply_edit">Edit comment</string>
+    <string name="reply_editing">Editing comment</string>
+    <string name="reply_delete">Delete comment</string>
+    <string name="reply_delete_title">Delete comment</string>
+    <string name="reply_delete_text">This removes the comment from AniList and cannot be undone.</string>
+    <string name="story_more">More options</string>
+    <string name="story_share">Share</string>
+    <string name="story_open_anilist">Open on AniList</string>
+    <string name="story_copy_text">Copy text</string>
+    <string name="md_open_video">Open video</string>
+    <string name="md_open_youtube">Open on YouTube</string>
+    <string name="story_delete">Delete activity</string>
+    <string name="story_delete_title">Delete activity</string>
+    <string name="story_delete_text">This removes the activity from AniList and cannot be undone.</string>
+    <string name="story_delete_confirm">Delete</string>
+    <string name="story_replies_title">Comments</string>
+    <string name="story_replies_loading">Loading…</string>
+    <string name="story_replies_empty">No comments yet. Be the first.</string>
+    <string name="story_reply_failed">Could not send the comment</string>
+    <string name="story_send">Send</string>
+    <string name="story_like">Like</string>
+    <string name="story_reply_hint">Write a comment…</string>
+    <string name="story_watched">Watched episode %1$s of %2$s</string>
+    <string name="story_watched_range">Watched episodes %1$s of %2$s</string>
+    <string name="story_rewatched">Rewatched episode %1$s of %2$s</string>
+    <string name="story_rewatched_range">Rewatched episodes %1$s of %2$s</string>
+    <string name="story_read">Read chapter %1$s of %2$s</string>
+    <string name="story_read_range">Read chapters %1$s of %2$s</string>
+    <string name="story_reread">Reread chapter %1$s of %2$s</string>
+    <string name="story_reread_range">Reread chapters %1$s of %2$s</string>
+    <string name="story_plans_watch">Plans to watch %1$s</string>
+    <string name="story_plans_read">Plans to read %1$s</string>
+    <string name="story_completed">Completed %1$s</string>
+    <string name="story_paused">Paused %1$s</string>
+    <string name="story_dropped">Dropped %1$s</string>
+    <string name="story_other" translatable="false">%1$s %2$s</string>
     <string name="home_add_to_list">Add to my list</string>
     <string name="home_hero_meta">%1$d • %2$s</string>
     <string name="home_hero_meta_divider" translatable="false">" | "</string>
@@ -37,6 +134,9 @@
         <item>OVA</item>
         <item>ONA</item>
         <item>MUSIC</item>
+        <item>MANGA</item>
+        <item>NOVEL</item>
+        <item>ONE_SHOT</item>
     </string-array>
     <string-array name="format_names">
         <item>TV</item>
@@ -46,6 +146,9 @@
         <item>OVA</item>
         <item>ONA</item>
         <item>Music</item>
+        <item>Manga</item>
+        <item>Light novel</item>
+        <item>One-shot</item>
     </string-array>
     <string-array name="genre_keys" translatable="false">
         <item>Action</item>
@@ -137,6 +240,8 @@
     <!-- Login, with a token -->
     <string name="login_token_title">Sign in with token</string>
     <string name="login_token_description">Paste an AniList access token below. This is for those who prefer not to use the browser window, or when the return to the app does not work.</string>
+    <string name="login_token_description_browser">The page of AniList opened in your browser. Allow Kaisou, copy the token it shows and come back here, Kaisou pastes it for you. If it does not, tap Paste.</string>
+    <string name="login_token_paste">Paste</string>
     <string name="login_token_label">Access token</string>
     <string name="login_token_submit">Sign in</string>
     <string name="login_token_steps_title">How to get a token</string>

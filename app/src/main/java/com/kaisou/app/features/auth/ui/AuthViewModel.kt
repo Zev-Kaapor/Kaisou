@@ -2,12 +2,9 @@ package com.kaisou.app.features.auth.ui
 
 // Android framework
 import android.app.Application
-import android.content.ActivityNotFoundException
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import androidx.annotation.StringRes
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,9 +17,11 @@ import kotlinx.coroutines.launch
 import com.kaisou.app.BuildConfig
 import com.kaisou.app.R
 import com.kaisou.app.core.anilist.AniListClient
+import com.kaisou.app.core.browser.InAppBrowser
 import com.kaisou.app.core.anilist.AniViewer
 import com.kaisou.app.core.anilist.ViewerResult
 import com.kaisou.app.core.auth.AniListSession
+import com.kaisou.app.core.auth.PinToken
 import com.kaisou.app.core.cache.AppStore
 
 // Where the user is: the token is being checked, the user has to sign in, or the user is in
@@ -52,6 +51,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun signOut() {
         session.clear()
         AppStore.clear("pool")
+        AppStore.clear("top1")
+        AppStore.clear("below1")
+        AppStore.clear("sequelids1")
+        AppStore.clear("recommended1")
+        AppStore.clear("sequels1")
         mutableState.value = AuthState.LoggedOut()
     }
 
@@ -70,17 +74,25 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         openInBrowser(context, "$AuthorizeUrl?client_id=${BuildConfig.ANILIST_CLIENT_ID}&response_type=token".toUri())
     }
 
+    // True when the sign in with a token can open the page of AniList that shows it, which needs the client made for that
+    val tokenByBrowser: Boolean = BuildConfig.ANILIST_PIN_CLIENT_ID.isNotEmpty()
+
+    // Opens the page of AniList that shows the token to copy, the user authorizes, copies it and comes back to paste it
+    fun startTokenLogin(context: Context) {
+        if (!tokenByBrowser) return
+        openInBrowser(context, "$AuthorizeUrl?client_id=${BuildConfig.ANILIST_PIN_CLIENT_ID}&response_type=token".toUri())
+    }
+
+    // Tells if a text is a token made for the client of the page that shows it
+    fun isPinToken(text: String): Boolean = PinToken.isFor(text, BuildConfig.ANILIST_PIN_CLIENT_ID)
+
     // Opens the page where an account is created, the user comes back and signs in
     fun startSignUp(context: Context) {
         openInBrowser(context, SignUpUrl.toUri())
     }
 
     private fun openInBrowser(context: Context, address: Uri) {
-        try {
-            CustomTabsIntent.Builder().build().launchUrl(context, address)
-        } catch (_: ActivityNotFoundException) {
-            context.startActivity(Intent(Intent.ACTION_VIEW, address).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        }
+        InAppBrowser.open(context, address.toString())
     }
 
     // The user pasted a token of AniList: it is kept and checked as the one that comes from the browser

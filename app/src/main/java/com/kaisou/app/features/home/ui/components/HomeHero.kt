@@ -289,7 +289,8 @@ private fun HomeHero(
                         )
                     },
                     onClick = onPlay,
-                    leading = { ButtonIcon(icon = KaisouIcons.PlayOutline, tint = KaisouTheme.colors.onAccentFill) }
+                    leading = { ButtonIcon(icon = KaisouIcons.PlayOutline, tint = KaisouTheme.colors.onAccentFill) },
+                    grouped = true
                 )
                 OutlineIconButton(
                     icon = KaisouIcons.Bookmark,

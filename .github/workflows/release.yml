@@ -87,10 +87,14 @@ jobs:
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
           TVDB_KEY: ${{ secrets.TVDB_KEY }}
           ANILIST_CLIENT_ID: ${{ secrets.ANILIST_CLIENT_ID }}
+          ANILIST_PIN_CLIENT_ID: ${{ secrets.ANILIST_PIN_CLIENT_ID }}
           MAL_CLIENT_ID: ${{ secrets.MAL_CLIENT_ID }}
         run: |
           if [ -z "$ANILIST_CLIENT_ID" ]; then
             echo "::warning::Missing ANILIST_CLIENT_ID secret, this release cannot sign in"
+          fi
+          if [ -z "$ANILIST_PIN_CLIENT_ID" ]; then
+            echo "::warning::Missing ANILIST_PIN_CLIENT_ID secret, the sign in with a token will not open the browser"
           fi
           if [ -z "$TMDB_TOKEN" ] || [ -z "$TVDB_KEY" ] || [ -z "$MAL_CLIENT_ID" ]; then
             echo "::warning::Missing TMDB_TOKEN, TVDB_KEY or MAL_CLIENT_ID secret, this release will lack artwork or ratings"

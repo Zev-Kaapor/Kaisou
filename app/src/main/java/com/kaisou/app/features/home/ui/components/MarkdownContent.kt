@@ -1,0 +1,105 @@
+package com.kaisou.app.features.home.ui.components
+
+// Android framework
+import android.content.Context
+// Compose layouts and foundations
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+// Material 3 components
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+// Compose state and runtime
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+// UI styling and utilities
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+// Image loading
+import coil3.compose.AsyncImage
+// Project resources
+import com.kaisou.app.R
+import com.kaisou.app.core.browser.InAppBrowser
+import com.kaisou.app.core.designsystem.icons.KaisouIcons
+import com.kaisou.app.core.designsystem.theme.KaisouTheme
+import com.kaisou.app.features.home.ui.HomeDimens
+
+// A text of AniList on a screen: the text with its markers resolved and its links that open when touched, a picture as a picture
+// that opens at full size outside the app when touched, and a video as a card that opens it outside the app
+@Composable
+fun MarkdownContent(text: String, style: TextStyle, color: Color, modifier: Modifier = Modifier, textAlign: TextAlign? = null) {
+    val dimens = KaisouTheme.dimens
+    val link = MaterialTheme.colorScheme.primary
+    val context = LocalContext.current
+    val uriHandler = remember(context) { InAppUriHandler(context) }
+    val blocks = remember(text) { StatusMarkdown.blocks(text) }
+
+    // The links of the text, and the pictures and the videos, open in the browser that stays over the app
+    CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)) {
+        blocks.forEach { block ->
+            when (block) {
+                is MarkdownBlock.Text -> {
+                    val rendered = remember(block.text, link) { StatusMarkdown.render(block.text, link, HomeDimens.StatusHeadingSize) }
+                    Text(text = rendered, style = style, color = color, textAlign = textAlign, modifier = Modifier.fillMaxWidth())
+                }
+                is MarkdownBlock.Image -> AsyncImage(
+                    model = block.url,
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = HomeDimens.StatusImageMaxHeight)
+                        .clip(MaterialTheme.shapes.medium)
+                        .clickable(role = Role.Button) { uriHandler.openUri(block.url) }
+                )
+                is MarkdownBlock.Video -> Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(KaisouTheme.colors.elevated)
+                        .clickable(role = Role.Button) { uriHandler.openUri(block.url) }
+                        .padding(horizontal = dimens.spaceLarge, vertical = dimens.spaceMedium),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
+                ) {
+                    Icon(
+                        imageVector = KaisouIcons.PlayOutline,
+                        contentDescription = null,
+                        tint = link,
+                        modifier = Modifier.size(HomeDimens.StatusVideoIcon)
+                    )
+                    Text(
+                        text = stringResource(if (block.youtube) R.string.md_open_youtube else R.string.md_open_video),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+    }
+}
+
+// Opens the addresses of the links of a text in the browser that stays over the app
+private class InAppUriHandler(private val context: Context) : UriHandler {
+    override fun openUri(uri: String) = InAppBrowser.open(context, uri)
+}

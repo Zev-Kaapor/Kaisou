@@ -21,11 +21,16 @@ import androidx.compose.runtime.Composable
 // UI styling and utilities
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 // A question with two buttons of the same width side by side, the one that cancels and the one that goes on, which stands out
-// It is white on the dark theme, the same as the play button of Wavvy
+// It is white on the dark theme, the same as the play button of Wavvy. It can end its text with a link, in the violet of the app
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfirmDialog(
@@ -35,7 +40,9 @@ fun ConfirmDialog(
     cancelLabel: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    textAlign: TextAlign = TextAlign.Center
+    textAlign: TextAlign = TextAlign.Center,
+    linkLabel: String? = null,
+    onLink: () -> Unit = {}
 ) {
     BasicAlertDialog(onDismissRequest = onDismiss) {
         Surface(
@@ -52,8 +59,22 @@ fun ConfirmDialog(
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
+                val accent = MaterialTheme.colorScheme.primary
                 Text(
-                    text = text,
+                    text = buildAnnotatedString {
+                        append(text)
+                        // The link goes on the same paragraph, right after the last word
+                        if (linkLabel != null) {
+                            append(" ")
+                            withLink(
+                                LinkAnnotation.Clickable(
+                                    tag = LinkTag,
+                                    styles = TextLinkStyles(SpanStyle(color = accent)),
+                                    linkInteractionListener = { onLink() }
+                                )
+                            ) { append(linkLabel) }
+                        }
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = textAlign,
@@ -81,6 +102,9 @@ fun ConfirmDialog(
         }
     }
 }
+
+// Name of the link at the end of the text
+private const val LinkTag = "link"
 
 // The corners of the box, the room inside it and between its parts
 private val ConfirmCorner = 28.dp

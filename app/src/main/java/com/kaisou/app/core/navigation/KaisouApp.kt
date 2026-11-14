@@ -85,7 +85,10 @@ fun KaisouApp(authViewModel: AuthViewModel = viewModel()) {
             error = null,
             onLogin = {},
             onSignUp = {},
-            onTokenLogin = {}
+            onTokenLogin = {},
+            tokenByBrowser = false,
+            onTokenPage = {},
+            isPinToken = { false }
         )
         is AuthState.LoggedOut -> LoginScreen(
             checking = false,
@@ -93,7 +96,10 @@ fun KaisouApp(authViewModel: AuthViewModel = viewModel()) {
             error = state.error,
             onLogin = { authViewModel.startLogin(context) },
             onSignUp = { authViewModel.startSignUp(context) },
-            onTokenLogin = authViewModel::signInWithToken
+            onTokenLogin = authViewModel::signInWithToken,
+            tokenByBrowser = authViewModel.tokenByBrowser,
+            onTokenPage = { authViewModel.startTokenLogin(context) },
+            isPinToken = authViewModel::isPinToken
         )
         is AuthState.LoggedIn -> KaisouShell(viewer = state.viewer, onSignOut = authViewModel::signOut)
     }

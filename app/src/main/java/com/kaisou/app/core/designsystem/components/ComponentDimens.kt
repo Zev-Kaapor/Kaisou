@@ -9,6 +9,12 @@ object ComponentDimens {
     // Round button with only an icon, and the icon inside it
     val IconButton = 48.dp
     val IconButtonIcon = 24.dp
+    // The cards of a menu: the icon, the room inside a card, between its icon and its name and between the cards
+    val MenuCardIcon = 24.dp
+    val MenuCardHorizontal = 16.dp
+    val MenuCardVertical = 14.dp
+    val MenuCardTextStart = 16.dp
+    val MenuCardGap = 8.dp
     // Area at the start of a pill button where its icon, badge or spinner goes, the label stays centered
     val ButtonLeading = 32.dp
     // Icon that sits alone in that area, and the spinner that takes its place

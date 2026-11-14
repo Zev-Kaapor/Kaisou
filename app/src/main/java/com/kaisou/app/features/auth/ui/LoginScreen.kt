@@ -62,6 +62,9 @@ fun LoginScreen(
     onLogin: () -> Unit,
     onSignUp: () -> Unit,
     onTokenLogin: (String) -> Unit,
+    tokenByBrowser: Boolean,
+    onTokenPage: () -> Unit,
+    isPinToken: (String) -> Boolean,
     modifier: Modifier = Modifier
 ) {
     var infoOpen by rememberSaveable { mutableStateOf(false) }
@@ -76,10 +79,16 @@ fun LoginScreen(
             onLogin = onLogin,
             onSignUp = onSignUp,
             onLearnMore = { infoOpen = true },
-            onToken = { tokenOpen = true }
+            onToken = {
+                tokenOpen = true
+                // The page of AniList that shows the token opens at once, the sheet waits for the user to come back with it
+                if (tokenByBrowser) onTokenPage()
+            }
         )
         if (infoOpen) LoginInfoSheet(onDismiss = { infoOpen = false })
-        if (tokenOpen) LoginTokenSheet(onDismiss = { tokenOpen = false }, onSubmit = onTokenLogin)
+        if (tokenOpen) {
+            LoginTokenSheet(onDismiss = { tokenOpen = false }, onSubmit = onTokenLogin, byBrowser = tokenByBrowser, isPinToken = isPinToken)
+        }
     }
 }
 

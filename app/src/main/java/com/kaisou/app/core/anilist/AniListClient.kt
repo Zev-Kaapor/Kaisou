@@ -103,10 +103,10 @@ class AniListClient {
     // The most trending titles of the current season, where the featured ones are drawn from. The token is optional, with it
     // each title says whether the user is in the middle of it. The pool is kept for a while, so opening the app again does not ask
     // for it again, and when AniList does not answer the last one kept is used, however old. Null when there is none
-    suspend fun heroPool(token: String?): List<AniMedia>? = withContext(Dispatchers.IO) {
+    suspend fun heroPool(token: String?, refresh: Boolean = false): List<AniMedia>? = withContext(Dispatchers.IO) {
         val season = AniSeason.of(LocalDate.now())
         val key = "${season.name} ${season.year} ${if (token != null) "user" else "guest"}"
-        AppStore.get(PoolSpace, key, PoolMillis)?.let { kept -> parsePool(kept)?.let { return@withContext it } }
+        if (!refresh) AppStore.get(PoolSpace, key, PoolMillis)?.let { kept -> parsePool(kept)?.let { return@withContext it } }
         val fresh = try {
             val variables = JSONObject().put("season", season.name).put("seasonYear", season.year)
             post(HeroQuery, variables, token)?.getJSONObject("Page")?.getJSONArray("media")?.toString()
@@ -127,6 +127,202 @@ class AniListClient {
                 .map { media.getJSONObject(it) }
                 .filterNot { it.optBoolean("isAdult") }
                 .map(::parseMedia)
+        } catch (_: Exception) {
+            null
+        }
+
+    // The shelves of the Home come in two parts. The top has what the page waits for, what the friends did and the lists of what the user is
+    // in the middle of. It is always asked for, since the friends do things all the time, and kept only for when AniList does not
+    // answer, then the last one kept is used, however old. Null when there is none
+    suspend fun topShelves(userId: Int, token: String?): AniShelves? =
+        fetchShelves(TopSpace, userId.toString(), TopQuery, JSONObject().put("userId", userId), token)
+
+    // The part under the top: the episodes that aired, the lists of what the user plans and the shelves of discovery. What was kept of it
+    // is shown while the new one comes, see keptBelow
+    suspend fun belowShelves(userId: Int, token: String?): AniShelves? {
+        val now = System.currentTimeMillis() / MillisPerSecond
+        val season = AniSeason.of(LocalDate.now())
+        val next = season.next()
+        val variables = JSONObject()
+            .put("userId", userId).put("from", now - NewEpisodesSeconds).put("to", now)
+            .put("season", season.name).put("year", season.year).put("nextSeason", next.name).put("nextYear", next.year)
+        return fetchShelves(BelowSpace, userId.toString(), BelowQuery, variables, token)
+    }
+
+    private suspend fun fetchShelves(space: String, key: String, query: String, variables: JSONObject, token: String?): AniShelves? =
+        withContext(Dispatchers.IO) {
+            val fresh = try {
+                post(query, variables, token)?.toString()
+            } catch (_: Exception) {
+                null
+            }
+            if (fresh != null) {
+                AppStore.put(space, key, fresh)
+                return@withContext parseShelves(fresh)
+            }
+            AppStore.getAny(space, key)?.let(::parseShelves)
+        }
+
+    // What was kept of what is lower on the page, however old, so the page can show it at once while the new one comes. Null when nothing
+    // was kept
+    suspend fun keptBelow(userId: Int): AniShelves? = withContext(Dispatchers.IO) { AppStore.getAny(BelowSpace, userId.toString())?.let(::parseShelves) }
+
+    suspend fun keptRecommended(userId: Int): AniRecommended? =
+        withContext(Dispatchers.IO) { AppStore.getAny(RecommendedSpace, userId.toString())?.let(::parseRecommended) }
+
+    suspend fun keptSequels(userId: Int): List<AniCard>? =
+        withContext(Dispatchers.IO) { AppStore.getAny(SequelsSpace, userId.toString())?.let(::parseSequels) }
+
+    // What is recommended for the user, asked for every time and kept like the shelves. It is asked apart because it is a heavy question, and if it fails the
+    // shelves still come
+    suspend fun recommended(userId: Int, token: String?): AniRecommended? = withContext(Dispatchers.IO) {
+        val key = userId.toString()
+        val fresh = try {
+            post(RecommendedQuery, JSONObject().put("userId", userId), token)?.toString()
+        } catch (_: Exception) {
+            null
+        }
+        if (fresh != null) {
+            AppStore.put(RecommendedSpace, key, fresh)
+            return@withContext parseRecommended(fresh)
+        }
+        AppStore.getAny(RecommendedSpace, key)?.let(::parseRecommended)
+    }
+
+    // The sequels of what the user finished that they do not have on their list and that already came out. The titles to look for are
+    // found among everything they finished, which is kept for hours, and are asked for in one question with a part for each batch, and the
+    // answer is kept like the shelves. Asked apart, so if it fails the shelves still come
+    suspend fun missingSequels(userId: Int, token: String?): List<AniCard>? = withContext(Dispatchers.IO) {
+        val key = userId.toString()
+        val fresh = try {
+            val ids = sequelIds(key, userId, token)
+            if (ids == null) {
+                null
+            } else {
+                val batches = ids.chunked(SequelBatch).take(MaxSequelBatches)
+                val media = JSONArray()
+                val data = if (batches.isEmpty()) null else post(sequelsQuery(batches), JSONObject(), token)
+                // Each batch is a part of the answer, one that failed is only a part left out, and none that came means nothing to show
+                data?.keys()?.forEach { alias ->
+                    val items = data.optJSONObject(alias)?.optJSONArray("media") ?: return@forEach
+                    for (index in 0 until items.length()) media.put(items.getJSONObject(index))
+                }
+                if (batches.isNotEmpty() && media.length() == 0) null else JSONObject().put("sequels", JSONObject().put("media", media)).toString()
+            }
+        } catch (_: Exception) {
+            null
+        }
+        if (fresh != null) {
+            AppStore.put(SequelsSpace, key, fresh)
+            return@withContext parseSequels(fresh)
+        }
+        AppStore.getAny(SequelsSpace, key)?.let(::parseSequels)
+    }
+
+    // The ids of the sequels of what the user finished. They change only when the user finishes something, so they are kept for hours and
+    // the long question about everything they finished is not asked at every start
+    private fun sequelIds(key: String, userId: Int, token: String?): List<Int>? {
+        AppStore.get(SequelIdsSpace, key, SequelIdsMillis)?.let { kept -> parseIds(kept)?.let { return it } }
+        val completed = post(CompletedRelationsQuery, JSONObject().put("userId", userId), token) ?: return null
+        val ids = AniShelvesParser.sequelIds(completed)
+        AppStore.put(SequelIdsSpace, key, JSONArray(ids).toString())
+        return ids
+    }
+
+    private fun parseIds(text: String): List<Int>? =
+        try {
+            JSONArray(text).let { array -> (0 until array.length()).map { array.getInt(it) } }
+        } catch (_: Exception) {
+            null
+        }
+
+    private fun parseSequels(text: String): List<AniCard>? =
+        try {
+            AniShelvesParser.parseSequels(JSONObject(text))
+        } catch (_: Exception) {
+            null
+        }
+
+    // Likes an activity, or takes the like back if it was already given, and says how it stands now. This changes the account of the
+    // user, so it is only called when they touch the heart. Null when AniList did not do it
+    suspend fun toggleLike(id: Int, reply: Boolean, token: String?): AniLike? = withContext(Dispatchers.IO) {
+        try {
+            val variables = JSONObject().put("id", id).put("type", if (reply) "ACTIVITY_REPLY" else "ACTIVITY")
+            post(ToggleLikeQuery, variables, token)?.optJSONObject("ToggleLikeV2")
+                ?.let { AniLike(isLiked = it.optBoolean("isLiked"), likeCount = it.optInt("likeCount")) }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    // Deletes an activity of the user from AniList for good, so it is only called after they confirm. True when AniList did it
+    suspend fun deleteActivity(activityId: Int, token: String?): Boolean = withContext(Dispatchers.IO) {
+        try {
+            post(DeleteActivityQuery, JSONObject().put("id", activityId), token)?.optJSONObject("DeleteActivity")?.optBoolean("deleted") == true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    // Posts a status, a text on the activity of the user, as the user. This changes their account, so it is only called when they
+    // press the button to post. True when AniList took it
+    suspend fun postStatus(text: String, token: String?): Boolean = withContext(Dispatchers.IO) {
+        try {
+            post(SaveStatusQuery, JSONObject().put("text", text), token)?.optJSONObject("SaveTextActivity")?.has("id") == true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    // The comments of an activity, null when AniList did not answer
+    suspend fun replies(activityId: Int, token: String?): List<AniReply>? = withContext(Dispatchers.IO) {
+        try {
+            val items = post(RepliesQuery, JSONObject().put("id", activityId), token)?.optJSONObject("Page")?.optJSONArray("activityReplies")
+            items?.let { list -> (0 until list.length()).mapNotNull { AniShelvesParser.reply(list.getJSONObject(it)) } }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    // Deletes a comment of the user for good, so it is only called after they confirm. True when AniList did it
+    suspend fun deleteReply(replyId: Int, token: String?): Boolean = withContext(Dispatchers.IO) {
+        try {
+            post(DeleteReplyQuery, JSONObject().put("id", replyId), token)?.optJSONObject("DeleteActivityReply")?.optBoolean("deleted") == true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    // Changes the text of a comment of the user, and gives it as AniList kept it. Null when AniList did not take it
+    suspend fun editReply(activityId: Int, replyId: Int, text: String, token: String?): AniReply? = withContext(Dispatchers.IO) {
+        try {
+            val variables = JSONObject().put("id", replyId).put("activity", activityId).put("text", text)
+            post(EditReplyQuery, variables, token)?.optJSONObject("SaveActivityReply")?.let(AniShelvesParser::reply)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    // Writes a comment on an activity as the user, and gives it as AniList kept it. Null when AniList did not take it
+    suspend fun reply(activityId: Int, text: String, token: String?): AniReply? = withContext(Dispatchers.IO) {
+        try {
+            post(SaveReplyQuery, JSONObject().put("id", activityId).put("text", text), token)?.optJSONObject("SaveActivityReply")
+                ?.let(AniShelvesParser::reply)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun parseRecommended(text: String): AniRecommended? =
+        try {
+            AniShelvesParser.parseRecommended(JSONObject(text))
+        } catch (_: Exception) {
+            null
+        }
+
+    private fun parseShelves(text: String): AniShelves? =
+        try {
+            AniShelvesParser.parse(JSONObject(text))
         } catch (_: Exception) {
             null
         }
@@ -255,6 +451,124 @@ class AniListClient {
               }
             }
         """
+
+        // Where the two parts of the shelves are kept on the disk, and how far back the new episodes go
+        const val TopSpace = "top1"
+        const val BelowSpace = "below1"
+        const val MillisPerSecond = 1000L
+        const val NewEpisodesSeconds = 48L * 60L * 60L
+
+        // What a card of a shelf needs of a title, and how many of each list and of the new episodes come
+        const val ShelfCard = "id title { romaji english } status format episodes chapters nextAiringEpisode { episode } startDate { year } averageScore meanScore bannerImage coverImage { extraLarge large }"
+        const val ShelfSize = 20
+        const val AiredSize = 50
+        const val ActivitySize = 50
+        const val MineSize = 25
+        // An activity of a list or of a text, with who did it
+        const val ActivityFields = "__typename ... on ListActivity { id createdAt likeCount replyCount isLiked status progress user { id name avatar { large } } media { $ShelfCard isAdult } } " +
+            "... on TextActivity { id createdAt likeCount replyCount isLiked text(asHtml: false) user { id name avatar { large } } }"
+        // Likes and comments on the activities
+        const val ReplyFields = "id text(asHtml: false) createdAt likeCount isLiked user { id name avatar { large } }"
+        const val ToggleLikeQuery = "mutation (${'$'}id: Int, ${'$'}type: LikeableType) { ToggleLikeV2(id: ${'$'}id, type: ${'$'}type) { " +
+            "... on ListActivity { isLiked likeCount } ... on TextActivity { isLiked likeCount } ... on ActivityReply { isLiked likeCount } } }"
+        const val DeleteReplyQuery = "mutation (${'$'}id: Int) { DeleteActivityReply(id: ${'$'}id) { deleted } }"
+        const val EditReplyQuery = "mutation (${'$'}id: Int, ${'$'}activity: Int, ${'$'}text: String) { " +
+            "SaveActivityReply(id: ${'$'}id, activityId: ${'$'}activity, text: ${'$'}text) { $ReplyFields } }"
+        const val DeleteActivityQuery = "mutation (${'$'}id: Int) { DeleteActivity(id: ${'$'}id) { deleted } }"
+        const val SaveStatusQuery = "mutation (${'$'}text: String) { SaveTextActivity(text: ${'$'}text) { id } }"
+        const val RepliesQuery = "query (${'$'}id: Int) { Page(perPage: 50) { activityReplies(activityId: ${'$'}id) { $ReplyFields } } }"
+        const val SaveReplyQuery = "mutation (${'$'}id: Int, ${'$'}text: String) { SaveActivityReply(activityId: ${'$'}id, text: ${'$'}text) { $ReplyFields } }"
+
+        // Recommendations: where they are kept, how many come at a time, and how many manga of the user they are taken from
+        const val RecommendedSpace = "recommended1"
+        const val RecommendationsPage = 50
+        const val MangaSeeds = 25
+        const val PerMangaSeed = 6
+        const val RecommendedCard = "$ShelfCard type isAdult mediaListEntry { status }"
+
+        // Sequels: where they are kept, how many titles are asked at a time and how many times at most
+        const val SequelsSpace = "sequels1"
+        const val SequelIdsSpace = "sequelids1"
+        const val SequelIdsMillis = 6L * 60L * 60L * 1000L
+        const val SequelBatch = 50
+        const val MaxSequelBatches = 4
+
+        // The new titles only count when some people already have them, otherwise the ones just made up fill the shelf
+        const val NewMinPopularity = 100
+
+        // A page of titles of the shelves of discovery
+        private fun discover(alias: String, arguments: String): String =
+            "$alias: Page(perPage: $ShelfSize) { media($arguments, isAdult: false) { $ShelfCard } }"
+
+        // One list of the user, the ones touched last first
+        private fun shelfList(alias: String, type: String, statuses: String): String =
+            "$alias: MediaListCollection(userId: ${'$'}userId, type: $type, status_in: [$statuses], sort: UPDATED_TIME_DESC, " +
+                "chunk: 1, perChunk: $ShelfSize) { lists { entries { progress media { $ShelfCard } } } }"
+
+        // The top of the shelves: what the friends did and the lists of what the user is in the middle of
+        val TopQuery = """
+            query (${'$'}userId: Int) {
+              ${shelfList("watching", "ANIME", "CURRENT, REPEATING")}
+              ${shelfList("reading", "MANGA", "CURRENT, REPEATING")}
+              activity: Page(perPage: $ActivitySize) {
+                activities(isFollowing: true, type_in: [TEXT, ANIME_LIST, MANGA_LIST, MEDIA_LIST], sort: ID_DESC) { $ActivityFields }
+              }
+              mine: Page(perPage: $MineSize) {
+                activities(userId: ${'$'}userId, type_in: [TEXT, ANIME_LIST, MANGA_LIST, MEDIA_LIST], sort: ID_DESC) { $ActivityFields }
+              }
+            }
+        """
+
+        // The part under the top: the lists of what is planned, the episodes that aired and the shelves of discovery
+        val BelowQuery = """
+            query (
+              ${'$'}userId: Int, ${'$'}from: Int, ${'$'}to: Int,
+              ${'$'}season: MediaSeason, ${'$'}year: Int, ${'$'}nextSeason: MediaSeason, ${'$'}nextYear: Int
+            ) {
+              ${shelfList("plannedAnime", "ANIME", "PLANNING")}
+              ${shelfList("plannedManga", "MANGA", "PLANNING")}
+              airing: Page(perPage: $AiredSize) {
+                airingSchedules(airingAt_greater: ${'$'}from, airingAt_lesser: ${'$'}to, sort: TIME_DESC) { airingAt episode media { $ShelfCard isAdult } }
+              }
+              ${discover("trending", "type: ANIME, sort: TRENDING_DESC")}
+              ${discover("trendingManga", "type: MANGA, sort: TRENDING_DESC")}
+              ${discover("popular", "type: ANIME, season: ${'$'}season, seasonYear: ${'$'}year, sort: POPULARITY_DESC")}
+              ${discover("upcoming", "type: ANIME, season: ${'$'}nextSeason, seasonYear: ${'$'}nextYear, sort: POPULARITY_DESC")}
+              ${discover("newAnime", "type: ANIME, sort: ID_DESC, popularity_greater: $NewMinPopularity")}
+              ${discover("newManga", "type: MANGA, sort: ID_DESC, popularity_greater: $NewMinPopularity")}
+            }
+        """
+
+        // Recommendations of the titles on the list of the user, the best rated and the newest, and of the manga read last
+        val RecommendedQuery = """
+            query (${'$'}userId: Int) {
+              byRating: Page(perPage: $RecommendationsPage) {
+                recommendations(sort: RATING_DESC, onList: true) { mediaRecommendation { $RecommendedCard } }
+              }
+              byNew: Page(perPage: $RecommendationsPage) {
+                recommendations(sort: ID_DESC, onList: true) { mediaRecommendation { $RecommendedCard } }
+              }
+              mangaSeeds: MediaListCollection(userId: ${'$'}userId, type: MANGA, status_in: [CURRENT, COMPLETED, REPEATING], sort: UPDATED_TIME_DESC, chunk: 1, perChunk: $MangaSeeds) {
+                lists { entries { media { recommendations(sort: RATING_DESC, perPage: $PerMangaSeed) { nodes { mediaRecommendation { $RecommendedCard } } } } } }
+              }
+            }
+        """
+
+        // The sequels of everything the user finished, the whole list is looked at since the old titles are the ones with sequels
+        val CompletedRelationsQuery = """
+            query (${'$'}userId: Int) {
+              completed: MediaListCollection(userId: ${'$'}userId, type: ANIME, status: COMPLETED, sort: UPDATED_TIME_DESC, chunk: 1, perChunk: 500) {
+                lists { entries { media { id relations { edges { relationType(version: 2) node { id type } } } } } }
+              }
+            }
+        """
+
+        // Among the batches of titles, the ones that came out and are not on the list of the user, each batch a part of one question
+        private fun sequelsQuery(batches: List<List<Int>>): String =
+            "query { " + batches.mapIndexed { index, ids ->
+                "b$index: Page(perPage: $SequelBatch) { media(id_in: [${ids.joinToString(",")}], type: ANIME, status_in: [RELEASING, FINISHED], " +
+                    "onList: false, isAdult: false) { $ShelfCard } }"
+            }.joinToString(" ") + " }"
 
         // The title that comes before another one, to find the series of a season that the other sites do not know yet
         const val PrequelQuery = """

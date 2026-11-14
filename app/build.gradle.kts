@@ -6,7 +6,7 @@ plugins {
 }
 
 // App version: bumping it makes the release workflow publish a new GitHub release
-val appVersionName = "0.0.1"
+val appVersionName = "0.1.0"
 
 // Keys of the services come from the environment of the CI or from the ignored local.properties, never from the code
 val localProperties = Properties().apply {
@@ -25,7 +25,7 @@ android {
         applicationId = "com.kaisou.app"
         minSdk = 26
         targetSdk = 37
-        // versionCode follows the version name, 0.0.1 becomes 1
+        // versionCode follows the version name, 0.1.0 becomes 100
         versionCode = appVersionName.split(".").let { (major, minor, patch) ->
             major.toInt() * 10000 + minor.toInt() * 100 + patch.toInt()
         }
@@ -37,6 +37,9 @@ android {
         buildConfigField("String", "MAL_CLIENT_ID", "\"${keyOf("MAL_CLIENT_ID", "mal.clientId")}\"")
         // Id of the API client registered on AniList for this app, empty until it is set the login says so
         buildConfigField("String", "ANILIST_CLIENT_ID", "\"${keyOf("ANILIST_CLIENT_ID", "anilist.clientId")}\"")
+        // Id of a second API client of AniList whose redirect is the page that shows the token to copy, for the sign in with a token.
+        // Empty until it is set, the sheet of the token then asks for one made by the user
+        buildConfigField("String", "ANILIST_PIN_CLIENT_ID", "\"${keyOf("ANILIST_PIN_CLIENT_ID", "anilist.pinClientId")}\"")
     }
 
     // Release signing comes from environment variables set by the CI

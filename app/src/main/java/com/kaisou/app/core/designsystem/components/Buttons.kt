@@ -34,7 +34,8 @@ import androidx.compose.ui.text.style.TextOverflow
 // Project resources
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 
-// Main pill button filled with the violet of the brand, with something at its start: an icon, a badge or a spinner
+// Main pill button filled with the violet of the brand, with something at its start: an icon, a badge or a spinner. The icon stays
+// at the start and the label in the middle, or both go together in the middle when grouped
 @Composable
 fun PrimaryButton(
     text: String,
@@ -42,7 +43,8 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null,
     loading: Boolean = false,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    grouped: Boolean = false
 ) {
     val colors = KaisouTheme.colors
 
@@ -56,7 +58,8 @@ fun PrimaryButton(
         } else {
             leading
         },
-        enabled = enabled
+        enabled = enabled,
+        grouped = grouped
     )
 }
 
@@ -126,7 +129,8 @@ fun OutlineIconButton(
     }
 }
 
-// Pill with the label and an optional icon at its start, together in the middle. The caller gives the background
+// Pill with a label and an optional icon at its start: the icon at the start and the label centered, or together in the middle when
+// grouped. The caller gives the background
 @Composable
 private fun PillButton(
     text: String,
@@ -134,34 +138,59 @@ private fun PillButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    grouped: Boolean = false
 ) {
     val dimens = KaisouTheme.dimens
+    val buttonModifier = modifier
+        .fillMaxWidth()
+        .height(dimens.buttonHeight)
+        .clip(CircleShape)
+        .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(dimens.buttonHeight)
-            .clip(CircleShape)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = dimens.spaceLarge),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (leading != null) {
-            leading()
-            Spacer(modifier = Modifier.width(dimens.spaceSmall))
+    if (grouped) {
+        Row(
+            modifier = buttonModifier.padding(horizontal = dimens.spaceLarge),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (leading != null) {
+                leading()
+                Spacer(modifier = Modifier.width(dimens.spaceSmall))
+            }
+            // A long label gives way before it runs under the icon or out of the button
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                color = textColor,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
+            )
         }
-        // A long label gives way before it runs under the icon or out of the button
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge,
-            color = textColor,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false)
-        )
+    } else {
+        Box(modifier = buttonModifier, contentAlignment = Alignment.Center) {
+            // Optional icon at the start, the label stays centered
+            if (leading != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = dimens.spaceSmall)
+                ) {
+                    leading()
+                }
+            }
+
+            // Room on both sides for the area of the icon, so a long label never runs under it
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                color = textColor,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = ComponentDimens.ButtonLeading + dimens.spaceMedium)
+            )
+        }
     }
 }
 

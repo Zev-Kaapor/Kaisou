@@ -32,6 +32,18 @@ private fun strokeIcon(name: String, vararg paths: String): ImageVector =
         }
     }.build()
 
+// A solid shape, for the few icons that are filled
+private fun fillIcon(name: String, path: String, grid: Float = IconGrid): ImageVector =
+    ImageVector.Builder(
+        name = name,
+        defaultWidth = IconGrid.dp,
+        defaultHeight = IconGrid.dp,
+        viewportWidth = grid,
+        viewportHeight = grid
+    ).apply {
+        addPath(pathData = PathParser().parsePathString(path).toNodes(), fill = SolidColor(Color.Black))
+    }.build()
+
 // Icons of the app, simple lines on a 24 grid
 object KaisouIcons {
     val Search = strokeIcon(
@@ -75,6 +87,85 @@ object KaisouIcons {
         "M3 10h18"
     )
     val Close = strokeIcon("Close", "M18 6 6 18", "m6 6 12 12")
+    val Plus = strokeIcon("Plus", "M5 12h14", "M12 5v14")
+    // The three dots as Wavvy draws them, on a grid of 960
+    val More = fillIcon(
+        "More",
+        "M480,800Q447,800 423.5,776.5Q400,753 400,720Q400,687 423.5,663.5Q447,640 480,640Q513,640 536.5,663.5Q560,687 560,720" +
+            "Q560,753 536.5,776.5Q513,800 480,800ZM480,560Q447,560 423.5,536.5Q400,513 400,480Q400,447 423.5,423.5Q447,400 480,400" +
+            "Q513,400 536.5,423.5Q560,447 560,480Q560,513 536.5,536.5Q513,560 480,560ZM480,320Q447,320 423.5,296.5Q400,273 400,240" +
+            "Q400,207 423.5,183.5Q447,160 480,160Q513,160 536.5,183.5Q560,207 560,240Q560,273 536.5,296.5Q513,320 480,320Z",
+        grid = 960f
+    )
+    val Share = strokeIcon(
+        "Share",
+        "M8.59 13.51l6.83 3.98",
+        "M15.41 6.51l-6.82 3.98",
+        "M21 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0",
+        "M9 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0",
+        "M21 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0"
+    )
+    val ExternalLink = strokeIcon("ExternalLink", "M15 3h6v6", "M10 14 21 3", "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6")
+    val Copy = strokeIcon(
+        "Copy",
+        "M8 8h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z",
+        "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+    )
+    val Edit = strokeIcon(
+        "Edit",
+        "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+        "m15 5 4 4"
+    )
+    val Trash = strokeIcon("Trash", "M3 6h18", "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", "M10 11v6", "M14 11v6")
+    val Bold = strokeIcon("Bold", "M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8")
+    val Italic = strokeIcon("Italic", "M19 4h-9", "M14 20H5", "M15 4 9 20")
+    val Strikethrough = strokeIcon("Strikethrough", "M16 4H9a3 3 0 0 0-2.83 4", "M14 12a4 4 0 0 1 0 8H6", "M4 12h16")
+    val Spoiler = strokeIcon(
+        "Spoiler",
+        "M9.88 9.88a3 3 0 1 0 4.24 4.24",
+        "M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68",
+        "M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61",
+        "m2 2 20 20"
+    )
+    val Link = strokeIcon(
+        "Link",
+        "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71",
+        "M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+    )
+    val Youtube = strokeIcon(
+        "Youtube",
+        "M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17",
+        "m10 15 5-3-5-3z"
+    )
+    val ListOrdered = strokeIcon("ListOrdered", "M10 12h11", "M10 18h11", "M10 6h11", "M4 10h2", "M4 6h1v4", "M6 18H4c0-1 2-2 2-3s-1-1.5-2-1")
+    val ListBulleted = strokeIcon("ListBulleted", "M8 6h13", "M8 12h13", "M8 18h13", "M3 6h.01", "M3 12h.01", "M3 18h.01")
+    val Heading = strokeIcon("Heading", "M6 12h12", "M6 20V4", "M18 20V4")
+    val AlignCenter = strokeIcon("AlignCenter", "M17 12H7", "M19 18H5", "M21 6H3")
+    val Quote = strokeIcon(
+        "Quote",
+        "M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z",
+        "M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"
+    )
+    val Code = strokeIcon("Code", "m16 18 6-6-6-6", "m8 6-6 6 6 6")
+    val Video = strokeIcon(
+        "Video",
+        "m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5",
+        "M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"
+    )
+    val Heart = strokeIcon(
+        "Heart",
+        "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+    )
+    val HeartFilled = fillIcon(
+        "HeartFilled",
+        "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+    )
+    val Send = fillIcon("Send", "M2.01 21 23 12 2.01 3 2 10l15 2-15 2z")
+    val Comment = strokeIcon("Comment", "M7.9 20A9 9 0 1 0 4 16.1L2 22Z")
+    val Star = fillIcon(
+        "Star",
+        "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+    )
     val Back = strokeIcon("Back", "m12 19-7-7 7-7", "M19 12H5")
     val ChevronRight = strokeIcon("ChevronRight", "m9 18 6-6-6-6")
     val Check = strokeIcon("Check", "M20 6 9 17l-5-5")

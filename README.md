@@ -43,10 +43,10 @@
 </details>
 
 > [!WARNING]
-> **Early version** - Kaisou is being built one screen at a time. Version 0.0.1 has the sign in with AniList and the Home, and most buttons and tabs are still empty. It is a first version to be tested, not a finished app.
+> **Early version** - Kaisou is being built one screen at a time. Version 0.1.0 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, and most buttons and tabs are still empty. It is a version to be tested, not a finished app.
 
 > [!NOTE]
-> **Your privacy** - Kaisou has no server of its own and does not track you. Your AniList access key is kept only on your phone and is left out of the Android backups. The app only talks to the services it needs: AniList for your account and your lists, TMDB, TheTVDB and ani.zip to find the posters, the logos, the ratings and the seasons of each title (the name and the id of the title are sent), MyAnimeList for the age rating (the id of the title is sent), Google Translate when a synopsis is translated (only the text of the synopsis is sent), and GitHub to look for a new version. More in the [FAQ](#faq).
+> **Your privacy** - Kaisou has no server of its own and does not track you. Your AniList access key is kept only on your phone and is left out of the Android backups. The app only talks to the services it needs: AniList for your account and your lists, TMDB, TheTVDB and ani.zip to find the posters, the logos, the ratings and the seasons of each title (the name and the id of the title are sent), MyAnimeList for the age rating (the id of the title is sent), Google Translate when a synopsis is translated (only the text of the synopsis is sent), the site that hosts a picture when a status of AniList shows one, and GitHub to look for a new version. More in the [FAQ](#faq).
 
 ---
 
@@ -71,7 +71,7 @@
 
 </div>
 
-Kaisou grows one small piece at a time, with every screen reviewed on a real phone before the next one begins, and the structure of an earlier app, Wavvy, as the base of its identity. Version 0.0.1 is the first release of the new app, with the sign in and the Home.
+Kaisou grows one small piece at a time, with every screen reviewed on a real phone before the next one begins, and the structure of an earlier app, Wavvy, as the base of its identity. Version 0.0.1 was the first release of the new app, with the sign in and the Home, and version 0.1.0 brought the shelves of the Home and the stories.
 
 <details>
 <summary><b>📅 Progress by version</b> • every step, from the first version</summary>
@@ -85,6 +85,8 @@ Kaisou grows one small piece at a time, with every screen reviewed on a real pho
 | **Sign in:** with AniList in the browser or with a token, kept only on the phone | ✅ Done, version 0.0.1 |
 | **Home:** the header with your numbers and the featured titles of the season, with their poster or wide picture, logo, age rating, season and synopsis in your language | ✅ Done, version 0.0.1 |
 | **Menu of the account, settings and about:** sign out, the version, the thanks, and the updates that look, download and install the new releases | ✅ Done, version 0.0.1 |
+| **Shelves of the Home:** what you are watching and reading, the new episodes, what you plan, the sequels you missed, the recommendations and the discovery of AniList | ✅ Done, version 0.1.0 |
+| **Stories:** the activity of the people you follow, to read, like, comment, share and delete, and a screen to write your own status with the formats of AniList | ✅ Done, version 0.1.0 |
 | **Explore, Calendar and Library:** the other three tabs | 🔜 Planned |
 | **Title page, search and notifications:** the page of a title with its episodes, the search and the notices of AniList | 🔜 Planned |
 | **Your profile and your lists:** the lists of anime and manga, with the progress | 🔜 Planned |
@@ -110,7 +112,7 @@ Everything the project does, in groups you can open. ✅ is already done, 🚧 i
 
 - The other tabs: Explore, Calendar and Library
 - The page of a title, with its episodes, and the search
-- Your lists of anime and manga, and the activity of the people you follow
+- Your lists of anime and manga
 - The notices of AniList and your profile
 - Extensions for the sources the user adds
 - A setting for the country of the age ratings, apart from the language
@@ -150,6 +152,15 @@ Nothing is being built right now.
 - The **age rating** of your country, with the official Brazilian symbols, and the ones of the other countries as a tag
 - The **season** of the title and the tag of the day of the week of its new episode
 - The **synopsis in your language**, translated when it is not English
+- The **shelves** under it: continue watching and reading, the new episodes, what you plan, the sequels you missed, the recommendations, what is trending, popular, coming and new, in cards with the score and how far you are
+- Pull down to look again, and the news of your friends come by themselves when the app opens and every few minutes
+
+#### 💬 Activity of the people
+- A **story** for each person you follow, with a piece of the ring for each thing they did in the last days, gray when you already saw it
+- Read what they did, **like** it, **comment** and **share** it, and delete your own
+- On the comments: like, change or delete yours, and open the profile of who wrote
+- A screen to **write your own status**, with the formats of AniList, a preview and a warning before it is posted
+- Links, pictures and videos of the text open or show as the site does, in a browser that stays over the app
 
 #### 🎨 Look
 - A dark theme with a violet identity, made for the night
@@ -170,6 +181,7 @@ Nothing is being built right now.
 
 #### ⚡ Light and fast
 - Pictures, ratings and translations are kept on the phone, so opening the app again does not ask for them again
+- The Home shows as soon as the hero and the top of the shelves are there, and the rest comes in as it is ready
 - Each service has a limit of requests at once, and the app waits when one asks it to rest
 - A small app, around 2 MB
 
@@ -265,18 +277,19 @@ Kaisou asks the services for the pictures, the ratings and the sign in, and each
 
 ```properties
 anilist.clientId=your client id
+anilist.pinClientId=your second client id
 tmdb.token=your read access token
 tvdb.key=your project key
 mal.clientId=your client id
 ```
 
-For the sign in, register a client on [AniList](https://anilist.co/settings/developer) with the redirect address `kaisou://anilist`. The other keys come from [TMDB](https://www.themoviedb.org/settings/api), [TheTVDB](https://thetvdb.com/api-information) and [MyAnimeList](https://myanimelist.net/apiconfig).
+For the sign in, register a client on [AniList](https://anilist.co/settings/developer) with the redirect address `kaisou://anilist`. The sign in with a token opens a page of AniList that shows the token to copy, which needs a second client with the redirect address `https://anilist.co/api/v2/oauth/pin`, and its id goes in `anilist.pinClientId`. The other keys come from [TMDB](https://www.themoviedb.org/settings/api), [TheTVDB](https://thetvdb.com/api-information) and [MyAnimeList](https://myanimelist.net/apiconfig).
 
-Without them the app builds and works with less: no key of AniList means no sign in in the browser, only with a token, without the keys of TMDB and TheTVDB the featured titles show the cover of AniList, and without the one of MyAnimeList the age rating of a country that has none is not found.
+Without them the app builds and works with less: no key of AniList means no sign in in the browser, and without the second one the sign in with a token asks for a token that the user makes by hand, without the keys of TMDB and TheTVDB the featured titles show the cover of AniList, and without the one of MyAnimeList the age rating of a country that has none is not found.
 
 **How a release is made**
 
-The workflow in `.github/workflows/release.yml` publishes a release when `appVersionName` changes in `app/build.gradle.kts`. It builds and signs the APKs, writes the notes from the commits since the last release and publishes them on GitHub. It reads the key of the signing and the keys of the services from the secrets of the repository: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`, `ANILIST_CLIENT_ID`, `TMDB_TOKEN`, `TVDB_KEY` and `MAL_CLIENT_ID`.
+The workflow in `.github/workflows/release.yml` publishes a release when `appVersionName` changes in `app/build.gradle.kts`. It builds and signs the APKs, writes the notes from the commits since the last release and publishes them on GitHub. It reads the key of the signing and the keys of the services from the secrets of the repository: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`, `ANILIST_CLIENT_ID`, `ANILIST_PIN_CLIENT_ID`, `TMDB_TOKEN`, `TVDB_KEY` and `MAL_CLIENT_ID`.
 
 ---
 
@@ -318,7 +331,7 @@ The workflow in `.github/workflows/release.yml` publishes a release when `appVer
 <details>
   <summary><b>Is the app ready to use?</b></summary>
   <br>
-  Not yet. Version 0.0.1 is the first release, with the sign in and the Home, and most buttons and tabs are still empty. See what it does in the <a href="#features">Features</a> section.
+  Not yet. Version 0.1.0 has the sign in, the Home with its shelves and the stories, and most buttons and tabs are still empty. See what it does in the <a href="#features">Features</a> section.
   <br>
 </details>
 
