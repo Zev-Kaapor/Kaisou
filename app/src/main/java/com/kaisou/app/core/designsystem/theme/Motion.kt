@@ -5,4 +5,17 @@ object KaisouMotion {
     // Navigation icon growing when selected, and how small it is when it is not
     const val IconScaleMillis = 150
     const val UnselectedIconScale = 0.875f
+
+    // Menu of the account rising from the bottom and going back
+    const val SheetMillis = 300
+
+    // Fade when switching between the main tabs
+    const val TabSwitchMillis = 200
+
+    // How far a screen slides when it comes in or goes out, as a fraction of its width
+    const val PageSlideDivisor = 8
+
+    // Loading placeholders, one light sweep and the wait before the next one
+    const val SkeletonSweepMillis = 900
+    const val SkeletonPauseMillis = 300
 }

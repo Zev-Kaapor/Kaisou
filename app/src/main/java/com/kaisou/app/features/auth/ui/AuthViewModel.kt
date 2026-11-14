@@ -23,6 +23,7 @@ import com.kaisou.app.core.anilist.AniListClient
 import com.kaisou.app.core.anilist.AniViewer
 import com.kaisou.app.core.anilist.ViewerResult
 import com.kaisou.app.core.auth.AniListSession
+import com.kaisou.app.core.cache.AppStore
 
 // Where the user is: the token is being checked, the user has to sign in, or the user is in
 sealed interface AuthState {
@@ -45,6 +46,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     init {
         // A token from another time is checked again, the app opens at once when the user is known
         if (session.token != null) validate()
+    }
+
+    // Signs out: the token and the user are forgotten, and so is the pool of the featured titles, which came with the lists of the user
+    fun signOut() {
+        session.clear()
+        AppStore.clear("pool")
+        mutableState.value = AuthState.LoggedOut()
     }
 
     private fun initialState(): AuthState {

@@ -30,6 +30,11 @@ android {
             major.toInt() * 10000 + minor.toInt() * 100 + patch.toInt()
         }
         versionName = appVersionName
+        // Keys of the sites that have the posters, empty when they are not set and the cover of AniList is shown
+        buildConfigField("String", "TMDB_TOKEN", "\"${keyOf("TMDB_TOKEN", "tmdb.token")}\"")
+        buildConfigField("String", "TVDB_KEY", "\"${keyOf("TVDB_KEY", "tvdb.key")}\"")
+        // Client ID of MyAnimeList, which gives the rating of the titles the countries do not, empty when it is not set
+        buildConfigField("String", "MAL_CLIENT_ID", "\"${keyOf("MAL_CLIENT_ID", "mal.clientId")}\"")
         // Id of the API client registered on AniList for this app, empty until it is set the login says so
         buildConfigField("String", "ANILIST_CLIENT_ID", "\"${keyOf("ANILIST_CLIENT_ID", "anilist.clientId")}\"")
     }
@@ -92,5 +97,12 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    testImplementation(libs.junit)
+    // The JSON of Android is only a stub on the machine, the tests that read JSON need the real one
+    testImplementation(libs.org.json)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

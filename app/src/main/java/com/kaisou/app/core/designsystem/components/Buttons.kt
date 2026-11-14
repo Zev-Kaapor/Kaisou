@@ -2,15 +2,21 @@ package com.kaisou.app.core.designsystem.components
 
 // Compose layouts and foundations
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 // Material 3 components
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 // Compose state and runtime
@@ -21,8 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 // Project resources
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 
@@ -71,7 +79,54 @@ fun QuietButton(
     )
 }
 
-// Pill with a centered label and an optional icon at the start, the caller gives the background
+// A plain icon for the start of a pill button, in the same area a badge or a spinner takes
+@Composable
+fun ButtonIcon(
+    icon: ImageVector,
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.size(ComponentDimens.ButtonLeading),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(ComponentDimens.ButtonIcon)
+        )
+    }
+}
+
+// Round button with an outline in the accent, next to the main button
+@Composable
+fun OutlineIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val accent = MaterialTheme.colorScheme.primary
+
+    Box(
+        modifier = modifier
+            .size(ComponentDimens.IconButton)
+            .border(ComponentDimens.ButtonBorder, accent, CircleShape)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = accent,
+            modifier = Modifier.size(ComponentDimens.IconButtonIcon)
+        )
+    }
+}
+
+// Pill with the label and an optional icon at its start, together in the middle. The caller gives the background
 @Composable
 private fun PillButton(
     text: String,
@@ -83,32 +138,29 @@ private fun PillButton(
 ) {
     val dimens = KaisouTheme.dimens
 
-    Box(
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .height(dimens.buttonHeight)
             .clip(CircleShape)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = dimens.spaceLarge),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Optional icon at the start, the label stays centered
         if (leading != null) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = dimens.spaceSmall)
-            ) {
-                leading()
-            }
+            leading()
+            Spacer(modifier = Modifier.width(dimens.spaceSmall))
         }
-
-        // Room on both sides for the area of the icon, so a long label never runs under it
+        // A long label gives way before it runs under the icon or out of the button
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
             color = textColor,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = ComponentDimens.ButtonLeading + dimens.spaceMedium)
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false)
         )
     }
 }

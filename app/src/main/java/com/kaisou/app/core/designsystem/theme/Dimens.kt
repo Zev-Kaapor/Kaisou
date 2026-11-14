@@ -22,15 +22,19 @@ data class Dimens(
     val spaceMedium: Dp = 12.dp,
     val spaceLarge: Dp = 16.dp,
     val spaceExtraLarge: Dp = 24.dp,
-    val spaceHuge: Dp = 32.dp,
-    // Thin line around bars and cards
+    // Thin line between rows of a card and under the header of a menu
     val hairline: Dp = 0.5.dp,
+    // Soft shadow of the texts over pictures: how far it falls and how much it spreads
+    val textShadowOffset: Dp = 1.dp,
+    val textShadowBlur: Dp = 6.dp,
+    // Soft shadow of the icons over pictures, which are drawn twice, the shadow behind blurred and the icon: how far it falls
+    // and how much it spreads
+    val iconShadowOffset: Dp = 1.dp,
+    val iconShadowBlur: Dp = 3.dp,
     // Height of the pill buttons
     val buttonHeight: Dp = 48.dp,
     // Margin at the sides of the screen
-    val screenPadding: Dp,
-    // Widest the content gets on big screens, unspecified means the full width
-    val contentMaxWidth: Dp
+    val screenPadding: Dp
 )
 
 // Window width from the width of the screen in dp
@@ -42,9 +46,9 @@ fun windowWidthFor(screenWidthDp: Int): WindowWidth = when {
 
 // Tokens for each window width
 fun dimensFor(windowWidth: WindowWidth): Dimens = when (windowWidth) {
-    WindowWidth.Compact -> Dimens(screenPadding = 16.dp, contentMaxWidth = Dp.Unspecified)
-    WindowWidth.Medium -> Dimens(screenPadding = 24.dp, contentMaxWidth = 720.dp)
-    WindowWidth.Expanded -> Dimens(screenPadding = 32.dp, contentMaxWidth = 960.dp)
+    WindowWidth.Compact -> Dimens(screenPadding = 16.dp)
+    WindowWidth.Medium -> Dimens(screenPadding = 24.dp)
+    WindowWidth.Expanded -> Dimens(screenPadding = 32.dp)
 }
 
 // Tokens of the current window width

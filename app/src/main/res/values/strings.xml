@@ -4,6 +4,115 @@
     <!-- Actions -->
     <string name="action_close">Close</string>
 
+    <!-- Home -->
+    <string name="home_error">Could not load the Home</string>
+    <string name="home_retry">Try again</string>
+    <string name="home_cta_watch">Watch E%1$d</string>
+    <string name="home_cta_continue">Continue E%1$d</string>
+    <string name="home_cta_watch_season">Watch S%1$d E%2$d</string>
+    <string name="home_cta_continue_season">Continue S%1$d E%2$d</string>
+    <string name="home_cta_watch_movie">Watch movie</string>
+    <string name="home_add_to_list">Add to my list</string>
+    <string name="home_hero_meta">%1$d • %2$s</string>
+    <string name="home_hero_meta_divider" translatable="false">" | "</string>
+    <!-- Advisory ratings: the names of the groups in the order of the ages, shown to screen readers -->
+    <string-array name="age_rating_names">
+        <item>All ages</item>
+        <item>Not recommended for under 10</item>
+        <item>Not recommended for under 12</item>
+        <item>Not recommended for under 14</item>
+        <item>Not recommended for under 16</item>
+        <item>Not recommended for under 18</item>
+    </string-array>
+    <string name="age_rating_approximate">%1$s, approximate classification</string>
+    <string name="age_rating_all_short">All</string>
+    <string name="age_rating_plus" translatable="false">%1$d+</string>
+    <string name="weekly_release_description">Weekly release: %1$s</string>
+    <!-- How AniList names the formats and the genres, in the same order as their names -->
+    <string-array name="format_keys" translatable="false">
+        <item>TV</item>
+        <item>TV_SHORT</item>
+        <item>MOVIE</item>
+        <item>SPECIAL</item>
+        <item>OVA</item>
+        <item>ONA</item>
+        <item>MUSIC</item>
+    </string-array>
+    <string-array name="format_names">
+        <item>TV</item>
+        <item>TV Short</item>
+        <item>Movie</item>
+        <item>Special</item>
+        <item>OVA</item>
+        <item>ONA</item>
+        <item>Music</item>
+    </string-array>
+    <string-array name="genre_keys" translatable="false">
+        <item>Action</item>
+        <item>Adventure</item>
+        <item>Comedy</item>
+        <item>Drama</item>
+        <item>Ecchi</item>
+        <item>Fantasy</item>
+        <item>Horror</item>
+        <item>Mahou Shoujo</item>
+        <item>Mecha</item>
+        <item>Music</item>
+        <item>Mystery</item>
+        <item>Psychological</item>
+        <item>Romance</item>
+        <item>Sci-Fi</item>
+        <item>Slice of Life</item>
+        <item>Sports</item>
+        <item>Supernatural</item>
+        <item>Thriller</item>
+    </string-array>
+    <string-array name="genre_names">
+        <item>Action</item>
+        <item>Adventure</item>
+        <item>Comedy</item>
+        <item>Drama</item>
+        <item>Ecchi</item>
+        <item>Fantasy</item>
+        <item>Horror</item>
+        <item>Mahou Shoujo</item>
+        <item>Mecha</item>
+        <item>Music</item>
+        <item>Mystery</item>
+        <item>Psychological</item>
+        <item>Romance</item>
+        <item>Sci-Fi</item>
+        <item>Slice of Life</item>
+        <item>Sports</item>
+        <item>Supernatural</item>
+        <item>Thriller</item>
+    </string-array>
+    <string-array name="weekday_short">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
+    </string-array>
+    <string-array name="weekday_full">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </string-array>
+
+    <!-- Header -->
+    <string name="home_notifications">Notifications</string>
+    <string name="home_search">Search</string>
+    <string name="home_profile">Profile</string>
+    <string name="home_stats">%1$s eps · %2$s ch.</string>
+    <string name="home_stats_description">%1$s episodes watched, %2$s chapters read</string>
+
     <!-- Navigation -->
     <string name="nav_home">Home</string>
     <string name="nav_explore">Explore</string>
@@ -43,4 +152,112 @@
     <string name="login_info_storage">It is saved only on this device! Kaisou does not use its own servers, and this data is not included in Android backups.</string>
     <string name="login_info_revoke_title">You are in control!</string>
     <string name="login_info_revoke">Want to disconnect? You can revoke Kaisou\'s access at any time, right from your AniList account settings.</string>
+
+    <!-- Menu of the account, settings, about, versions and thanks -->
+    <string name="cd_back">Back</string>
+    <string name="cd_profile">Profile</string>
+    <string name="cd_sign_out">Sign out</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="profile_your_profile">My profile</string>
+    <string name="profile_settings">Settings</string>
+    <string name="profile_provider" translatable="false">AniList</string>
+    <string name="settings_option_default">(Default)</string>
+    <string name="settings_group_more">More</string>
+    <string name="settings_group_the_app">The app</string>
+    <string name="settings_group_project">Project</string>
+    <string name="settings_group_status">Status</string>
+    <string name="settings_group_checking">Checking</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_subtitle">Version and links</string>
+    <string name="settings_about_version">Version</string>
+    <string name="settings_about_source">Source code</string>
+    <string name="settings_about_source_subtitle">The project on GitHub</string>
+    <string name="settings_about_source_address" translatable="false">https://github.com/Zev-Kaapor/Kaisou</string>
+    <string name="settings_about_releases">Versions</string>
+    <string name="settings_about_releases_subtitle">Search, download and install updates</string>
+    <string name="settings_about_author_label">Created and developed by</string>
+    <string name="settings_about_author_name" translatable="false">Zev Kaapor</string>
+    <string name="settings_about_author_address" translatable="false">https://github.com/Zev-Kaapor</string>
+    <string name="settings_about_author_photo" translatable="false">https://github.com/Zev-Kaapor.png</string>
+    <string name="settings_about_license">License</string>
+    <string name="settings_about_license_subtitle">GNU General Public License v3.0</string>
+    <string name="settings_about_license_address" translatable="false">https://github.com/Zev-Kaapor/Kaisou/blob/main/LICENSE</string>
+    <string name="settings_about_thanks">Thanks</string>
+    <string name="settings_about_thanks_special">Special thanks</string>
+    <string name="settings_about_thanks_special_subtitle">The projects and tools that inspired the app</string>
+    <string name="thanks_projects_group">Projects and inspirations</string>
+    <string name="thanks_ai_group">Helper tools</string>
+    <string name="thanks_anilist" translatable="false">AniList &amp; ani.zip</string>
+    <string name="thanks_anilist_subtitle">The catalog, the lists and the account of the user, and the link between their ids and the ones of the other sites</string>
+    <string name="thanks_anilist_address" translatable="false">https://anilist.co</string>
+    <string name="thanks_crunchyroll">Crunchyroll</string>
+    <string name="thanks_crunchyroll_subtitle">Inspiration for the look of the Home and of the title</string>
+    <string name="thanks_crunchyroll_address" translatable="false">https://www.crunchyroll.com</string>
+    <string name="thanks_dantotsu">Dantotsu</string>
+    <string name="thanks_dantotsu_subtitle">Inspiration for the header and for a client of AniList</string>
+    <string name="thanks_dantotsu_address" translatable="false">https://github.com/itsmechinmoy/Dantotsu</string>
+    <string name="thanks_google_translate">Google Translate</string>
+    <string name="thanks_google_translate_subtitle">The translation of the synopses</string>
+    <string name="thanks_google_translate_address" translatable="false">https://translate.google.com</string>
+    <string name="thanks_myanimelist">MyAnimeList</string>
+    <string name="thanks_myanimelist_subtitle">The age rating of the anime</string>
+    <string name="thanks_myanimelist_address" translatable="false">https://myanimelist.net</string>
+    <string name="thanks_thetvdb">TheTVDB</string>
+    <string name="thanks_thetvdb_subtitle">The posters, the backdrops, the logos and the seasons of the series. Metadata provided by TheTVDB</string>
+    <string name="thanks_thetvdb_address" translatable="false">https://www.thetvdb.com</string>
+    <string name="thanks_tmdb">TMDB</string>
+    <string name="thanks_tmdb_subtitle">The posters, the backdrops, the logos and the ratings. This product uses the TMDB API but is not endorsed or certified by TMDB</string>
+    <string name="thanks_tmdb_address" translatable="false">https://www.themoviedb.org</string>
+    <string name="thanks_tomato">Tomato</string>
+    <string name="thanks_tomato_subtitle">Inspiration for the details of the title and for the tag of the weekly release</string>
+    <string name="thanks_tomato_address" translatable="false">https://tomatoanimes.com/d/latest</string>
+    <string name="thanks_wavvy">Wavvy</string>
+    <string name="thanks_wavvy_subtitle">The structure, the identity and the way of building the screens</string>
+    <string name="thanks_wavvy_address" translatable="false">https://github.com/Zev-Kaapor/Wavvy</string>
+    <string name="thanks_wavvy_icon" translatable="false">https://raw.githubusercontent.com/Zev-Kaapor/Wavvy/main/assets/branding/wavvy_logo.png</string>
+    <string name="thanks_claude">Claude Code</string>
+    <string name="thanks_claude_subtitle">Development assistant and Tech Lead</string>
+    <string name="thanks_claude_address" translatable="false">https://claude.ai</string>
+    <string name="updates_title">Updates</string>
+    <string name="updates_checking">Looking for updates…</string>
+    <string name="updates_up_to_date">You have the newest version</string>
+    <string name="updates_installed">Installed version %1$s</string>
+    <string name="updates_available">Version %1$s is available</string>
+    <string name="updates_downloading">Downloading version %1$s</string>
+    <string name="updates_progress">%1$d%% • %2$s of %3$s</string>
+    <string name="updates_ready">Version %1$s is ready to install</string>
+    <string name="updates_ready_subtitle">Android will ask you to confirm</string>
+    <string name="updates_installing">Installing…</string>
+    <string name="updates_permission">Allow Kaisou to install apps</string>
+    <string name="updates_permission_subtitle">Turn it on in the settings that opened, then come back and tap Install</string>
+    <string name="updates_download">Download and install</string>
+    <string name="updates_install">Install</string>
+    <string name="updates_try_again">Try again</string>
+    <string name="updates_check">Look again</string>
+    <string name="updates_notes">What changed in %1$s</string>
+    <string name="updates_release_page">See the version on GitHub</string>
+    <string name="updates_pause">Pause the updates</string>
+    <string name="updates_pause_subtitle">The app stops looking for new versions by itself</string>
+    <string name="updates_interval">How often to look</string>
+    <string name="updates_interval_6">Every 6 hours</string>
+    <string name="updates_interval_12">Every 12 hours</string>
+    <string name="updates_interval_24">Once a day</string>
+    <string name="updates_interval_168">Once a week</string>
+    <string name="updates_error_check">Could not look for updates</string>
+    <string name="updates_error_download">The download did not finish</string>
+    <string name="updates_error_no_file">This version has no file for your device</string>
+    <string name="updates_error_install">Could not install the update</string>
+    <string name="updates_error_signature">The installed app was signed with another key, such as the one of Android Studio. Uninstall it and install the version of GitHub once, the next updates work</string>
+    <string name="updates_channel">Updates</string>
+    <string name="updates_notification_title">New version of Kaisou</string>
+    <string name="updates_notification_text">Version %1$s is available</string>
+    <string name="updates_prompt_title">Update available</string>
+    <string name="updates_prompt_text">Version %1$s of Kaisou is ready. Do you want to update now?</string>
+    <string name="updates_prompt_confirm">Update</string>
+    <string name="updates_prompt_later">Later</string>
+    <string name="updates_translate">Translate</string>
+    <string name="updates_original">Original</string>
+    <string name="updates_translate_error">Could not translate</string>
+    <string name="updates_note_more">more</string>
+    <string name="updates_note_less">less</string>
 </resources>

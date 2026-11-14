@@ -10,10 +10,20 @@ import androidx.compose.ui.graphics.Color
 data class KaisouColors(
     // Text and icons over images and gradients
     val onMedia: Color,
-    // Dark fade under text over images
-    val mediaScrim: Color,
-    // Filled accent controls, darker than the accent so the white text stays readable
-    val accentFill: Color,
+    // Black of the veil at the top of the hero
+    // Black of the veil at the top of the hero
+    val veil: Color,
+    // Soft shadow of the texts over pictures, the one of the icons over them and the color of the numbers over any art
+    val textShadow: Color,
+    val iconShadow: Color,
+    val numberHighlight: Color,
+    // Tags of the advisory ratings, one for each group in the order of the ages, and what is drawn over them
+    val ratingGroups: List<Color>,
+    val onRating: Color,
+    // Tag with the day of the week of a weekly release and what is drawn over it
+    val weeklyBadge: Color,
+    val onWeeklyBadge: Color,
+    // Text and icons over the filled accent controls
     val onAccentFill: Color,
     // Surface for bars and sheets that sit above the background
     val elevated: Color,
@@ -28,20 +38,33 @@ data class KaisouColors(
     // Soft glow at the top of full screens, blending from one side to the other
     val glowStart: Color,
     val glowEnd: Color,
-    // Brand gradient from blue to violet to pink, the colors of the logo
-    val gradientStart: Color,
-    val gradientMiddle: Color,
-    val gradientEnd: Color,
     // Main buttons, violet fading to a darker violet
     val buttonStart: Color,
-    val buttonEnd: Color
+    val buttonEnd: Color,
+    // Thin ring around the picture of the account, from a light violet to a dark one
+    val avatarRingStart: Color,
+    val avatarRingMiddle: Color,
+    val avatarRingEnd: Color
 )
 
 // Extra colors of the app
 val KaisouPalette = KaisouColors(
     onMedia = OnFilled,
-    mediaScrim = Color(0xCC000000),
-    accentFill = Color(0xFF7C4DEB),
+    veil = Color(0xFF000000),
+    textShadow = Color(0xFF000000),
+    iconShadow = Color(0xFF000000),
+    numberHighlight = Color(0xFFFFFFFF),
+    ratingGroups = listOf(
+        Color(0xFF0C9447),
+        Color(0xFF0F7DC2),
+        Color(0xFFD9A400),
+        Color(0xFFF6821F),
+        Color(0xFFE2231A),
+        Color(0xFF1B1B1B)
+    ),
+    onRating = OnFilled,
+    weeklyBadge = Color(0xFF1578C8),
+    onWeeklyBadge = OnFilled,
     onAccentFill = OnFilled,
     elevated = ContainerHigh,
     navBar = Color(0xFF09090D),
@@ -51,9 +74,9 @@ val KaisouPalette = KaisouColors(
     skeletonHighlight = Color(0xFF4A4A4A),
     glowStart = Color(0x388A5CF2),
     glowEnd = Color(0x384B8DFF),
-    gradientStart = Color(0xFF4B8DFF),
-    gradientMiddle = Accent,
-    gradientEnd = Color(0xFFFA597F),
     buttonStart = Color(0xFF7C4DEB),
-    buttonEnd = Color(0xFF6A3FD8)
+    buttonEnd = Color(0xFF6A3FD8),
+    avatarRingStart = Color(0xFFAB7DFF),
+    avatarRingMiddle = Color(0xFF8A5CF2),
+    avatarRingEnd = Color(0xFF6A3FD8)
 )

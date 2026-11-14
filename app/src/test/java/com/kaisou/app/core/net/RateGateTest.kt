@@ -1,0 +1,51 @@
+package com.kaisou.app.core.net
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class RateGateTest {
+    private fun gate() = RateGate("test", maxAtOnce = 2, log = {})
+
+    @Test
+    fun aRequestThatWorksIsMadeOnce() {
+        var calls = 0
+        val result = gate().run { calls++; "ok" }
+        assertEquals("ok", result)
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun aRequestThatWasTurnedAwayGoesAgainAfterTheWait() {
+        var calls = 0
+        val started = System.currentTimeMillis()
+        val result = gate().run {
+            calls++
+            if (calls == 1) throw TooManyRequests(60) else "ok"
+        }
+        assertEquals("ok", result)
+        assertEquals(2, calls)
+        assertTrue(System.currentTimeMillis() - started >= 50)
+    }
+
+    @Test(expected = TooManyRequests::class)
+    fun itGivesUpWhenTheServiceKeepsTurningItAway() {
+        gate().run<String> { throw TooManyRequests(1) }
+    }
+
+    @Test
+    fun theWaitIsForEveryoneNotOnlyForTheOneTurnedAway() {
+        val gate = gate()
+        var first = 0
+        gate.run { first++; if (first == 1) throw TooManyRequests(80) else Unit }
+        val started = System.currentTimeMillis()
+        // The gate was closed by the first and a later request has to find it open again, which it does after the wait
+        gate.run { Unit }
+        assertTrue(System.currentTimeMillis() - started < 80)
+    }
+
+    @Test(expected = IllegalStateException::class)
+    fun anyOtherFailureGoesUpAsItIs() {
+        gate().run<String> { throw IllegalStateException("broken") }
+    }
+}

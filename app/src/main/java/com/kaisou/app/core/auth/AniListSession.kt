@@ -15,6 +15,8 @@ object AniListSession {
     private const val IdKey = "user_id"
     private const val NameKey = "user_name"
     private const val AvatarKey = "user_avatar"
+    private const val EpisodesKey = "user_episodes"
+    private const val ChaptersKey = "user_chapters"
     private const val NoUser = -1
 
     private lateinit var preferences: SharedPreferences
@@ -38,7 +40,13 @@ object AniListSession {
             val id = preferences.getInt(IdKey, NoUser)
             val name = preferences.getString(NameKey, null)
             if (id == NoUser || name == null) return null
-            return AniViewer(id = id, name = name, avatar = preferences.getString(AvatarKey, null))
+            return AniViewer(
+                id = id,
+                name = name,
+                avatar = preferences.getString(AvatarKey, null),
+                episodesWatched = preferences.getInt(EpisodesKey, 0),
+                chaptersRead = preferences.getInt(ChaptersKey, 0)
+            )
         }
 
     fun saveToken(token: String, expiresAtMillis: Long) {
@@ -53,6 +61,8 @@ object AniListSession {
             putInt(IdKey, viewer.id)
             putString(NameKey, viewer.name)
             putString(AvatarKey, viewer.avatar)
+            putInt(EpisodesKey, viewer.episodesWatched)
+            putInt(ChaptersKey, viewer.chaptersRead)
         }
     }
 

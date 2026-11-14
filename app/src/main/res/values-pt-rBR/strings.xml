@@ -3,6 +3,82 @@
     <!-- Ações -->
     <string name="action_close">Fechar</string>
 
+    <!-- Início -->
+    <string name="home_error">Não foi possível carregar o Início</string>
+    <string name="home_retry">Tentar de novo</string>
+    <string name="home_cta_watch">Assistir E%1$d</string>
+    <string name="home_cta_continue">Continuar E%1$d</string>
+    <string name="home_cta_watch_season">Assistir T%1$d E%2$d</string>
+    <string name="home_cta_continue_season">Continuar T%1$d E%2$d</string>
+    <string name="home_cta_watch_movie">Assistir filme</string>
+    <string name="home_add_to_list">Adicionar à minha lista</string>
+    <string name="home_hero_meta">%1$d • %2$s</string>
+    <string-array name="age_rating_names">
+        <item>Livre para todos os públicos</item>
+        <item>Não recomendado para menores de 10 anos</item>
+        <item>Não recomendado para menores de 12 anos</item>
+        <item>Não recomendado para menores de 14 anos</item>
+        <item>Não recomendado para menores de 16 anos</item>
+        <item>Não recomendado para menores de 18 anos</item>
+    </string-array>
+    <string name="age_rating_approximate">%1$s, classificação aproximada</string>
+    <string name="age_rating_all_short">Livre</string>
+    <string name="weekly_release_description">Lançamento semanal: %1$s</string>
+    <string-array name="format_names">
+        <item>TV</item>
+        <item>TV curta</item>
+        <item>Filme</item>
+        <item>Especial</item>
+        <item>OVA</item>
+        <item>ONA</item>
+        <item>Música</item>
+    </string-array>
+    <string-array name="genre_names">
+        <item>Ação</item>
+        <item>Aventura</item>
+        <item>Comédia</item>
+        <item>Drama</item>
+        <item>Ecchi</item>
+        <item>Fantasia</item>
+        <item>Terror</item>
+        <item>Garota mágica</item>
+        <item>Mecha</item>
+        <item>Música</item>
+        <item>Mistério</item>
+        <item>Psicológico</item>
+        <item>Romance</item>
+        <item>Ficção científica</item>
+        <item>Cotidiano</item>
+        <item>Esportes</item>
+        <item>Sobrenatural</item>
+        <item>Suspense</item>
+    </string-array>
+    <string-array name="weekday_short">
+        <item>Seg</item>
+        <item>Ter</item>
+        <item>Qua</item>
+        <item>Qui</item>
+        <item>Sex</item>
+        <item>Sáb</item>
+        <item>Dom</item>
+    </string-array>
+    <string-array name="weekday_full">
+        <item>segunda-feira</item>
+        <item>terça-feira</item>
+        <item>quarta-feira</item>
+        <item>quinta-feira</item>
+        <item>sexta-feira</item>
+        <item>sábado</item>
+        <item>domingo</item>
+    </string-array>
+
+    <!-- Cabeçalho -->
+    <string name="home_notifications">Notificações</string>
+    <string name="home_search">Pesquisar</string>
+    <string name="home_profile">Perfil</string>
+    <string name="home_stats">%1$s eps · %2$s caps</string>
+    <string name="home_stats_description">%1$s episódios assistidos, %2$s capítulos lidos</string>
+
     <!-- Navegação -->
     <string name="nav_home">Início</string>
     <string name="nav_explore">Explorar</string>
@@ -42,4 +118,94 @@
     <string name="login_info_storage">Ela fica salva exclusivamente neste aparelho! O Kaisou não utiliza servidores próprios e esse dado não entra nos backups do Android.</string>
     <string name="login_info_revoke_title">Você está no controle!</string>
     <string name="login_info_revoke" tools:ignore="Typos">Quer desconectar? Você pode revogar o acesso do Kaisou a qualquer momento, direto nas configurações da sua conta no AniList.</string>
+
+    <!-- Menu da conta, configurações, sobre, versões e agradecimentos -->
+    <string name="cd_back">Voltar</string>
+    <string name="cd_profile">Perfil</string>
+    <string name="cd_sign_out">Sair</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="profile_your_profile">Meu perfil</string>
+    <string name="profile_settings">Configurações</string>
+    <string name="settings_option_default">(Padrão)</string>
+    <string name="settings_group_more">Mais</string>
+    <string name="settings_group_the_app">O app</string>
+    <string name="settings_group_project">Projeto</string>
+    <string name="settings_group_status">Estado</string>
+    <string name="settings_group_checking">Verificação</string>
+    <string name="settings_about">Sobre</string>
+    <string name="settings_about_subtitle">Versão e links</string>
+    <string name="settings_about_version">Versão</string>
+    <string name="settings_about_source">Código-fonte</string>
+    <string name="settings_about_source_subtitle">O projeto no GitHub</string>
+    <string name="settings_about_releases">Versões</string>
+    <string name="settings_about_releases_subtitle">Procurar, baixar e instalar atualizações</string>
+    <string name="settings_about_author_label">Criado e desenvolvido por</string>
+    <string name="settings_about_license">Licença</string>
+    <string name="settings_about_license_subtitle">GNU General Public License v3.0</string>
+    <string name="settings_about_thanks">Agradecimentos</string>
+    <string name="settings_about_thanks_special">Agradecimentos especiais</string>
+    <string name="settings_about_thanks_special_subtitle">Os projetos e ferramentas que inspiraram o app</string>
+    <string name="thanks_projects_group">Projetos e inspirações</string>
+    <string name="thanks_ai_group">Ferramentas auxiliares</string>
+    <string name="thanks_anilist_subtitle">O catálogo, as listas e a conta do usuário, e a ligação entre os ids deles e os dos outros sites</string>
+    <string name="thanks_crunchyroll">Crunchyroll</string>
+    <string name="thanks_crunchyroll_subtitle">Inspiração para o visual da Home e do título</string>
+    <string name="thanks_dantotsu">Dantotsu</string>
+    <string name="thanks_dantotsu_subtitle">Inspiração para o cabeçalho e para um cliente do AniList</string>
+    <string name="thanks_google_translate">Google Tradutor</string>
+    <string name="thanks_google_translate_subtitle">A tradução das sinopses</string>
+    <string name="thanks_myanimelist">MyAnimeList</string>
+    <string name="thanks_myanimelist_subtitle">A classificação indicativa dos animes</string>
+    <string name="thanks_thetvdb">TheTVDB</string>
+    <string name="thanks_thetvdb_subtitle">Os pôsteres, as imagens de fundo, os logos e as temporadas das séries. Metadados fornecidos pelo TheTVDB</string>
+    <string name="thanks_tmdb">TMDB</string>
+    <string name="thanks_tmdb_subtitle">Os pôsteres, as imagens de fundo, os logos e as classificações. Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB</string>
+    <string name="thanks_tomato">Tomato</string>
+    <string name="thanks_tomato_subtitle">Inspiração para os detalhes do título e para a etiqueta do lançamento semanal</string>
+    <string name="thanks_wavvy">Wavvy</string>
+    <string name="thanks_wavvy_subtitle">A estrutura, a identidade e o jeito de construir as telas</string>
+    <string name="thanks_claude">Claude Code</string>
+    <string name="thanks_claude_subtitle">Auxiliar de desenvolvimento e Tech Lead</string>
+    <string name="updates_title">Atualizações</string>
+    <string name="updates_checking">Procurando atualizações…</string>
+    <string name="updates_up_to_date">Você está na versão mais recente</string>
+    <string name="updates_installed">Versão instalada %1$s</string>
+    <string name="updates_available">A versão %1$s está disponível</string>
+    <string name="updates_downloading">Baixando a versão %1$s</string>
+    <string name="updates_progress">%1$d%% • %2$s de %3$s</string>
+    <string name="updates_ready">A versão %1$s está pronta para instalar</string>
+    <string name="updates_ready_subtitle">O Android vai pedir a sua confirmação</string>
+    <string name="updates_installing">Instalando…</string>
+    <string name="updates_permission">Permita que o Kaisou instale apps</string>
+    <string name="updates_permission_subtitle">Ligue nas configurações que abriram, volte e toque em Instalar</string>
+    <string name="updates_download">Baixar e instalar</string>
+    <string name="updates_install">Instalar</string>
+    <string name="updates_try_again">Tentar de novo</string>
+    <string name="updates_check">Procurar de novo</string>
+    <string name="updates_notes">O que mudou na %1$s</string>
+    <string name="updates_release_page">Ver a versão no GitHub</string>
+    <string name="updates_pause">Pausar as atualizações</string>
+    <string name="updates_pause_subtitle">O app para de procurar versões novas sozinho</string>
+    <string name="updates_interval">Com que frequência procurar</string>
+    <string name="updates_interval_6">A cada 6 horas</string>
+    <string name="updates_interval_12">A cada 12 horas</string>
+    <string name="updates_interval_24">Uma vez por dia</string>
+    <string name="updates_interval_168">Uma vez por semana</string>
+    <string name="updates_error_check">Não foi possível procurar atualizações</string>
+    <string name="updates_error_download">O download não terminou</string>
+    <string name="updates_error_no_file">Esta versão não tem arquivo para o seu aparelho</string>
+    <string name="updates_error_install">Não foi possível instalar a atualização</string>
+    <string name="updates_error_signature">O app instalado foi assinado com outra chave, como o do Android Studio. Desinstale e instale a versão do GitHub uma vez, as próximas atualizações funcionam</string>
+    <string name="updates_channel">Atualizações</string>
+    <string name="updates_notification_title">Nova versão do Kaisou</string>
+    <string name="updates_notification_text">A versão %1$s está disponível</string>
+    <string name="updates_prompt_title">Atualização disponível</string>
+    <string name="updates_prompt_text">A versão %1$s do Kaisou está pronta. Quer atualizar agora?</string>
+    <string name="updates_prompt_confirm">Atualizar</string>
+    <string name="updates_prompt_later">Depois</string>
+    <string name="updates_translate">Traduzir</string>
+    <string name="updates_original">Original</string>
+    <string name="updates_translate_error">Não foi possível traduzir</string>
+    <string name="updates_note_more">mais</string>
+    <string name="updates_note_less">menos</string>
 </resources>
