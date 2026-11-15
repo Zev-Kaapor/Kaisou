@@ -116,7 +116,8 @@
         <item>Não recomendado para menores de 18 anos</item>
     </string-array>
     <string name="age_rating_approximate">%1$s, classificação aproximada</string>
-    <string name="age_rating_all_short">Livre</string>
+    <string name="age_rating_pending">Classificação pendente</string>
+    <string name="age_rating_not_rated">Sem classificação</string>
     <string name="weekly_release_description">Lançamento semanal: %1$s</string>
     <string-array name="format_names">
         <item>TV</item>

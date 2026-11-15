@@ -17,6 +17,18 @@ object TitleArtJson {
             .put("seasons", JSONObject(art.seasonStarts.entries.associate { it.key.toString() to it.value.toString() }))
             .toString()
 
+    // The ratings of the countries alone, as text
+    fun writeCertifications(certifications: Map<String, String>): String = JSONObject(certifications).toString()
+
+    // Null when the text is not one that was written here
+    fun readCertifications(text: String): Map<String, String>? =
+        try {
+            val json = JSONObject(text)
+            json.keys().asSequence().associateWith { json.getString(it) }
+        } catch (_: Exception) {
+            null
+        }
+
     // Null when the text is not one that was written here
     fun read(text: String): TitleArt? =
         try {

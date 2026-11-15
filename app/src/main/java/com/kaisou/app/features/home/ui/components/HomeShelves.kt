@@ -67,11 +67,15 @@ import java.util.Locale
 // Project resources
 import com.kaisou.app.R
 import com.kaisou.app.core.artwork.ArtworkRepository
+import com.kaisou.app.core.designsystem.components.AgeRatingBadge
 import com.kaisou.app.core.designsystem.components.SkeletonHost
 import com.kaisou.app.core.designsystem.components.skeleton
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.language.AppLanguage
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
+import com.kaisou.app.core.rating.ContentRating
+import com.kaisou.app.core.rating.RatingQuery
+import com.kaisou.app.core.rating.RatingRepository
 import com.kaisou.app.features.home.data.CardShape
 import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.home.data.StoryUi
@@ -250,14 +254,21 @@ private fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, 
         } else {
             buildAnnotatedString { append(card.details) }
         }
-        if (line.isNotEmpty()) {
-            Text(
-                text = line,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+        val rating = rememberCardRating(card.rating)
+        // The room of the rating is kept while it is looked for, so the line does not move when it comes up
+        val showRating = !rating.loaded || rating.rating != null
+        if (line.isNotEmpty() || showRating) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
+                if (showRating) CardRating(rating.rating)
+                Text(
+                    text = line,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
@@ -309,6 +320,39 @@ private fun CardTab(episode: Int?, score: Float?, modifier: Modifier = Modifier)
             tint = colors.onAccentFill,
             modifier = Modifier.size(HomeDimens.TabStar)
         )
+    }
+}
+
+// What is known of the rating of a card: whether it was looked for already, and the rating, null when the title has none
+private class CardRatingState(val loaded: Boolean, val rating: ContentRating?)
+
+// Looks for the rating of a title only while its card is on the screen, from what is kept first
+@Composable
+private fun rememberCardRating(query: RatingQuery): CardRatingState {
+    val region = AppLanguage.region
+    val kept = RatingRepository.known(region, query)
+    val state by produceState(CardRatingState(kept.first, kept.second), query.anilistId, region) {
+        value = CardRatingState(loaded = true, rating = RatingRepository.forCard(region, query))
+    }
+    return state
+}
+
+// The square of the rating at the start of the line under a card, a gray square of the placeholder while it is looked for, that gives
+// way to it softly when found
+@Composable
+private fun CardRating(rating: ContentRating?) {
+    val alpha by animateFloatAsState(
+        targetValue = if (rating != null) 1f else 0f,
+        animationSpec = tween(HomeDimens.CardRatingFadeMillis),
+        label = "cardRating"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(HomeDimens.CardRatingSize)
+            .background(KaisouTheme.colors.skeleton.copy(alpha = 1f - alpha), MaterialTheme.shapes.extraSmall)
+    ) {
+        rating?.let { AgeRatingBadge(it, size = HomeDimens.CardRatingSize, modifier = Modifier.alpha(alpha)) }
     }
 }
 

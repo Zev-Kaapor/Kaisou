@@ -122,8 +122,8 @@
         <item>Not recommended for under 18</item>
     </string-array>
     <string name="age_rating_approximate">%1$s, approximate classification</string>
-    <string name="age_rating_all_short">All</string>
-    <string name="age_rating_plus" translatable="false">%1$d+</string>
+    <string name="age_rating_pending">Rating pending</string>
+    <string name="age_rating_not_rated">Not rated</string>
     <string name="weekly_release_description">Weekly release: %1$s</string>
     <!-- How AniList names the formats and the genres, in the same order as their names -->
     <string-array name="format_keys" translatable="false">

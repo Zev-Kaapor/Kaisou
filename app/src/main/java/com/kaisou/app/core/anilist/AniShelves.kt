@@ -22,7 +22,10 @@ data class AniCard(
     val episodes: Int?,
     val chapters: Int?,
     // How many episodes have aired so far, known only while the title is airing, when it has no total yet
-    val aired: Int?
+    val aired: Int?,
+    // The id on MyAnimeList, which gives the rating of an anime, and whether AniList marks the title for adults
+    val malId: Int? = null,
+    val adult: Boolean = false
 )
 
 // A title on the list of the user and how far the user is in it
@@ -274,7 +277,9 @@ object AniShelvesParser {
             format = text(media, "format"),
             episodes = number(media, "episodes"),
             chapters = number(media, "chapters"),
-            aired = media.optJSONObject("nextAiringEpisode")?.let { number(it, "episode") }?.minus(1)?.takeIf { it > 0 }
+            aired = media.optJSONObject("nextAiringEpisode")?.let { number(it, "episode") }?.minus(1)?.takeIf { it > 0 },
+            malId = number(media, "idMal"),
+            adult = media.optBoolean("isAdult")
         )
     }
 

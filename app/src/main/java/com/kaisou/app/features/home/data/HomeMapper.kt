@@ -23,6 +23,7 @@ import com.kaisou.app.core.anilist.SeasonNumber
 import com.kaisou.app.core.artwork.ArtQuery
 import com.kaisou.app.core.designsystem.theme.Background
 import com.kaisou.app.core.designsystem.theme.ContainerHigh
+import com.kaisou.app.core.rating.RatingQuery
 
 // Turns what AniList says into what the Home shows, in the language of the app
 class HomeMapper(private val resources: Resources) {
@@ -189,8 +190,9 @@ class HomeMapper(private val resources: Resources) {
         done: Int? = null,
         total: Int? = null,
         wide: Boolean = false
-    ): CardUi =
-        CardUi(
+    ): CardUi {
+        val art = ArtQuery(source.names, source.year, source.format == MovieFormat)
+        return CardUi(
             anilistId = source.id,
             title = source.title,
             imageUrl = if (wide) source.banner ?: source.cover else source.cover,
@@ -199,8 +201,10 @@ class HomeMapper(private val resources: Resources) {
             done = done,
             total = total,
             details = details,
-            query = if (wide) ArtQuery(source.names, source.year, source.format == MovieFormat) else null
+            query = if (wide) art else null,
+            rating = RatingQuery(source.id, source.malId, source.adult, source.format in MangaFormats, art)
         )
+    }
 
     // The gradient that shows until the image arrives, from the color of the cover to the page
     private fun colors(hex: String?): List<Color> {
@@ -231,6 +235,8 @@ class HomeMapper(private val resources: Resources) {
         const val Hiatus = "HIATUS"
         const val Cancelled = "CANCELLED"
         const val MovieFormat = "MOVIE"
+        // The formats that only a manga has
+        val MangaFormats = setOf("MANGA", "NOVEL", "ONE_SHOT")
         const val MaxGenres = 3
         const val FadeToPage = 0.7f
         val Spaces = Regex("\\s+")

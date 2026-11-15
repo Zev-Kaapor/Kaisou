@@ -12,6 +12,7 @@ import java.time.LocalDate
 import com.kaisou.app.R
 import com.kaisou.app.core.artwork.ArtQuery
 import com.kaisou.app.core.rating.ContentRating
+import com.kaisou.app.core.rating.RatingQuery
 
 // How many featured titles the Home shows, drawn from the most trending ones of the season
 const val HeroCount = 6
@@ -93,7 +94,9 @@ data class CardUi(
     val total: Int?,
     val details: String,
     // What the other sites are asked by to find a better picture of the title, only for the cards that look for one
-    val query: ArtQuery?
+    val query: ArtQuery?,
+    // What the advisory rating of the title is found by, it comes in when the card is on the screen
+    val rating: RatingQuery
 )
 
 // A shelf of the Home: what it is, the shape of its cards and the titles on it

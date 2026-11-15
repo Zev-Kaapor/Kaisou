@@ -17,9 +17,6 @@ data class KaisouColors(
     val textShadow: Color,
     val iconShadow: Color,
     val numberHighlight: Color,
-    // Tags of the advisory ratings, one for each group in the order of the ages, and what is drawn over them
-    val ratingGroups: List<Color>,
-    val onRating: Color,
     // Tag with the day of the week of a weekly release and what is drawn over it
     val weeklyBadge: Color,
     val onWeeklyBadge: Color,
@@ -54,15 +51,6 @@ val KaisouPalette = KaisouColors(
     textShadow = Color(0xFF000000),
     iconShadow = Color(0xFF000000),
     numberHighlight = Color(0xFFFFFFFF),
-    ratingGroups = listOf(
-        Color(0xFF0C9447),
-        Color(0xFF0F7DC2),
-        Color(0xFFD9A400),
-        Color(0xFFF6821F),
-        Color(0xFFE2231A),
-        Color(0xFF1B1B1B)
-    ),
-    onRating = OnFilled,
     weeklyBadge = Color(0xFF1578C8),
     onWeeklyBadge = OnFilled,
     onAccentFill = OnFilled,

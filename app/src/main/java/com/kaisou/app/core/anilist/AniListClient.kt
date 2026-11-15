@@ -459,13 +459,13 @@ class AniListClient {
         const val NewEpisodesSeconds = 48L * 60L * 60L
 
         // What a card of a shelf needs of a title, and how many of each list and of the new episodes come
-        const val ShelfCard = "id title { romaji english } status format episodes chapters nextAiringEpisode { episode } startDate { year } averageScore meanScore bannerImage coverImage { extraLarge large }"
+        const val ShelfCard = "id idMal isAdult title { romaji english } status format episodes chapters nextAiringEpisode { episode } startDate { year } averageScore meanScore bannerImage coverImage { extraLarge large }"
         const val ShelfSize = 20
         const val AiredSize = 50
         const val ActivitySize = 50
         const val MineSize = 25
         // An activity of a list or of a text, with who did it
-        const val ActivityFields = "__typename ... on ListActivity { id createdAt likeCount replyCount isLiked status progress user { id name avatar { large } } media { $ShelfCard isAdult } } " +
+        const val ActivityFields = "__typename ... on ListActivity { id createdAt likeCount replyCount isLiked status progress user { id name avatar { large } } media { $ShelfCard } } " +
             "... on TextActivity { id createdAt likeCount replyCount isLiked text(asHtml: false) user { id name avatar { large } } }"
         // Likes and comments on the activities
         const val ReplyFields = "id text(asHtml: false) createdAt likeCount isLiked user { id name avatar { large } }"
@@ -484,7 +484,7 @@ class AniListClient {
         const val RecommendationsPage = 50
         const val MangaSeeds = 25
         const val PerMangaSeed = 6
-        const val RecommendedCard = "$ShelfCard type isAdult mediaListEntry { status }"
+        const val RecommendedCard = "$ShelfCard type mediaListEntry { status }"
 
         // Sequels: where they are kept, how many titles are asked at a time and how many times at most
         const val SequelsSpace = "sequels1"
@@ -528,7 +528,7 @@ class AniListClient {
               ${shelfList("plannedAnime", "ANIME", "PLANNING")}
               ${shelfList("plannedManga", "MANGA", "PLANNING")}
               airing: Page(perPage: $AiredSize) {
-                airingSchedules(airingAt_greater: ${'$'}from, airingAt_lesser: ${'$'}to, sort: TIME_DESC) { airingAt episode media { $ShelfCard isAdult } }
+                airingSchedules(airingAt_greater: ${'$'}from, airingAt_lesser: ${'$'}to, sort: TIME_DESC) { airingAt episode media { $ShelfCard } }
               }
               ${discover("trending", "type: ANIME, sort: TRENDING_DESC")}
               ${discover("trendingManga", "type: MANGA, sort: TRENDING_DESC")}

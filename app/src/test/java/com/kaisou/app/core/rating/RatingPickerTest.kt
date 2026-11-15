@@ -18,9 +18,8 @@ class RatingPickerTest {
     }
 
     @Test
-    fun anotherCountryShowsItsOwnLabel() {
+    fun anotherCountryShowsTheGlobalSquare() {
         val rating = RatingPicker.pick("US", certified, null, adult = false)!!
-        assertEquals("TV-MA", rating.label)
         assertEquals(AgeGroup.Sixteen, rating.group)
         assertFalse(rating.symbol)
         assertTrue(rating.official)

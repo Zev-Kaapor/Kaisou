@@ -12,8 +12,7 @@ object RatingPicker {
     fun fromRegion(region: String, certifications: Map<String, String>): ContentRating? {
         val label = certifications[region] ?: return null
         val age = Certifications.ageOf(label) ?: return null
-        val brazilian = region == Brazil
-        return ContentRating(AgeGroup.of(age), label.takeUnless { brazilian }, official = true, symbol = brazilian)
+        return ContentRating(AgeGroup.of(age), official = true, symbol = region == Brazil)
     }
 
     // The rating to show, null when nothing is known. The ones that did not come from the country of the user are approximations
@@ -24,6 +23,6 @@ object RatingPicker {
             ?: Elsewhere.firstNotNullOfOrNull { country -> certifications[country]?.let(Certifications::ageOf) }?.let(AgeGroup::of)
             ?: AgeGroup.Eighteen.takeIf { adult }
             ?: return null
-        return ContentRating(group, label = null, official = false, symbol = brazilian)
+        return ContentRating(group, official = false, symbol = brazilian)
     }
 }

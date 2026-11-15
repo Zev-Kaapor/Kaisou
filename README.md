@@ -149,10 +149,10 @@ Nothing is being built right now.
 - The **featured titles** of the season, one at a time, in a carousel that you can swipe
 - The **poster** in high quality when standing up and a **wide picture** when lying down, chosen from TMDB and TheTVDB, with the cover of AniList as the last choice
 - The **logo** of the title in place of its name, when there is one that can be seen
-- The **age rating** of your country, with the official Brazilian symbols, and the ones of the other countries as a tag
+- The **age rating** of your country, with the official Brazilian symbols, and a square with the age and a plus in the other countries
 - The **season** of the title and the tag of the day of the week of its new episode
 - The **synopsis in your language**, translated when it is not English
-- The **shelves** under it: continue watching and reading, the new episodes, what you plan, the sequels you missed, the recommendations, what is trending, popular, coming and new, in cards with the score and how far you are
+- The **shelves** under it: continue watching and reading, the new episodes, what you plan, the sequels you missed, the recommendations, what is trending, popular, coming and new, in cards with the score, the age rating and how far you are
 - Pull down to look again, and the news of your friends come by themselves when the app opens and every few minutes
 
 #### 💬 Activity of the people
@@ -366,7 +366,7 @@ The workflow in `.github/workflows/release.yml` publishes a release when `appVer
 <details>
   <summary><b>Where does the age rating come from?</b></summary>
   <br>
-  From the rating that the country of your phone gives to the title, as TMDB has it, with the official symbols for Brazil. When your country has none, the rating of MyAnimeList is used, and then the one of another country, as an approximation, and the screen readers say so.
+  From the rating that the country of your phone gives to the title, as TMDB has it, with the official symbols for Brazil. When your country has none, the rating of MyAnimeList is used, and then the one of another country, as an approximation, and the screen readers say so. A manga has no rating on those sources, so it shows NR, not rated, or 18+ when AniList marks it for adults. An anime nobody rated yet shows RP, rating pending.
   <br>
 </details>
 

@@ -22,6 +22,9 @@ class ArtworkRepository {
     // What was found per title, one with nothing means the title has none, so it is not asked again
     private val cache = TimedCache<TitleArt>(CacheMillis, MaxEntries)
 
+    // The ratings alone, by title: they do not depend on the language
+    private val certificationsCache = TimedCache<Map<String, String>>(CacheMillis, CertificationsMaxEntries)
+
     // Logs in to TheTVDB ahead of time, so the first title does not wait for it
     suspend fun prewarm() {
         withContext(Dispatchers.IO) { TvdbClient.warmUp() }
@@ -43,6 +46,28 @@ class ArtworkRepository {
             withContext(Dispatchers.IO) { AppStore.put(StoreSpace, key, TitleArtJson.write(found.art)) }
         }
         return found.art
+    }
+
+    // The ratings of the countries of a title and nothing else, for the cards that only need them: the ids and one question to TMDB,
+    // with no pictures. Null when they could not be found, which is not kept, so it is asked again
+    suspend fun certifications(anilistId: Int, query: ArtQuery): Map<String, String>? {
+        certificationsCache.get(anilistId)?.let { return it.value }
+        withContext(Dispatchers.IO) { AppStore.get(CertificationsSpace, anilistId.toString(), CertificationsStoreMillis) }
+            ?.let(TitleArtJson::readCertifications)
+            ?.let {
+                certificationsCache.put(anilistId, it)
+                return it
+            }
+        val resolved = try {
+            withContext(Dispatchers.IO) { ids.resolve(anilistId, query) }
+        } catch (_: Exception) {
+            return null
+        }
+        val certified = resolved?.tmdbId?.let { tmdbId -> withContext(Dispatchers.IO) { TmdbClient.certifications(resolved.kind, tmdbId) } } ?: Certified.None
+        if (certified.failed) return null
+        certificationsCache.put(anilistId, certified.byCountry)
+        withContext(Dispatchers.IO) { AppStore.put(CertificationsSpace, anilistId.toString(), TitleArtJson.writeCertifications(certified.byCountry)) }
+        return certified.byCountry
     }
 
     private suspend fun fetch(anilistId: Int, query: ArtQuery, language: String): Found = coroutineScope {
@@ -112,5 +137,10 @@ class ArtworkRepository {
         // What is kept on the disk and for how long: a day, since a title does not change its pictures or its ratings that fast
         private const val StoreSpace = "art2"
         private const val StoreMillis = 24L * 60L * 60L * 1000L
+
+        // The ratings alone for the cards: how many titles stay in memory, and a week on the disk, they almost never change
+        private const val CertificationsMaxEntries = 600
+        private const val CertificationsSpace = "cert1"
+        private const val CertificationsStoreMillis = 7L * 24L * 60L * 60L * 1000L
     }
 }

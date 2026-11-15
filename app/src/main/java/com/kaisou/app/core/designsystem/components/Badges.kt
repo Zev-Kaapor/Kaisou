@@ -4,7 +4,6 @@ package com.kaisou.app.core.designsystem.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,13 +23,13 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 // Java time
 import java.time.DayOfWeek
 // Project resources
 import com.kaisou.app.R
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
-import com.kaisou.app.core.rating.AgeGroup
 import com.kaisou.app.core.rating.ContentRating
 
 // Day of the week a title gets a new episode, a small blue tag with a calendar
@@ -72,46 +71,22 @@ fun WeeklyReleaseBadge(
     }
 }
 
-// Advisory rating of a title: the official symbol in Brazil and a tag with the label or the age in the other countries. A rating
-// that is only an approximation says so to the screen readers
+// Advisory rating of a title as a square: the official symbol in Brazil, and in every other country the square with the age and a
+// plus. A title with no age has its own symbol, RP or NR. A rating that is only an approximation says so to the screen readers
 @Composable
 fun AgeRatingBadge(
     rating: ContentRating,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    size: Dp = ComponentDimens.RatingSymbol
 ) {
-    val dimens = KaisouTheme.dimens
-    val colors = KaisouTheme.colors
-    val group = rating.group
-    val name = stringArrayResource(R.array.age_rating_names)[group.ordinal]
+    val unrated = rating.unrated
+    val symbol = unrated?.symbol ?: if (rating.symbol) rating.group.symbol else rating.group.global
+    val name = if (unrated != null) stringResource(unrated.description) else stringArrayResource(R.array.age_rating_names)[rating.group.ordinal]
     val description = if (rating.official) name else stringResource(R.string.age_rating_approximate, name)
 
-    if (rating.symbol) {
-        Image(
-            painter = painterResource(group.symbol),
-            contentDescription = description,
-            modifier = modifier
-                .size(ComponentDimens.RatingSymbol)
-        )
-    } else {
-        val text = rating.label ?: if (group == AgeGroup.All) {
-            stringResource(R.string.age_rating_all_short)
-        } else {
-            stringResource(R.string.age_rating_plus, group.minAge)
-        }
-        Box(
-            modifier = modifier
-                .height(ComponentDimens.BadgeHeight)
-                .clip(MaterialTheme.shapes.extraSmall)
-                .background(colors.ratingGroups[group.ordinal])
-                .semantics { contentDescription = description }
-                .padding(horizontal = dimens.spaceExtraSmall),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.onRating
-            )
-        }
-    }
+    Image(
+        painter = painterResource(symbol),
+        contentDescription = description,
+        modifier = modifier.size(size)
+    )
 }
