@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 // Compose layouts and foundations
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -85,6 +86,7 @@ fun HomeHeroCarousel(
     landscape: Boolean,
     onPlay: () -> Unit,
     onAddToList: () -> Unit,
+    onOpenTitle: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val swipeThreshold = with(LocalDensity.current) { HomeDimens.HeroSwipeThreshold.toPx() }
@@ -134,6 +136,7 @@ fun HomeHeroCarousel(
                     landscape = landscape,
                     onPlay = onPlay,
                     onAddToList = onAddToList,
+                    onOpen = { onOpenTitle(heroes[page].anilistId) },
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -154,6 +157,7 @@ private fun HomeHero(
     landscape: Boolean,
     onPlay: () -> Unit,
     onAddToList: () -> Unit,
+    onOpen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = KaisouTheme.dimens
@@ -176,7 +180,7 @@ private fun HomeHero(
                     .fillMaxWidth(if (hasBackdrop) HomeDimens.HeroLandscapeArtFraction else HomeDimens.HeroLandscapePosterFraction)
             } else {
                 Modifier.fillMaxWidth()
-            }).fillMaxHeight()
+            }).fillMaxHeight().clickable(onClick = onOpen)
         ) {
             // The gradient of the cover stays under the picture, which covers it when it arrives
             Box(modifier = Modifier.fillMaxSize().background(Brush.linearGradient(hero.artColors)))

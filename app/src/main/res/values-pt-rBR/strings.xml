@@ -106,6 +106,204 @@
     <string name="story_paused">Pausou %1$s</string>
     <string name="story_dropped">Largou %1$s</string>
     <string name="home_add_to_list">Adicionar à minha lista</string>
+    <string name="title_show_more">Mostrar mais</string>
+    <string name="title_show_less">Mostrar menos</string>
+    <string name="title_cta_watch">Assistir %1$s</string>
+    <string name="title_cta_continue">Continuar %1$s</string>
+    <string name="title_cta_resume">Retomar %1$s</string>
+    <string name="title_cta_read">Ler %1$s</string>
+    <string name="title_cta_watch_again">Assistir de novo</string>
+    <string name="title_cta_read_again">Reler</string>
+    <string name="title_unit_episode">E%1$d</string>
+    <string name="title_unit_season_episode">T%1$dE%2$d</string>
+    <string name="title_unit_chapter">cap. %1$d</string>
+    <string name="title_synopsis">Sinopse</string>
+    <string name="title_section_watch_order">Ordem para assistir</string>
+    <string name="title_watch_current">Você está aqui</string>
+    <string name="title_rank_popular">Mais popular</string>
+    <string name="title_rank_rated">Mais bem avaliado</string>
+    <string name="title_rank_all_time">de todos os tempos</string>
+    <string name="title_rank_in_year">em %1$d</string>
+    <string name="title_rank_in_season">em %1$s %2$d</string>
+    <string name="title_section_relations">Relacionados</string>
+    <string name="title_section_recommendations">Recomendados</string>
+    <string name="title_section_characters">Personagens</string>
+    <string name="title_section_staff">Equipe</string>
+    <string name="title_section_friends">Amigos</string>
+    <string name="title_section_reviews">Reviews</string>
+    <string name="title_section_stats">Estatísticas</string>
+    <string name="title_section_threads">Fórum</string>
+    <string name="title_stats_scores">Notas</string>
+    <string name="title_stats_status">Nas listas</string>
+    <string name="title_review_useful">Útil: %1$d</string>
+    <string name="title_community_empty">Nada por aqui ainda</string>
+    <string name="title_episodes_sort_old">Mais antigos primeiro</string>
+    <string name="title_episodes_sort_new">Mais recentes primeiro</string>
+    <string name="title_episodes_empty">Ainda não há episódios</string>
+    <string name="title_episode_untitled">Episódio %1$d</string>
+    <string name="title_chapters_soon">A lista de capítulos virá com as fontes de leitura.</string>
+    <string-array name="title_relation_names">
+        <item>Anterior</item>
+        <item>Sequência</item>
+        <item>História principal</item>
+        <item>História paralela</item>
+        <item>Spin-off</item>
+        <item>Adaptação</item>
+        <item>Origem</item>
+        <item>Alternativa</item>
+        <item>Resumo</item>
+        <item>Compilação</item>
+        <item>Contém</item>
+        <item>Personagem</item>
+        <item>Outro</item>
+    </string-array>
+    <string-array name="title_role_names">
+        <item>Principal</item>
+        <item>Coadjuvante</item>
+        <item>Figurante</item>
+    </string-array>
+    <string-array name="title_list_names_anime">
+        <item>Assistindo</item>
+        <item>Planejando</item>
+        <item>Completo</item>
+        <item>Reassistindo</item>
+        <item>Pausado</item>
+        <item>Largado</item>
+    </string-array>
+    <string-array name="title_list_names_manga">
+        <item>Lendo</item>
+        <item>Planejando</item>
+        <item>Completo</item>
+        <item>Relendo</item>
+        <item>Pausado</item>
+        <item>Largado</item>
+    </string-array>
+    <plurals name="title_replies">
+        <item quantity="one">%d resposta</item>
+        <item quantity="many">%d respostas</item>
+        <item quantity="other">%d respostas</item>
+    </plurals>
+    <string name="title_duration_minutes">%1$d min</string>
+    <string name="title_status_releasing">Em exibição</string>
+    <string name="title_status_finished">Finalizado</string>
+    <string name="title_status_hiatus">Em hiato</string>
+    <string name="title_status_not_yet">Não lançado</string>
+    <string name="title_status_cancelled">Cancelado</string>
+    <string name="title_data_format">Formato</string>
+    <string name="title_data_status">Status</string>
+    <string name="title_data_episodes">Episódios</string>
+    <string name="title_data_chapters">Capítulos</string>
+    <string name="title_data_volumes">Volumes</string>
+    <string name="title_data_duration">Duração</string>
+    <string name="title_data_season">Temporada</string>
+    <string name="title_data_start">Início</string>
+    <string name="title_data_end">Término</string>
+    <string name="title_data_source">Fonte</string>
+    <string name="title_data_origin">País</string>
+    <string name="title_data_studios">Estúdios</string>
+    <string name="title_data_producers">Produtoras</string>
+    <string name="title_data_romaji">Título em romaji</string>
+    <string name="title_data_english">Título em inglês</string>
+    <string name="title_data_native">Título original</string>
+    <string name="title_data_synonyms">Sinônimos</string>
+    <string name="title_data_popularity">Popularidade</string>
+    <string name="title_data_favourites">Favoritos</string>
+    <string name="title_tab_details">Detalhes</string>
+    <string name="title_tab_episodes">Episódios</string>
+    <string name="title_tab_chapters">Capítulos</string>
+    <string name="title_tab_community">Comunidade</string>
+    <string name="title_section_data">Informações</string>
+    <string name="title_section_tags">Tags</string>
+    <string name="title_section_trailer">Trailer</string>
+    <string name="title_section_links">Links</string>
+    <string name="title_section_watch">Onde assistir</string>
+    <string name="title_details_error">Não foi possível carregar os detalhes</string>
+    <string name="title_next_episode">Episódio %1$d</string>
+    <string name="cd_trailer">Ver o trailer</string>
+    <string name="title_notify_releasing">Em breve você será avisado de cada novo episódio.</string>
+    <string name="title_notify_releasing_manga">Em breve você será avisado de cada novo capítulo.</string>
+    <string name="title_notify_finished">Em breve você será avisado quando uma nova temporada for lançada.</string>
+    <string name="title_notify_finished_manga">Em breve você será avisado quando houver continuação.</string>
+    <string name="title_notify_hiatus">Em breve você será avisado quando voltar.</string>
+    <string name="title_notify_upcoming">Em breve você será avisado quando for lançado.</string>
+    <string-array name="title_source_names">
+        <item>Original</item>
+        <item>Mangá</item>
+        <item>Light novel</item>
+        <item>Visual novel</item>
+        <item>Videogame</item>
+        <item>Outro</item>
+        <item>Romance</item>
+        <item>Doujinshi</item>
+        <item>Anime</item>
+        <item>Web novel</item>
+        <item>Live action</item>
+        <item>Jogo</item>
+        <item>Quadrinhos</item>
+        <item>Projeto multimídia</item>
+        <item>Livro ilustrado</item>
+    </string-array>
+    <string-array name="title_season_names">
+        <item>Inverno</item>
+        <item>Primavera</item>
+        <item>Verão</item>
+        <item>Outono</item>
+    </string-array>
+    <plurals name="title_volumes">
+        <item quantity="one">%d vol.</item>
+        <item quantity="many">%d vols.</item>
+        <item quantity="other">%d vols.</item>
+    </plurals>
+    <string name="title_notify_message">Avisos de lançamento</string>
+    <string name="title_favourite_added">Adicionado aos seus favoritos</string>
+    <string name="title_favourite_removed">Removido dos seus favoritos</string>
+    <string name="title_favourite_failed">Não foi possível mudar seus favoritos</string>
+    <string name="cd_notify">Avisos de lançamento</string>
+    <string name="cd_favourite">Adicionar aos favoritos</string>
+    <string name="cd_unfavourite">Remover dos favoritos</string>
+    <string name="rate_limit_title">Excesso de requisições</string>
+    <plurals name="rate_limit_wait">
+        <item quantity="one">O AniList pediu para esperar. Nova tentativa em %d segundo</item>
+        <item quantity="many">O AniList pediu para esperar. Nova tentativa em %d segundos</item>
+        <item quantity="other">O AniList pediu para esperar. Nova tentativa em %d segundos</item>
+    </plurals>
+    <string name="title_alert_on">Avisos ativados</string>
+    <string name="title_alert_off">Avisos desativados</string>
+    <string name="title_section_themes">Aberturas e encerramentos</string>
+    <string name="title_section_news">Notícias</string>
+    <string name="title_theme_episodes">Episódios %1$s</string>
+    <string name="title_news_all">Ver todas as notícias</string>
+    <string name="title_news_empty">Ainda não há notícias</string>
+    <string name="title_section_covers">Capas</string>
+    <string name="title_cover_volume">Vol. %1$s</string>
+    <string name="title_list_status">Status</string>
+    <string name="title_list_progress">Episódios assistidos</string>
+    <string name="title_list_progress_total">%1$d / %2$d</string>
+    <string name="title_list_score">Sua nota</string>
+    <string name="title_list_repeat_anime">Vezes que você reassistiu</string>
+    <string name="title_list_repeat_manga">Vezes que você releu</string>
+    <string name="title_list_notes">Suas anotações</string>
+    <string name="title_list_save">Salvar</string>
+    <string name="title_list_saved">Salvo na sua lista</string>
+    <string name="title_list_removed">Removido da sua lista</string>
+    <string name="title_list_failed">Não foi possível alterar sua lista</string>
+    <string name="cd_list">Sua lista</string>
+    <string name="title_list_chapters">Capítulos lidos</string>
+    <string name="title_list_volumes">Volumes lidos</string>
+    <string name="title_list_started">Data de início</string>
+    <string name="title_list_ended">Data de término</string>
+    <string name="title_list_other">Mais opções</string>
+    <string name="title_list_private">Privado (só você vê)</string>
+    <string name="title_list_hidden">Esconder das listas por status</string>
+    <string name="title_list_delete">Excluir</string>
+    <string name="title_list_clear">Limpar</string>
+    <string name="title_list_no_score">Sem nota</string>
+    <string name="title_list_started_ask">Quando você começou?</string>
+    <string name="title_list_ended_ask">Quando você terminou?</string>
+    <string name="title_list_today">Hoje</string>
+    <string name="title_list_score_scale">/ 10</string>
+    <string name="title_error">Não foi possível carregar o título</string>
+    <string name="cd_share">Compartilhar</string>
     <string name="home_hero_meta">%1$d • %2$s</string>
     <string-array name="age_rating_names">
         <item>Livre para todos os públicos</item>
@@ -250,6 +448,15 @@
     <string name="thanks_anilist_subtitle">O catálogo, as listas e a conta do usuário, e a ligação entre os ids deles e os dos outros sites</string>
     <string name="thanks_crunchyroll">Crunchyroll</string>
     <string name="thanks_crunchyroll_subtitle">Inspiração para o visual da Home e do título</string>
+    <string name="thanks_jikan">Jikan</string>
+    <string name="thanks_jikan_subtitle">As aberturas e os encerramentos dos animes, do MyAnimeList</string>
+    <string name="thanks_kuroiru">Kuroiru</string>
+    <string name="thanks_kuroiru_subtitle">As notícias dos animes, com as manchetes do Anime News Network</string>
+    <string name="thanks_mangabaka">MangaBaka</string>
+    <string name="thanks_mangabaka_subtitle">As notícias dos mangás</string>
+    <string name="thanks_youtube_player_subtitle">O player que toca os trailers dentro da página</string>
+    <string name="thanks_mangadex">MangaDex</string>
+    <string name="thanks_mangadex_subtitle">As capas dos volumes dos mangás</string>
     <string name="thanks_dantotsu">Dantotsu</string>
     <string name="thanks_dantotsu_subtitle">Inspiração para o cabeçalho e para um cliente do AniList</string>
     <string name="thanks_google_translate">Google Tradutor</string>

@@ -36,6 +36,11 @@ class RateGate(
     @Volatile
     private var openAtMillis = 0L
 
+    // Told how long the gate is going to rest, in milliseconds, each time a service closes it. The screen uses it to tell the user why
+    // things are slow. It is not told again for a rest that is already on
+    @Volatile
+    var onRest: ((Long) -> Unit)? = null
+
     // Makes the request when the gate is open, and again when it was turned away, up to a few times. What the request throws
     // that is not a turn away goes up as it is
     fun <T> run(request: () -> T): T {
@@ -48,7 +53,11 @@ class RateGate(
                 return request()
             } catch (error: TooManyRequests) {
                 val wait = error.retryAfterMillis.coerceAtMost(MaxWaitMillis)
-                openAtMillis = maxOf(openAtMillis, System.currentTimeMillis() + wait)
+                val reopen = System.currentTimeMillis() + wait
+                if (reopen > openAtMillis) {
+                    openAtMillis = reopen
+                    onRest?.invoke(wait)
+                }
                 log("$name asked for ${wait}ms of rest")
                 if (++turnedAway > MaxRetries) throw error
             } finally {
@@ -73,4 +82,7 @@ object Gates {
     val Tvdb = RateGate("TheTVDB", maxAtOnce = 4)
     val Mal = RateGate("MyAnimeList", maxAtOnce = 3)
     val Google = RateGate("Google Translate", maxAtOnce = 2)
+    val Jikan = RateGate("Jikan", maxAtOnce = 1)
+    val News = RateGate("News", maxAtOnce = 2)
+    val MangaDex = RateGate("MangaDex", maxAtOnce = 2)
 }

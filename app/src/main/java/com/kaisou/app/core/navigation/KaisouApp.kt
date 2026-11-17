@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 // UI styling and utilities
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -53,6 +54,7 @@ import com.kaisou.app.R
 import com.kaisou.app.core.anilist.AniViewer
 import com.kaisou.app.core.designsystem.components.ConfirmDialog
 import com.kaisou.app.core.designsystem.components.OverlaySheetHost
+import com.kaisou.app.core.designsystem.components.ToastHost
 import com.kaisou.app.core.designsystem.theme.KaisouMotion
 import com.kaisou.app.features.auth.ui.AuthState
 import com.kaisou.app.features.auth.ui.AuthViewModel
@@ -67,6 +69,8 @@ import com.kaisou.app.features.settings.ui.ThanksScreen
 import com.kaisou.app.features.settings.ui.ThanksSection
 import com.kaisou.app.features.settings.ui.UpdatesSection
 import com.kaisou.app.features.settings.ui.UpdatesSettingsScreen
+import com.kaisou.app.features.title.ui.NewsScreen
+import com.kaisou.app.features.title.ui.TitleScreen
 import com.kaisou.app.features.updates.data.UpdateState
 import com.kaisou.app.features.updates.data.UpdateWork
 import com.kaisou.app.features.updates.data.Updates
@@ -116,6 +120,8 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     val backStackEntry by navController.currentBackStackEntryAsState()
     // The bar shows the tab of the screen that is on, the start tab while there is none yet
     val selected = MainTab.entries.firstOrNull { it.route == backStackEntry?.destination?.route } ?: startTab
+    // The page of a title has the whole screen, with no bar and no rail
+    val onTitle = backStackEntry?.destination?.route.let { it == TitleRoute || it == NewsRoute }
 
     val onSelect: (MainTab) -> Unit = { tab ->
         navController.navigate(tab.route) {
@@ -145,14 +151,15 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     ) {
         if (maxWidth > maxHeight) {
             Row(modifier = Modifier.fillMaxSize()) {
-                KaisouNavRail(selected = selected, onSelect = onSelect)
+                if (!onTitle) KaisouNavRail(selected = selected, onSelect = onSelect)
 
-                // The rail already makes room for the camera cutout on its side, the content keeps away from it on the other
+                // The rail already makes room for the camera cutout on its side, the content keeps away from it on the other. Without
+                // the rail it keeps away from both
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start))
-                        .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.End))
+                        .then(if (onTitle) Modifier else Modifier.consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start)))
+                        .windowInsetsPadding(WindowInsets.displayCutout.only(if (onTitle) WindowInsetsSides.Horizontal else WindowInsetsSides.End))
                 ) {
                     MainNavHost(
                         navController = navController,
@@ -172,7 +179,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
                     onProfile = { profileOpen = true },
                     modifier = Modifier.weight(1f)
                 )
-                KaisouNavBar(selected = selected, onSelect = onSelect)
+                if (!onTitle) KaisouNavBar(selected = selected, onSelect = onSelect)
             }
         }
 
@@ -194,6 +201,9 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
 
         // The sheets that the screens ask for, which rise over the bar
         OverlaySheetHost()
+
+        // The notices of the app, as an island at the top, over everything
+        ToastHost(modifier = Modifier.align(Alignment.TopCenter))
 
         // The question when the app opens and there is a newer version, it goes to the screen of the updates to show how the download goes
         val updatePrompt by Updates.prompt.collectAsState()
@@ -235,7 +245,37 @@ private fun MainNavHost(
         predictivePopEnterTransition = { comesIn(forward = initialIndex() != NotATab && initialIndex() < targetIndex()) },
         predictivePopExitTransition = { goesOut(forward = initialIndex() != NotATab && initialIndex() < targetIndex()) }
     ) {
-        composable(MainTab.Home.route) { HomeScreen(viewer = viewer, onProfile = onProfile, modifier = Modifier.fillMaxSize()) }
+        composable(MainTab.Home.route) {
+            HomeScreen(
+                viewer = viewer,
+                onProfile = onProfile,
+                onOpenTitle = { navController.navigate(titleRoute(it)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        // The page of a title opens over the tabs, with no bar, and back returns to where it was opened
+        composable(
+            route = TitleRoute,
+            arguments = listOf(navArgument(TitleIdArg) { type = NavType.IntType })
+        ) {
+            TitleScreen(
+                onBack = { navController.popBackStack() },
+                onOpenTitle = { navController.navigate(titleRoute(it)) },
+                onOpenNews = { id, malId, manga -> navController.navigate(newsRoute(id, malId, manga)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        // All the news of a title open over it, with no bar
+        composable(
+            route = NewsRoute,
+            arguments = listOf(
+                navArgument(TitleIdArg) { type = NavType.IntType },
+                navArgument(NewsMalArg) { type = NavType.IntType; defaultValue = -1 },
+                navArgument(NewsMangaArg) { type = NavType.BoolType; defaultValue = false }
+            )
+        ) {
+            NewsScreen(onBack = { navController.popBackStack() }, modifier = Modifier.fillMaxSize())
+        }
         // The other tabs have no screen yet
         composable(MainTab.Explore.route) { Box(modifier = Modifier.fillMaxSize()) }
         composable(MainTab.Calendar.route) { Box(modifier = Modifier.fillMaxSize()) }

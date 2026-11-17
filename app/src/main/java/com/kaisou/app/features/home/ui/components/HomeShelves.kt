@@ -172,7 +172,7 @@ private fun StoryRing(seen: List<Boolean>, unseenColor: Color, seenColor: Color)
 // A shelf of the Home: its name and a row of cards that slides sideways, the first one at the margin of the screen and the last
 // one cut by the edge so it shows there is more. Lying down more of them fit in the row
 @Composable
-fun HomeShelf(shelf: ShelfUi, modifier: Modifier = Modifier) {
+fun HomeShelf(shelf: ShelfUi, onOpenTitle: (Int) -> Unit, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
     // The wide cards change their picture together, on the clock of the shelf
     var showWide by remember { mutableStateOf(false) }
@@ -201,9 +201,9 @@ fun HomeShelf(shelf: ShelfUi, modifier: Modifier = Modifier) {
         ) {
             items(shelf.cards, key = { it.anilistId }) { card ->
                 if (shelf.shape == CardShape.Poster) {
-                    TitleCard(card, HomeDimens.PosterWidth, HomeDimens.PosterRatio, showWide)
+                    TitleCard(card, HomeDimens.PosterWidth, HomeDimens.PosterRatio, showWide, onClick = { onOpenTitle(card.anilistId) })
                 } else {
-                    TitleCard(card, HomeDimens.WideWidth, HomeDimens.WideRatio, showWide)
+                    TitleCard(card, HomeDimens.WideWidth, HomeDimens.WideRatio, showWide, onClick = { onOpenTitle(card.anilistId) })
                 }
             }
         }
@@ -214,12 +214,12 @@ fun HomeShelf(shelf: ShelfUi, modifier: Modifier = Modifier) {
 // a thin line around it so dark covers do not melt into the page, then its name and a line with how far the user is in it, the part
 // done in the violet of the app, or the details of the title
 @Composable
-private fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, modifier: Modifier = Modifier) {
+fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
     val colors = KaisouTheme.colors
     val accent = MaterialTheme.colorScheme.primary
 
-    Column(modifier = modifier.width(width)) {
+    Column(modifier = modifier.width(width).clickable(onClick = onClick)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -276,7 +276,7 @@ private fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, 
 // The signature of the cards: a tab in the violet of the buttons that sits in a corner of the picture, round only on its free
 // corner. The score has it at the bottom and a new episode at the top
 @Composable
-private fun CornerTab(shape: Shape, modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+fun CornerTab(shape: Shape, modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     val dimens = KaisouTheme.dimens
     val colors = KaisouTheme.colors
 

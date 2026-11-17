@@ -110,6 +110,255 @@
     <string name="story_dropped">Dropped %1$s</string>
     <string name="story_other" translatable="false">%1$s %2$s</string>
     <string name="home_add_to_list">Add to my list</string>
+    <!-- Page of a title, prototype -->
+    <string name="title_show_more">Show more</string>
+    <string name="title_show_less">Show less</string>
+    <string name="title_cta_watch">Watch %1$s</string>
+    <string name="title_cta_continue">Continue %1$s</string>
+    <string name="title_cta_resume">Resume %1$s</string>
+    <string name="title_cta_read">Read %1$s</string>
+    <string name="title_cta_watch_again">Watch again</string>
+    <string name="title_cta_read_again">Read again</string>
+    <string name="title_unit_episode">E%1$d</string>
+    <string name="title_unit_season_episode">S%1$dE%2$d</string>
+    <string name="title_unit_chapter">Ch. %1$d</string>
+    <string name="title_synopsis">Synopsis</string>
+    <string name="title_section_watch_order">Watch order</string>
+    <string name="title_watch_current">You are here</string>
+    <string name="title_rank_popular">Most popular</string>
+    <string name="title_rank_rated">Highest rated</string>
+    <string name="title_rank_all_time">of all time</string>
+    <string name="title_rank_in_year">in %1$d</string>
+    <string name="title_rank_in_season">in %1$s %2$d</string>
+    <string name="title_section_relations">Related</string>
+    <string name="title_section_recommendations">Recommended</string>
+    <string name="title_section_characters">Characters</string>
+    <string name="title_section_staff">Staff</string>
+    <string name="title_section_friends">Friends</string>
+    <string name="title_section_reviews">Reviews</string>
+    <string name="title_section_stats">Statistics</string>
+    <string name="title_section_threads">Forum</string>
+    <string name="title_stats_scores">Scores</string>
+    <string name="title_stats_status">On the lists</string>
+    <string name="title_review_useful">Useful: %1$d</string>
+    <string name="title_community_empty">Nothing here yet</string>
+    <string name="title_episodes_sort_old">Oldest first</string>
+    <string name="title_episodes_sort_new">Newest first</string>
+    <string name="title_episodes_empty">No episodes yet</string>
+    <string name="title_episode_untitled">Episode %1$d</string>
+    <string name="title_episode_row" translatable="false">%1$d. %2$s</string>
+    <string name="title_chapters_soon">The list of chapters comes with the sources of reading.</string>
+    <string-array name="title_relation_keys" translatable="false">
+        <item>PREQUEL</item>
+        <item>SEQUEL</item>
+        <item>PARENT</item>
+        <item>SIDE_STORY</item>
+        <item>SPIN_OFF</item>
+        <item>ADAPTATION</item>
+        <item>SOURCE</item>
+        <item>ALTERNATIVE</item>
+        <item>SUMMARY</item>
+        <item>COMPILATION</item>
+        <item>CONTAINS</item>
+        <item>CHARACTER</item>
+        <item>OTHER</item>
+    </string-array>
+    <string-array name="title_relation_names">
+        <item>Prequel</item>
+        <item>Sequel</item>
+        <item>Parent story</item>
+        <item>Side story</item>
+        <item>Spin-off</item>
+        <item>Adaptation</item>
+        <item>Source</item>
+        <item>Alternative</item>
+        <item>Summary</item>
+        <item>Compilation</item>
+        <item>Contains</item>
+        <item>Character</item>
+        <item>Other</item>
+    </string-array>
+    <string-array name="title_role_keys" translatable="false">
+        <item>MAIN</item>
+        <item>SUPPORTING</item>
+        <item>BACKGROUND</item>
+    </string-array>
+    <string-array name="title_role_names">
+        <item>Main</item>
+        <item>Supporting</item>
+        <item>Background</item>
+    </string-array>
+    <string-array name="title_list_keys" translatable="false">
+        <item>CURRENT</item>
+        <item>PLANNING</item>
+        <item>COMPLETED</item>
+        <item>REPEATING</item>
+        <item>PAUSED</item>
+        <item>DROPPED</item>
+    </string-array>
+    <string-array name="title_list_names_anime">
+        <item>Watching</item>
+        <item>Planning</item>
+        <item>Completed</item>
+        <item>Rewatching</item>
+        <item>Paused</item>
+        <item>Dropped</item>
+    </string-array>
+    <string-array name="title_list_names_manga">
+        <item>Reading</item>
+        <item>Planning</item>
+        <item>Completed</item>
+        <item>Rereading</item>
+        <item>Paused</item>
+        <item>Dropped</item>
+    </string-array>
+    <plurals name="title_replies">
+        <item quantity="one">%d reply</item>
+        <item quantity="other">%d replies</item>
+    </plurals>
+    <string name="title_season_year" translatable="false">%1$s %2$d</string>
+    <string name="title_duration_minutes">%1$d min</string>
+    <string name="title_status_releasing">Airing</string>
+    <string name="title_status_finished">Finished</string>
+    <string name="title_status_hiatus">On hiatus</string>
+    <string name="title_status_not_yet">Not yet released</string>
+    <string name="title_status_cancelled">Cancelled</string>
+    <string name="title_data_format">Format</string>
+    <string name="title_data_status">Status</string>
+    <string name="title_data_episodes">Episodes</string>
+    <string name="title_data_chapters">Chapters</string>
+    <string name="title_data_volumes">Volumes</string>
+    <string name="title_data_duration">Duration</string>
+    <string name="title_data_season">Season</string>
+    <string name="title_data_start">Start date</string>
+    <string name="title_data_end">End date</string>
+    <string name="title_data_source">Source</string>
+    <string name="title_data_origin">Country</string>
+    <string name="title_data_studios">Studios</string>
+    <string name="title_data_producers">Producers</string>
+    <string name="title_data_romaji">Romaji title</string>
+    <string name="title_data_english">English title</string>
+    <string name="title_data_native">Native title</string>
+    <string name="title_data_synonyms">Synonyms</string>
+    <string name="title_data_popularity">Popularity</string>
+    <string name="title_data_favourites">Favourites</string>
+    <string name="title_tab_details">Details</string>
+    <string name="title_tab_episodes">Episodes</string>
+    <string name="title_tab_chapters">Chapters</string>
+    <string name="title_tab_community">Community</string>
+    <string name="title_section_data">Information</string>
+    <string name="title_section_tags">Tags</string>
+    <string name="title_section_trailer">Trailer</string>
+    <string name="title_section_links">Links</string>
+    <string name="title_section_watch">Where to watch</string>
+    <string name="title_details_error">Could not load the details</string>
+    <string name="title_next_episode">Episode %1$d</string>
+    <string name="cd_trailer">Play the trailer</string>
+    <string name="title_notify_releasing">Soon you will be warned of each new episode.</string>
+    <string name="title_notify_releasing_manga">Soon you will be warned of each new chapter.</string>
+    <string name="title_notify_finished">Soon you will be warned when a new season comes out.</string>
+    <string name="title_notify_finished_manga">Soon you will be warned when it continues.</string>
+    <string name="title_notify_hiatus">Soon you will be warned when it comes back.</string>
+    <string name="title_notify_upcoming">Soon you will be warned when it is released.</string>
+    <string-array name="title_source_keys" translatable="false">
+        <item>ORIGINAL</item>
+        <item>MANGA</item>
+        <item>LIGHT_NOVEL</item>
+        <item>VISUAL_NOVEL</item>
+        <item>VIDEO_GAME</item>
+        <item>OTHER</item>
+        <item>NOVEL</item>
+        <item>DOUJINSHI</item>
+        <item>ANIME</item>
+        <item>WEB_NOVEL</item>
+        <item>LIVE_ACTION</item>
+        <item>GAME</item>
+        <item>COMIC</item>
+        <item>MULTIMEDIA_PROJECT</item>
+        <item>PICTURE_BOOK</item>
+    </string-array>
+    <string-array name="title_source_names">
+        <item>Original</item>
+        <item>Manga</item>
+        <item>Light novel</item>
+        <item>Visual novel</item>
+        <item>Video game</item>
+        <item>Other</item>
+        <item>Novel</item>
+        <item>Doujinshi</item>
+        <item>Anime</item>
+        <item>Web novel</item>
+        <item>Live action</item>
+        <item>Game</item>
+        <item>Comic</item>
+        <item>Multimedia project</item>
+        <item>Picture book</item>
+    </string-array>
+    <string-array name="title_season_keys" translatable="false">
+        <item>WINTER</item>
+        <item>SPRING</item>
+        <item>SUMMER</item>
+        <item>FALL</item>
+    </string-array>
+    <string-array name="title_season_names">
+        <item>Winter</item>
+        <item>Spring</item>
+        <item>Summer</item>
+        <item>Fall</item>
+    </string-array>
+    <plurals name="title_volumes">
+        <item quantity="one">%d vol</item>
+        <item quantity="other">%d vols</item>
+    </plurals>
+    <string name="title_notify_message">Release alerts</string>
+    <string name="title_favourite_added">Added to your favourites</string>
+    <string name="title_favourite_removed">Removed from your favourites</string>
+    <string name="title_favourite_failed">Could not change your favourites</string>
+    <string name="cd_notify">Release alerts</string>
+    <string name="cd_favourite">Add to favourites</string>
+    <string name="cd_unfavourite">Remove from favourites</string>
+    <string name="rate_limit_title">Too many requests</string>
+    <plurals name="rate_limit_wait">
+        <item quantity="one">AniList asked to wait. New try in %d second</item>
+        <item quantity="other">AniList asked to wait. New try in %d seconds</item>
+    </plurals>
+    <string name="title_alert_on">Alerts on</string>
+    <string name="title_alert_off">Alerts off</string>
+    <string name="title_section_themes">Openings and endings</string>
+    <string name="title_section_news">News</string>
+    <string name="title_theme_episodes">Episodes %1$s</string>
+    <string name="title_news_all">See all the news</string>
+    <string name="title_news_empty">No news yet</string>
+    <string name="title_section_covers">Covers</string>
+    <string name="title_cover_volume">Vol. %1$s</string>
+    <string name="title_list_status">Status</string>
+    <string name="title_list_progress">Episodes watched</string>
+    <string name="title_list_progress_total">%1$d / %2$d</string>
+    <string name="title_list_score">Your score</string>
+    <string name="title_list_repeat_anime">Times you watched it again</string>
+    <string name="title_list_repeat_manga">Times you read it again</string>
+    <string name="title_list_notes">Your notes</string>
+    <string name="title_list_save">Save</string>
+    <string name="title_list_saved">Saved on your list</string>
+    <string name="title_list_removed">Removed from your list</string>
+    <string name="title_list_failed">Could not change your list</string>
+    <string name="cd_list">Your list</string>
+    <string name="title_list_chapters">Chapters read</string>
+    <string name="title_list_volumes">Volumes read</string>
+    <string name="title_list_started">Start date</string>
+    <string name="title_list_ended">End date</string>
+    <string name="title_list_other">More options</string>
+    <string name="title_list_private">Private (only you see it)</string>
+    <string name="title_list_hidden">Hide from the lists by status</string>
+    <string name="title_list_delete">Delete</string>
+    <string name="title_list_clear">Clear</string>
+    <string name="title_list_no_score">No score</string>
+    <string name="title_list_started_ask">When did you start?</string>
+    <string name="title_list_ended_ask">When did you finish?</string>
+    <string name="title_list_today">Today</string>
+    <string name="title_list_score_scale">/ 10</string>
+    <string name="title_error">Could not load the title</string>
+    <string name="cd_share">Share</string>
     <string name="home_hero_meta">%1$d • %2$s</string>
     <string name="home_hero_meta_divider" translatable="false">" | "</string>
     <!-- Advisory ratings: the names of the groups in the order of the ages, shown to screen readers -->
@@ -298,6 +547,21 @@
     <string name="thanks_crunchyroll">Crunchyroll</string>
     <string name="thanks_crunchyroll_subtitle">Inspiration for the look of the Home and of the title</string>
     <string name="thanks_crunchyroll_address" translatable="false">https://www.crunchyroll.com</string>
+    <string name="thanks_jikan">Jikan</string>
+    <string name="thanks_jikan_subtitle">The openings and the endings of the anime, from MyAnimeList</string>
+    <string name="thanks_jikan_address" translatable="false">https://jikan.moe</string>
+    <string name="thanks_kuroiru">Kuroiru</string>
+    <string name="thanks_kuroiru_subtitle">The news of the anime, with the headlines of Anime News Network</string>
+    <string name="thanks_kuroiru_address" translatable="false">https://kuroiru.co</string>
+    <string name="thanks_mangabaka">MangaBaka</string>
+    <string name="thanks_mangabaka_subtitle">The news of the manga</string>
+    <string name="thanks_mangabaka_address" translatable="false">https://mangabaka.org</string>
+    <string name="thanks_youtube_player" translatable="false">android-youtube-player</string>
+    <string name="thanks_youtube_player_subtitle">The player that plays the trailers inside the page</string>
+    <string name="thanks_youtube_player_address" translatable="false">https://github.com/PierfrancescoSoffritti/android-youtube-player</string>
+    <string name="thanks_mangadex">MangaDex</string>
+    <string name="thanks_mangadex_subtitle">The covers of the volumes of the manga</string>
+    <string name="thanks_mangadex_address" translatable="false">https://mangadex.org</string>
     <string name="thanks_dantotsu">Dantotsu</string>
     <string name="thanks_dantotsu_subtitle">Inspiration for the header and for a client of AniList</string>
     <string name="thanks_dantotsu_address" translatable="false">https://github.com/itsmechinmoy/Dantotsu</string>

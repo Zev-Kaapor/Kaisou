@@ -116,6 +116,9 @@ class AniRecommended(val anime: List<AniCard>, val manga: List<AniCard>)
 
 // Reads the answer of the one request that brings every shelf
 object AniShelvesParser {
+    // What a card needs of a title, asked of AniList
+    const val CardFields = "id idMal isAdult title { romaji english } status format episodes chapters nextAiringEpisode { episode } startDate { year } averageScore meanScore bannerImage coverImage { extraLarge large }"
+
     private const val RecommendedSize = 20
 
     // What is recommended after the titles on the list of the user. The anime come from the recommendations of everything on the list,
@@ -259,7 +262,7 @@ object AniShelvesParser {
         return (0 until media.length()).mapNotNull { card(media.getJSONObject(it)) }
     }
 
-    private fun card(media: JSONObject?): AniCard? {
+    fun card(media: JSONObject?): AniCard? {
         if (media == null || media.isNull("id")) return null
         val title = media.optJSONObject("title")
         val cover = media.optJSONObject("coverImage")

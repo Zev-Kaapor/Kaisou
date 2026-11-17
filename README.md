@@ -46,7 +46,7 @@
 > **Early version** - Kaisou is being built one screen at a time. Version 0.1.0 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, and most buttons and tabs are still empty. It is a version to be tested, not a finished app.
 
 > [!NOTE]
-> **Your privacy** - Kaisou has no server of its own and does not track you. Your AniList access key is kept only on your phone and is left out of the Android backups. The app only talks to the services it needs: AniList for your account and your lists, TMDB, TheTVDB and ani.zip to find the posters, the logos, the ratings and the seasons of each title (the name and the id of the title are sent), MyAnimeList for the age rating (the id of the title is sent), Google Translate when a synopsis is translated (only the text of the synopsis is sent), the site that hosts a picture when a status of AniList shows one, and GitHub to look for a new version. More in the [FAQ](#faq).
+> **Your privacy** - Kaisou has no server of its own and does not track you. Your AniList access key is kept only on your phone and is left out of the Android backups. The app only talks to the services it needs: AniList for your account and your lists, TMDB, TheTVDB and ani.zip to find the posters, the logos, the ratings and the seasons of each title (the name and the id of the title are sent), MyAnimeList for the age rating (the id of the title is sent), Jikan, or one of its public mirrors, for the openings and the endings of an anime (the id of MyAnimeList is sent), YouTube when a trailer is played, in its own player (the id of the video is sent), MangaDex for the covers of a manga (the name and the id of AniList of the manga are sent), Kuroiru for the news of an anime (the id of MyAnimeList is sent), MangaBaka for the news of a manga (the id of AniList is sent), Google Translate when a synopsis is translated (only the text of the synopsis is sent), the site that hosts a picture when a status of AniList shows one, and GitHub to look for a new version. More in the [FAQ](#faq).
 
 ---
 
@@ -154,6 +154,14 @@ Nothing is being built right now.
 - The **synopsis in your language**, translated when it is not English
 - The **shelves** under it: continue watching and reading, the new episodes, what you plan, the sequels you missed, the recommendations, what is trending, popular, coming and new, in cards with the score, the age rating and how far you are
 - Pull down to look again, and the news of your friends come by themselves when the app opens and every few minutes
+
+#### 📺 Title
+- The top with the poster or the wide picture, the logo, the score, your list, the **heart** of your favourites and the **bell** of the release alerts
+- The synopsis in your language, the next episode with its countdown, and the **prequel and the sequel** one tap away
+- Tabs for the **details**, the **episodes or chapters** and the **community**
+- The places among the best with a star that is gold, silver and bronze for the first three, the data, all the tags with the ones that give away the story hidden, the trailer, which plays inside the page, the **covers of the volumes** of a manga from MangaDex, what is tied to it, the whole series in order, the characters, the staff, what people recommend and where to watch
+- The **openings and the endings** with their songs and the episodes they play in, from MyAnimeList, and under them the **news** of the title, from Anime News Network by Kuroiru for an anime and from MangaBaka for a manga
+- The friends that have it, the reviews, the scores, the lists and the threads
 
 #### 💬 Activity of the people
 - A **story** for each person you follow, with a piece of the ring for each thing they did in the last days, gray when you already saw it
@@ -456,6 +464,12 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
   </thead>
   <tbody>
     <tr>
+      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_youtube_player.webp" width="32" height="32" alt="android-youtube-player"></td>
+      <td><strong><a href="https://github.com/PierfrancescoSoffritti/android-youtube-player">android-youtube-player</a></strong></td>
+      <td><a href="https://github.com/PierfrancescoSoffritti">PierfrancescoSoffritti</a></td>
+      <td>The player that plays the trailers inside the page</td>
+    </tr>
+    <tr>
       <td align="center"><img src="https://github.com/AniList.png" width="32" height="32" alt="AniList &amp; ani.zip"></td>
       <td><strong>AniList &amp; ani.zip</strong></td>
       <td><a href="https://anilist.co">AniList</a></td>
@@ -478,6 +492,30 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
       <td><strong>Google Translate</strong></td>
       <td><a href="https://translate.google.com">Google LLC</a></td>
       <td>The translation of the synopses, through its public endpoint</td>
+    </tr>
+    <tr>
+      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_kuroiru.webp" width="32" height="32" alt="Kuroiru"></td>
+      <td><strong>Kuroiru</strong></td>
+      <td><a href="https://kuroiru.co">Kuroiru</a></td>
+      <td>The news of the anime, with the headlines of Anime News Network</td>
+    </tr>
+    <tr>
+      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_jikan.webp" width="32" height="32" alt="Jikan"></td>
+      <td><strong>Jikan</strong></td>
+      <td><a href="https://jikan.moe">Jikan</a></td>
+      <td>The openings and the endings of the anime, from MyAnimeList</td>
+    </tr>
+    <tr>
+      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_mangabaka.webp" width="32" height="32" alt="MangaBaka"></td>
+      <td><strong>MangaBaka</strong></td>
+      <td><a href="https://mangabaka.org">MangaBaka</a></td>
+      <td>The news of the manga</td>
+    </tr>
+    <tr>
+      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_mangadex.webp" width="32" height="32" alt="MangaDex"></td>
+      <td><strong>MangaDex</strong></td>
+      <td><a href="https://mangadex.org">MangaDex</a></td>
+      <td>The covers of the volumes of the manga</td>
     </tr>
     <tr>
       <td align="center"><img src="https://www.google.com/s2/favicons?domain=myanimelist.net&sz=128" width="32" height="32" alt="MyAnimeList"></td>
@@ -517,7 +555,7 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
 
 <h3>Thanks to the Services</h3>
 
-<p>Thank you to <strong>AniList</strong>, which gives the catalog, the lists and the sign in, to <strong>TMDB</strong>, to <strong>TheTVDB</strong> and to <strong>MyAnimeList</strong>, which give the pictures, the seasons and the ratings.<br>
+<p>Thank you to <strong>AniList</strong>, which gives the catalog, the lists and the sign in, to <strong>TMDB</strong>, to <strong>TheTVDB</strong> and to <strong>MyAnimeList</strong>, which give the pictures, the seasons and the ratings, to <strong>Jikan</strong>, which gives the openings and the endings, and to <strong>Kuroiru</strong> and <strong>MangaBaka</strong>, which give the news.<br>
 <em>This product uses the TMDB API but is not endorsed or certified by TMDB. Metadata provided by <a href="https://www.thetvdb.com">TheTVDB</a>. Kaisou is independent and is not affiliated with or endorsed by any of them.</em></p>
 
 <h3>Helper Tools</h3>
@@ -613,7 +651,7 @@ Kaisou is licensed under the **GNU General Public License v3.0**, see the [LICEN
 
 Kaisou is an open-source, non-commercial project developed for educational and personal use. This project is **not affiliated with, funded, authorized, endorsed by, or associated** with AniList, TMDB, TheTVDB, MyAnimeList, Crunchyroll, Google LLC, or any of their affiliates and subsidiaries.
 
-The names, the logos, the posters and the data of the titles belong to their owners and come from AniList, TMDB and TheTVDB, with which Kaisou has no agreement. If you own any of them and want it out of the app, open an issue and it will be taken out.
+The names, the logos, the posters and the data of the titles belong to their owners and come from AniList, TMDB, TheTVDB, MyAnimeList, Jikan, Kuroiru, MangaBaka and MangaDex, with which Kaisou has no agreement. If you own any of them and want it out of the app, open an issue and it will be taken out.
 
 All trademarks, service marks, and intellectual property rights referenced in this project belong to their respective owners. Kaisou does not host, store, or distribute any copyrighted media; it functions strictly as a client interface for publicly available content provided via third-party APIs.
 

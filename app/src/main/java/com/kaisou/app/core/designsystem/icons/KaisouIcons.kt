@@ -44,8 +44,36 @@ private fun fillIcon(name: String, path: String, grid: Float = IconGrid): ImageV
         addPath(pathData = PathParser().parsePathString(path).toNodes(), fill = SolidColor(Color.Black))
     }.build()
 
+// The bell that rings: a filled body with its clapper, and two waves of line on each side
+private const val BellRingingBodyPath =
+    "M12,4.4 C10.9,4.4 10,5.2 9.9,6.2 C7.6,7 6.1,9.2 6.1,12 V15.5 L4.7,18.4 C4.5,18.8 4.8,19.2 5.2,19.2 H18.8 C19.2,19.2 19.5,18.8 19.3,18.4 L17.9,15.5 V12 C17.9,9.2 16.4,7 14.1,6.2 C14,5.2 13.1,4.4 12,4.4 Z" +
+        "M9,20.6 H15 C14.5,21.7 13.4,22.3 12,22.3 C10.6,22.3 9.5,21.7 9,20.6 Z"
+private const val BellRingingWavesPath =
+    "M4,2.1 Q0.7,5.6 0.7,10.5 M6.3,4.3 Q3.5,6.7 3.5,10.5 M20,2.1 Q23.3,5.6 23.3,10.5 M17.7,4.3 Q20.5,6.7 20.5,10.5"
+private const val BellWaveStroke = 1.5f
+
+private fun ringingBellIcon(): ImageVector =
+    ImageVector.Builder(
+        name = "BellRinging",
+        defaultWidth = IconGrid.dp,
+        defaultHeight = IconGrid.dp,
+        viewportWidth = IconGrid,
+        viewportHeight = IconGrid
+    ).apply {
+        addPath(pathData = PathParser().parsePathString(BellRingingBodyPath).toNodes(), fill = SolidColor(Color.Black))
+        addPath(
+            pathData = PathParser().parsePathString(BellRingingWavesPath).toNodes(),
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = BellWaveStroke,
+            strokeLineCap = StrokeCap.Round
+        )
+    }.build()
+
 // Icons of the app, simple lines on a 24 grid
 object KaisouIcons {
+    // The bell when the releases of a title are being followed
+    val BellRinging = ringingBellIcon()
+
     val Search = strokeIcon(
         "Search",
         "M3 11a8 8 0 1 0 16 0a8 8 0 1 0-16 0",
@@ -151,6 +179,26 @@ object KaisouIcons {
         "Video",
         "m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5",
         "M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"
+    )
+    // The state of a title on the list of the user: not on it, being watched, being read, planned, done, done again, paused and dropped
+    val ListPlus = strokeIcon("ListPlus", "M11 12H3", "M16 6H3", "M16 18H3", "M18 9v6", "M21 12h-6")
+    val ListVideo = strokeIcon(
+        "ListVideo",
+        "M21 5H3", "M10 12H3", "M10 19H3",
+        "M15 12.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997a1 1 0 0 1-1.517-.86z"
+    )
+    val ListChecks = strokeIcon("ListChecks", "m3 17 2 2 4-4", "m3 7 2 2 4-4", "M13 6h8", "M13 12h8", "M13 18h8")
+    val BookOpen = strokeIcon(
+        "BookOpen",
+        "M12 7v14",
+        "M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"
+    )
+    val Clock = strokeIcon("Clock", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "M12 6v6l4 2")
+    val Repeat = strokeIcon("Repeat", "m17 2 4 4-4 4", "M3 11v-1a4 4 0 0 1 4-4h14", "m7 22-4-4 4-4", "M21 13v1a4 4 0 0 1-4 4H3")
+    val Pause = strokeIcon(
+        "Pause",
+        "M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z",
+        "M6 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"
     )
     val Heart = strokeIcon(
         "Heart",

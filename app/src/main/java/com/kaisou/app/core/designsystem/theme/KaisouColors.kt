@@ -17,6 +17,14 @@ data class KaisouColors(
     val textShadow: Color,
     val iconShadow: Color,
     val numberHighlight: Color,
+    // The stars of the places a title has among the best: gold, silver and bronze for the first three, then one for the first ten, one for
+    // the first fifty and one for the first hundred
+    val medalGold: Color,
+    val medalSilver: Color,
+    val medalBronze: Color,
+    val rankTopTen: Color,
+    val rankTopFifty: Color,
+    val rankTopHundred: Color,
     // Tag with the day of the week of a weekly release and what is drawn over it
     val weeklyBadge: Color,
     val onWeeklyBadge: Color,
@@ -51,6 +59,12 @@ val KaisouPalette = KaisouColors(
     textShadow = Color(0xFF000000),
     iconShadow = Color(0xFF000000),
     numberHighlight = Color(0xFFFFFFFF),
+    medalGold = Color(0xFFFFC53D),
+    medalSilver = Color(0xFFC9CED8),
+    medalBronze = Color(0xFFD08A4E),
+    rankTopTen = Color(0xFF34D399),
+    rankTopFifty = Color(0xFF60A5FA),
+    rankTopHundred = Color(0xFFF472B6),
     weeklyBadge = Color(0xFF1578C8),
     onWeeklyBadge = OnFilled,
     onAccentFill = OnFilled,

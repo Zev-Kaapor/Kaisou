@@ -82,6 +82,29 @@ fun QuietButton(
     )
 }
 
+// Pill button with no fill, only an outline and the label in the accent, for what says the state of something
+@Composable
+fun OutlineButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    leading: (@Composable () -> Unit)? = null,
+    enabled: Boolean = true,
+    grouped: Boolean = false
+) {
+    val accent = MaterialTheme.colorScheme.primary
+
+    PillButton(
+        text = text,
+        textColor = accent,
+        onClick = onClick,
+        modifier = modifier.border(ComponentDimens.ButtonBorder, accent, CircleShape),
+        leading = leading,
+        enabled = enabled,
+        grouped = grouped
+    )
+}
+
 // A plain icon for the start of a pill button, in the same area a badge or a spinner takes
 @Composable
 fun ButtonIcon(

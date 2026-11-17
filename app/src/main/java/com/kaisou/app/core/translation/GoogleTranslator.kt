@@ -30,6 +30,8 @@ object GoogleTranslator {
     private const val TimeoutMillis = 10_000
     private const val CacheMillis = 60L * 60L * 1000L
     private const val MaxEntries = 100
+    // How many texts of a list go in one request
+    private const val LinesPerRequest = 15
     private const val Tag = "GoogleTranslator"
     // What is kept on the disk and for how long: a month, a translation does not change
     private const val StoreSpace = "translation"
@@ -50,6 +52,20 @@ object GoogleTranslator {
         cache.put(key, translated)
         return translated
     }
+
+    // A list of short texts in the language given, a few in each request with one in each line. A group that fails, or does not come back
+    // line by line, keeps its texts as they came
+    suspend fun translateLines(texts: List<String>, language: String): List<String> =
+        texts.chunked(LinesPerRequest).flatMap { group ->
+            val clean = group.map { it.replace('\n', ' ').trim() }
+            val lines = translate(clean.joinToString("\n"), language)?.lines()?.map { it.trim() }
+            if (lines == null || lines.size != group.size) {
+                Log.w(Tag, "Lines not translated: ${lines?.size} lines for ${group.size} texts")
+                group
+            } else {
+                group.mapIndexed { index, text -> lines[index].ifEmpty { text } }
+            }
+        }
 
     // The answer of the first way is a list of pieces, each with its translation first and the original after it
     fun parse(body: String): String? {

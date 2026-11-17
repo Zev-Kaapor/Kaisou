@@ -166,7 +166,7 @@ class HomeMapper(private val resources: Resources) {
     // The format and how long a title is, like TV and 12 episodes, or only what is known of them. A title that is not out yet says
     // it is coming soon where its length would be, and one that is still going and has no total says how many aired so far, or that it
     // is going on, since AniList only gives a total when there is an end
-    private fun size(card: AniCard): String {
+    fun size(card: AniCard): String {
         val format = card.format?.let { formatNames[it] }
         val length = when {
             card.status == NotYetReleased -> resources.getString(R.string.home_card_soon)
@@ -183,7 +183,7 @@ class HomeMapper(private val resources: Resources) {
 
     // Every card has the score of its title on the scale of ten. The wide ones use the banner of the title when it has one, and the
     // cover when it does not
-    private fun card(
+    fun card(
         source: AniCard,
         details: String = "",
         episode: Int? = null,

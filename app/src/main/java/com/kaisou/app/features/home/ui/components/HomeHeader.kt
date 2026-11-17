@@ -174,7 +174,7 @@ private fun AccountInfo(viewer: AniViewer?, modifier: Modifier = Modifier) {
 
 // Plain round button with an icon and, when asked, the counter of what is new on its corner
 @Composable
-private fun HeaderAction(
+fun HeaderAction(
     icon: ImageVector,
     contentDescription: String,
     onClick: () -> Unit,

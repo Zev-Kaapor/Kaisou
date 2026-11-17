@@ -104,6 +104,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.youtube.player)
     testImplementation(libs.junit)
     // The JSON of Android is only a stub on the machine, the tests that read JSON need the real one
     testImplementation(libs.org.json)

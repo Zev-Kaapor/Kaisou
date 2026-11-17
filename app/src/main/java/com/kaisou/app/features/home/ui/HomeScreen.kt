@@ -59,6 +59,7 @@ import com.kaisou.app.features.home.ui.components.StoryViewer
 fun HomeScreen(
     viewer: AniViewer,
     onProfile: () -> Unit,
+    onOpenTitle: (Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -135,12 +136,13 @@ fun HomeScreen(
                         height = heroHeight,
                         landscape = landscape,
                         onPlay = {},
-                        onAddToList = {}
+                        onAddToList = {},
+                        onOpenTitle = onOpenTitle
                     )
                 }
                 // What is under the hero: the user and the friends, then the shelves that have something on them
                 item(key = "friends") { HomeFriends(own = own, friends = state.friends, seen = state.seen, onOpen = { openStory = it.userId }, onAdd = viewModel::openComposer) }
-                items(state.shelves, key = { it.id.name }) { shelf -> HomeShelf(shelf = shelf) }
+                items(state.shelves, key = { it.id.name }) { shelf -> HomeShelf(shelf = shelf, onOpenTitle = onOpenTitle) }
               }
             }
         }

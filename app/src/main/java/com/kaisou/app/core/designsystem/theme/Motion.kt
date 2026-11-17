@@ -15,6 +15,9 @@ object KaisouMotion {
     // How far a screen slides when it comes in or goes out, as a fraction of its width
     const val PageSlideDivisor = 8
 
+    // A block of text opening to show all of it and closing back
+    const val ExpandMillis = 320
+
     // Loading placeholders, one light sweep and the wait before the next one
     const val SkeletonSweepMillis = 900
     const val SkeletonPauseMillis = 300

@@ -343,6 +343,15 @@ class AniListClient {
             null
         }
 
+    // Any question to AniList, for the screens that own their query: the data of the answer, null when there was none or it failed
+    suspend fun query(query: String, variables: JSONObject, token: String?): JSONObject? = withContext(Dispatchers.IO) {
+        try {
+            post(query, variables, token)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     // Asks AniList and gives the data of the answer, null when there was none. When AniList asks for rest the request waits for it
     private fun post(query: String, variables: JSONObject, token: String?): JSONObject? = Gates.AniList.run { postOnce(query, variables, token) }
 
@@ -355,6 +364,8 @@ class AniListClient {
             connection.doOutput = true
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Accept", "application/json")
+            // What AniList says is always asked again from it, never taken from a copy on the way
+            connection.setRequestProperty("Cache-Control", "no-cache")
             if (token != null) connection.setRequestProperty("Authorization", "Bearer $token")
             connection.outputStream.use {
                 it.write(JSONObject().put("query", query).put("variables", variables).toString().toByteArray())
@@ -459,7 +470,7 @@ class AniListClient {
         const val NewEpisodesSeconds = 48L * 60L * 60L
 
         // What a card of a shelf needs of a title, and how many of each list and of the new episodes come
-        const val ShelfCard = "id idMal isAdult title { romaji english } status format episodes chapters nextAiringEpisode { episode } startDate { year } averageScore meanScore bannerImage coverImage { extraLarge large }"
+        const val ShelfCard = AniShelvesParser.CardFields
         const val ShelfSize = 20
         const val AiredSize = 50
         const val ActivitySize = 50

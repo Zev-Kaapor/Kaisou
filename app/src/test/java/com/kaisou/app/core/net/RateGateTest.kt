@@ -44,6 +44,18 @@ class RateGateTest {
         assertTrue(System.currentTimeMillis() - started < 80)
     }
 
+    @Test
+    fun theScreenIsToldOfTheRestOnceWhileItIsOn() {
+        val gate = gate()
+        val told = mutableListOf<Long>()
+        gate.onRest = { told += it }
+        var calls = 0
+        gate.run { calls++; if (calls <= 2) throw TooManyRequests(60) else Unit }
+        // The second turn away asks for a rest that ends no later than the one that is on, so it is not told again
+        assertEquals(listOf(60L), told.take(1))
+        assertTrue(told.size <= 2)
+    }
+
     @Test(expected = IllegalStateException::class)
     fun anyOtherFailureGoesUpAsItIs() {
         gate().run<String> { throw IllegalStateException("broken") }

@@ -49,10 +49,15 @@ private class Thanks(
 
 // The projects, the sites and the apps that inspired Kaisou, the order is made by their names
 private val SpecialThanks = listOf(
+    Thanks(R.string.thanks_youtube_player, R.string.thanks_youtube_player_subtitle, R.string.thanks_youtube_player_address, pictureRes = R.drawable.thanks_youtube_player),
     Thanks(R.string.thanks_anilist, R.string.thanks_anilist_subtitle, R.string.thanks_anilist_address, pictureRes = R.drawable.ic_anilist),
     Thanks(R.string.thanks_crunchyroll, R.string.thanks_crunchyroll_subtitle, R.string.thanks_crunchyroll_address, R.drawable.thanks_crunchyroll),
     Thanks(R.string.thanks_dantotsu, R.string.thanks_dantotsu_subtitle, R.string.thanks_dantotsu_address, R.drawable.thanks_dantotsu),
     Thanks(R.string.thanks_google_translate, R.string.thanks_google_translate_subtitle, R.string.thanks_google_translate_address, R.drawable.thanks_google_translate),
+    Thanks(R.string.thanks_jikan, R.string.thanks_jikan_subtitle, R.string.thanks_jikan_address, R.drawable.thanks_jikan),
+    Thanks(R.string.thanks_kuroiru, R.string.thanks_kuroiru_subtitle, R.string.thanks_kuroiru_address, R.drawable.thanks_kuroiru),
+    Thanks(R.string.thanks_mangabaka, R.string.thanks_mangabaka_subtitle, R.string.thanks_mangabaka_address, R.drawable.thanks_mangabaka),
+    Thanks(R.string.thanks_mangadex, R.string.thanks_mangadex_subtitle, R.string.thanks_mangadex_address, R.drawable.thanks_mangadex),
     Thanks(R.string.thanks_myanimelist, R.string.thanks_myanimelist_subtitle, R.string.thanks_myanimelist_address, R.drawable.thanks_myanimelist),
     Thanks(R.string.thanks_thetvdb, R.string.thanks_thetvdb_subtitle, R.string.thanks_thetvdb_address, R.drawable.thanks_thetvdb),
     Thanks(R.string.thanks_tmdb, R.string.thanks_tmdb_subtitle, R.string.thanks_tmdb_address, R.drawable.thanks_tmdb),
