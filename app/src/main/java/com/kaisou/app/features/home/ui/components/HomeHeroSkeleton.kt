@@ -27,7 +27,11 @@ import androidx.compose.runtime.remember
 // UI styling and utilities
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 // Project resources
@@ -79,16 +83,14 @@ fun HomeHeroSkeleton(
             // down it is the right half
             val headerHeight = WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding() + HomeDimens.HeaderAction
             if (landscape) {
-                // The art block on the right, with its left edge melting into the page like the real art
+                // The art block on the right, with its left edge and its bottom melting into the page like the real art
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .fillMaxWidth(HomeDimens.HeroLandscapeArtFraction)
                         .fillMaxHeight()
-                        .background(art)
-                ) {
-                    HeroArtEdgeFade()
-                }
+                        .meltingArt(art)
+                )
                 ArtIcon(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
@@ -115,6 +117,33 @@ fun HomeHeroSkeleton(
             }
         }
     }
+}
+
+// The art lying down as a block that melts into the page on its left edge and at its bottom by becoming transparent, and not by being
+// covered with the color of the page, so the light of the sweep only shows where the art is and there is no edge where the block ends
+@Composable
+private fun Modifier.meltingArt(color: Color): Modifier {
+    val bottom = HomeDimens.HeroLandscapeBottomFade
+    val left = remember {
+        val stops = HomeDimens.HeroArtEdgeFadeStops.map { (at, cover) -> at * HomeDimens.HeroArtEdgeFadeReach to Color.Black.copy(alpha = 1f - cover) }
+        Brush.horizontalGradient(*stops.toTypedArray(), 1f to Color.Black)
+    }
+    val down = remember {
+        Brush.verticalGradient(
+            1f - bottom to Color.Black,
+            1f - bottom * 0.6f to Color.Black.copy(alpha = 0.65f),
+            1f - bottom * 0.25f to Color.Black.copy(alpha = 0.2f),
+            1f to Color.Transparent
+        )
+    }
+
+    return graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+        .background(color)
+        .drawWithContent {
+            drawContent()
+            drawRect(brush = left, blendMode = BlendMode.DstIn)
+            drawRect(brush = down, blendMode = BlendMode.DstIn)
+        }
 }
 
 // The icon of an image in the middle of the room it is given

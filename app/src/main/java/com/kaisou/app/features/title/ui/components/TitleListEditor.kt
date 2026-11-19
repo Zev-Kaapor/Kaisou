@@ -1,7 +1,6 @@
 package com.kaisou.app.features.title.ui.components
 
 // Compose layouts and foundations
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +19,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
@@ -39,6 +38,7 @@ import androidx.compose.material3.rememberDatePickerState
 // Compose state and runtime
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -47,12 +47,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -78,12 +80,15 @@ import com.kaisou.app.core.designsystem.components.LocalSheetClose
 import com.kaisou.app.core.designsystem.components.OutlineIconButton
 import com.kaisou.app.core.designsystem.components.PrimaryButton
 import com.kaisou.app.core.designsystem.components.SheetCloseButton
+import com.kaisou.app.core.designsystem.components.scrollIndicator
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouMotion
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.title.data.ListDraft
+import com.kaisou.app.features.title.data.ListOptions
 import com.kaisou.app.features.title.data.ListStatus
 import com.kaisou.app.features.title.data.ReleaseState
+import com.kaisou.app.features.title.data.ScoreFormat
 import com.kaisou.app.features.title.data.TitleUi
 import com.kaisou.app.features.title.ui.TitleDimens
 
@@ -94,9 +99,12 @@ import com.kaisou.app.features.title.ui.TitleDimens
 // planned one when it is not out
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ListEditorSheet(title: TitleUi, onSave: (ListDraft) -> Unit, onRemove: () -> Unit, onDismiss: () -> Unit) {
+fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -> Unit, onRemove: () -> Unit, onDismiss: () -> Unit) {
     val dimens = KaisouTheme.dimens
     val entry = title.entry
+    // What the account says: how the score is given and the lists of the user. Until it is known the score is from 0 to 10
+    val account = options ?: ListOptions()
+    val format = account.scoreFormat
     val totalUnits = (if (title.manga) title.chapters else title.episodes)?.takeIf { it > 0 }
     val totalVolumes = title.volumes?.takeIf { it > 0 }
     var status by rememberSaveable {
@@ -105,6 +113,10 @@ fun ListEditorSheet(title: TitleUi, onSave: (ListDraft) -> Unit, onRemove: () ->
     var progress by rememberSaveable { mutableStateOf(entry?.progress ?: 0) }
     var volumes by rememberSaveable { mutableStateOf(entry?.progressVolumes ?: 0) }
     var score by rememberSaveable { mutableStateOf(entry?.score?.takeIf { it > 0f }?.let(::scoreText).orEmpty()) }
+    var lists by rememberSaveable { mutableStateOf(entry?.customLists.orEmpty()) }
+    var advanced by rememberSaveable {
+        mutableStateOf(account.advancedScoring.map { name -> entry?.advancedScores?.get(name)?.takeIf { it > 0f }?.let(::scoreText).orEmpty() })
+    }
     var started by rememberSaveable { mutableStateOf(entry?.startedAt?.toEpochDay()) }
     var ended by rememberSaveable { mutableStateOf(entry?.completedAt?.toEpochDay()) }
     var repeat by rememberSaveable { mutableStateOf(entry?.repeat ?: 0) }
@@ -112,6 +124,14 @@ fun ListEditorSheet(title: TitleUi, onSave: (ListDraft) -> Unit, onRemove: () ->
     var isPrivate by rememberSaveable { mutableStateOf(entry?.isPrivate ?: false) }
     var hidden by rememberSaveable { mutableStateOf(entry?.hidden ?: false) }
     var moreOpen by rememberSaveable { mutableStateOf(false) }
+    val density = LocalDensity.current
+    val scroll = rememberScrollState()
+    var moreFull by remember { mutableIntStateOf(0) }
+    val moreHeight by animateIntAsState(
+        targetValue = if (moreOpen) moreFull else 0,
+        animationSpec = tween(KaisouMotion.ExpandMillis, easing = FastOutSlowInEasing),
+        label = "listMore"
+    )
     // What was there before the title was made done, to put back when the user changes their mind
     var backup by remember { mutableStateOf<Backup?>(null) }
     val names = stringArrayResource(if (title.manga) R.array.title_list_names_manga else R.array.title_list_names_anime)
@@ -158,7 +178,8 @@ fun ListEditorSheet(title: TitleUi, onSave: (ListDraft) -> Unit, onRemove: () ->
         Column(
             modifier = Modifier
                 .imePadding()
-                .verticalScroll(rememberScrollState())
+                .scrollIndicator(scroll)
+                .verticalScroll(scroll)
                 .padding(horizontal = dimens.screenPadding)
                 .padding(bottom = dimens.spaceLarge),
             verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
@@ -240,36 +261,13 @@ fun ListEditorSheet(title: TitleUi, onSave: (ListDraft) -> Unit, onRemove: () ->
                     }
                 }
             }
-            // The score is written, from 0 to 10, over a line at the end of its row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.large)
-                    .background(KaisouTheme.colors.elevated)
-                    .padding(dimens.spaceMedium),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
-            ) {
-                Icon(imageVector = KaisouIcons.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(TitleDimens.ListIcon))
-                Text(
-                    text = stringResource(R.string.title_list_score),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f)
-                )
-                WriteBox(
-                    value = score,
-                    onValueChange = { score = it.takeIf(::isScoreText) ?: score },
-                    placeholder = stringResource(R.string.title_list_no_score),
-                    keyboardType = KeyboardType.Decimal,
-                    width = TitleDimens.ListScoreBox
-                )
-                Text(
-                    text = stringResource(R.string.title_list_score_scale),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            // The score in the way the user chose on AniList: a number to write, five stars or three faces
+            ScoreRow(
+                format = format,
+                label = stringResource(R.string.title_list_score),
+                value = score,
+                onValueChange = { score = it }
+            )
             // The two days side by side
             Row(horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
                 DayPill(label = stringResource(R.string.title_list_started), ask = stringResource(R.string.title_list_started_ask), day = started, onChange = { started = it }, modifier = Modifier.weight(1f))
@@ -279,7 +277,7 @@ fun ListEditorSheet(title: TitleUi, onSave: (ListDraft) -> Unit, onRemove: () ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(role = Role.Button) { moreOpen = !moreOpen }
+                    .clickable(interactionSource = null, indication = null, role = Role.Button) { moreOpen = !moreOpen }
                     .padding(vertical = dimens.spaceExtraSmall),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -296,9 +294,13 @@ fun ListEditorSheet(title: TitleUi, onSave: (ListDraft) -> Unit, onRemove: () ->
                     modifier = Modifier.size(TitleDimens.ListIcon)
                 )
             }
-            AnimatedVisibility(visible = moreOpen) {
+            // The box has the height of what is inside it while it is open and none while it is closed, and the height is what moves, so the
+            // end of the movement is the place it was going to
+            Box(modifier = Modifier.fillMaxWidth().height(with(density) { moreHeight.toDp() }).clipToBounds()) {
                 Column(
                     modifier = Modifier
+                        .wrapContentHeight(align = Alignment.Top, unbounded = true)
+                        .onSizeChanged { moreFull = it.height }
                         .fillMaxWidth()
                         .clip(MaterialTheme.shapes.large)
                         .background(KaisouTheme.colors.elevated)
@@ -315,6 +317,42 @@ fun ListEditorSheet(title: TitleUi, onSave: (ListDraft) -> Unit, onRemove: () ->
                         StepButton(symbol = MinusSymbol, onClick = { repeat = (repeat - 1).coerceAtLeast(0) })
                         NumberInput(value = repeat, max = MaxRepeat, onValueChange = { repeat = it }, suffix = null, big = false)
                         StepButton(symbol = PlusSymbol, onClick = { repeat = (repeat + 1).coerceAtMost(MaxRepeat) })
+                    }
+                    if (account.advancedScoring.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.title_list_advanced),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        account.advancedScoring.forEachIndexed { index, name ->
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
+                                Text(
+                                    text = advancedLabel(name),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                WriteBox(
+                                    value = advanced.getOrElse(index) { "" },
+                                    onValueChange = { text ->
+                                        if (isScoreText(format, text)) advanced = advanced.toMutableList().also { it[index] = text }
+                                    },
+                                    placeholder = "0",
+                                    keyboardType = if (format == ScoreFormat.Point10Decimal) KeyboardType.Decimal else KeyboardType.Number,
+                                    width = TitleDimens.ListScoreBox
+                                )
+                            }
+                        }
+                    }
+                    if (account.customLists.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.title_list_custom),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        account.customLists.forEach { name ->
+                            SwitchLine(name, name in lists) { on -> lists = if (on) lists + name else lists - name }
+                        }
                     }
                     SwitchLine(stringResource(R.string.title_list_private), isPrivate) { isPrivate = it }
                     SwitchLine(stringResource(R.string.title_list_hidden), hidden) { hidden = it }
@@ -365,6 +403,8 @@ fun ListEditorSheet(title: TitleUi, onSave: (ListDraft) -> Unit, onRemove: () ->
                                 progress = progress,
                                 progressVolumes = volumes,
                                 score = score.replace(',', '.').toFloatOrNull() ?: 0f,
+                                customLists = lists.takeIf { account.customLists.isNotEmpty() },
+                                advancedScores = advanced.map { it.replace(',', '.').toFloatOrNull() ?: 0f }.takeIf { account.advancedScoring.isNotEmpty() },
                                 repeat = repeat,
                                 notes = notes.trim(),
                                 isPrivate = isPrivate,
@@ -440,16 +480,14 @@ private fun ProgressBar(fraction: Float?) {
     }
 }
 
-// A number that is written over a line, with how many there are in all after it when there is a total, big when it is the one that matters. It
-// counts to its new value instead of jumping
+// A number that is written over a line, with how many there are in all after it when there is a total, big when it is the one that matters
 @Composable
 private fun NumberInput(value: Int, max: Int, onValueChange: (Int) -> Unit, suffix: String?, big: Boolean) {
     val dimens = KaisouTheme.dimens
-    val shown by animateIntAsState(targetValue = value, animationSpec = tween(NumberMillis, easing = FastOutSlowInEasing), label = "listNumber")
 
     Row(modifier = Modifier.padding(horizontal = dimens.spaceSmall), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
         WriteBox(
-            value = if (shown == 0) "" else shown.toString(),
+            value = if (value == 0) "" else value.toString(),
             onValueChange = { text -> onValueChange((text.filter(Char::isDigit).take(MaxDigits).toIntOrNull() ?: 0).coerceAtMost(max)) },
             placeholder = "0",
             keyboardType = KeyboardType.Number,
@@ -549,7 +587,10 @@ private fun DayPill(label: String, ask: String, day: Long?, onChange: (Long?) ->
         }
     }
     if (picking) {
-        val state = rememberDatePickerState(initialSelectedDateMillis = (day ?: LocalDate.now().toEpochDay()) * MillisPerDay)
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = (day ?: LocalDate.now().toEpochDay()) * MillisPerDay,
+            yearRange = FirstYear..LocalDate.now().year
+        )
         val colors = KaisouTheme.colors
         val primary = MaterialTheme.colorScheme.primary
         DatePickerDialog(
@@ -623,11 +664,92 @@ private fun SwitchLine(text: String, checked: Boolean, onChange: (Boolean) -> Un
     }
 }
 
-// The text of a score being written: nothing, or a number from 0 to 10 with one decimal at most, with a dot or a comma
-private fun isScoreText(text: String): Boolean {
+// The highest score of each way to give it
+private fun scoreMax(format: ScoreFormat): Float =
+    when (format) {
+        ScoreFormat.Point100 -> 100f
+        ScoreFormat.Point5 -> 5f
+        ScoreFormat.Point3 -> 3f
+        else -> MaxScore
+    }
+
+// The text of a score being written: nothing, or a number up to the highest of the way to give it, with one decimal at most and with a dot
+// or a comma only when the way allows it
+private fun isScoreText(format: ScoreFormat, text: String): Boolean {
     if (text.isEmpty()) return true
-    if (!Regex("""\d{1,2}([.,]\d?)?""").matches(text)) return false
-    return (text.replace(',', '.').toFloatOrNull() ?: return false) <= MaxScore
+    val pattern = if (format == ScoreFormat.Point10Decimal) Regex("""\d{1,2}([.,]\d?)?""") else Regex("""\d{1,3}""")
+    if (!pattern.matches(text)) return false
+    return (text.replace(',', '.').toFloatOrNull() ?: return false) <= scoreMax(format)
+}
+
+// The score as a row of its own: a number written over a line, five stars or three faces, by the way the user chose to give it
+@Composable
+private fun ScoreRow(format: ScoreFormat, label: String, value: String, onValueChange: (String) -> Unit) {
+    val dimens = KaisouTheme.dimens
+    val chosen = value.replace(',', '.').toFloatOrNull()?.toInt() ?: 0
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(KaisouTheme.colors.elevated)
+            .padding(dimens.spaceMedium),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
+    ) {
+        Icon(imageVector = KaisouIcons.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(TitleDimens.ListIcon))
+        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+        when (format) {
+            // Five stars: a tap on one gives its number, and a tap on the one that is chosen takes the score away
+            ScoreFormat.Point5 -> repeat(StarCount) { index ->
+                val number = index + 1
+                Icon(
+                    imageVector = KaisouIcons.Star,
+                    contentDescription = null,
+                    tint = if (number <= chosen) KaisouTheme.colors.medalGold else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = FaintAlpha),
+                    modifier = Modifier
+                        .size(TitleDimens.ListScoreIcon)
+                        .clip(CircleShape)
+                        .clickable(role = Role.Button) { onValueChange(if (number == chosen) "" else number.toString()) }
+                )
+            }
+            // Three faces, the sad one, the neutral one and the happy one
+            ScoreFormat.Point3 -> listOf(KaisouIcons.Frown, KaisouIcons.Meh, KaisouIcons.Smile).forEachIndexed { index, face ->
+                val number = index + 1
+                Icon(
+                    imageVector = face,
+                    contentDescription = null,
+                    tint = if (number == chosen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = FaintAlpha),
+                    modifier = Modifier
+                        .size(TitleDimens.ListScoreIcon)
+                        .clip(CircleShape)
+                        .clickable(role = Role.Button) { onValueChange(if (number == chosen) "" else number.toString()) }
+                )
+            }
+            else -> {
+                WriteBox(
+                    value = value,
+                    onValueChange = { text -> if (isScoreText(format, text)) onValueChange(text) },
+                    placeholder = "0",
+                    keyboardType = if (format == ScoreFormat.Point10Decimal) KeyboardType.Decimal else KeyboardType.Number,
+                    width = TitleDimens.ListScoreBox
+                )
+                Text(
+                    text = stringResource(if (format == ScoreFormat.Point100) R.string.title_list_score_scale_100 else R.string.title_list_score_scale),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+// The name of a part of the detailed score, in the language of the app when it is one of the five that AniList starts with
+@Composable
+private fun advancedLabel(name: String): String {
+    val keys = stringArrayResource(R.array.title_advanced_keys)
+    val names = stringArrayResource(R.array.title_advanced_names)
+    return names.getOrNull(keys.indexOf(name)) ?: name
 }
 
 private fun scoreText(score: Float): String =
@@ -637,12 +759,14 @@ private const val MinusSymbol = "−"
 private const val PlusSymbol = "+"
 private const val EmptyValue = "—"
 private const val MaxUnits = 5000
+private const val FirstYear = 1900
 private const val MaxRepeat = 99
 private const val MaxDigits = 4
 private const val MaxScore = 10f
+private const val StarCount = 5
+private const val FaintAlpha = 0.35f
 private const val StatusesPerLine = 3
 private const val PercentScale = 100
-private const val NumberMillis = 350
 private const val MillisPerDay = 86_400_000L
 private const val NotesMinLines = 2
 private const val NotesMaxLines = 5

@@ -161,6 +161,16 @@
         <item>Principal</item>
         <item>Coadjuvante</item>
         <item>Figurante</item>
+        <item>Criador original</item>
+        <item>História</item>
+        <item>Arte</item>
+        <item>História e arte</item>
+        <item>Direção</item>
+        <item>Direção-chefe</item>
+        <item>Composição da série</item>
+        <item>Design de personagens</item>
+        <item>Música</item>
+        <item>Design original de personagens</item>
     </string-array>
     <string-array name="title_list_names_anime">
         <item>Assistindo</item>
@@ -168,7 +178,7 @@
         <item>Completo</item>
         <item>Reassistindo</item>
         <item>Pausado</item>
-        <item>Largado</item>
+        <item>Dropado</item>
     </string-array>
     <string-array name="title_list_names_manga">
         <item>Lendo</item>
@@ -176,7 +186,7 @@
         <item>Completo</item>
         <item>Relendo</item>
         <item>Pausado</item>
-        <item>Largado</item>
+        <item>Dropado</item>
     </string-array>
     <plurals name="title_replies">
         <item quantity="one">%d resposta</item>
@@ -254,7 +264,6 @@
         <item quantity="many">%d vols.</item>
         <item quantity="other">%d vols.</item>
     </plurals>
-    <string name="title_notify_message">Avisos de lançamento</string>
     <string name="title_favourite_added">Adicionado aos seus favoritos</string>
     <string name="title_favourite_removed">Removido dos seus favoritos</string>
     <string name="title_favourite_failed">Não foi possível mudar seus favoritos</string>
@@ -276,9 +285,7 @@
     <string name="title_news_empty">Ainda não há notícias</string>
     <string name="title_section_covers">Capas</string>
     <string name="title_cover_volume">Vol. %1$s</string>
-    <string name="title_list_status">Status</string>
     <string name="title_list_progress">Episódios assistidos</string>
-    <string name="title_list_progress_total">%1$d / %2$d</string>
     <string name="title_list_score">Sua nota</string>
     <string name="title_list_repeat_anime">Vezes que você reassistiu</string>
     <string name="title_list_repeat_manga">Vezes que você releu</string>
@@ -297,11 +304,137 @@
     <string name="title_list_hidden">Esconder das listas por status</string>
     <string name="title_list_delete">Excluir</string>
     <string name="title_list_clear">Limpar</string>
-    <string name="title_list_no_score">Sem nota</string>
     <string name="title_list_started_ask">Quando você começou?</string>
     <string name="title_list_ended_ask">Quando você terminou?</string>
     <string name="title_list_today">Hoje</string>
     <string name="title_list_score_scale">/ 10</string>
+    <string name="title_alert_off_note">Você não receberá mais avisos deste título</string>
+    <string name="title_list_custom">Suas listas</string>
+    <string name="title_list_advanced">Nota detalhada</string>
+    <string name="title_list_score_scale_100">/ 100</string>
+    <string-array name="title_advanced_names">
+        <item>História</item>
+        <item>Personagens</item>
+        <item>Visual</item>
+        <item>Áudio</item>
+        <item>Diversão</item>
+    </string-array>
+    <string name="profile_about">Sobre</string>
+    <string name="profile_gender">Gênero</string>
+    <string name="profile_age">Idade</string>
+    <string name="profile_birthday">Aniversário</string>
+    <string name="profile_blood">Tipo sanguíneo</string>
+    <string name="profile_nicknames">Também chamado de</string>
+    <string name="profile_occupations">Ocupações</string>
+    <string name="profile_died">Falecimento</string>
+    <string name="profile_home">Cidade natal</string>
+    <string name="profile_years">Anos de atuação</string>
+    <string name="profile_language">Idioma</string>
+    <string name="profile_female">Feminino</string>
+    <string name="profile_male">Masculino</string>
+    <string name="profile_years_range">%1$d a %2$s</string>
+    <string name="profile_today">hoje</string>
+    <string name="profile_voices">Dubladores</string>
+    <string name="profile_appears">Aparece em</string>
+    <string name="profile_voiced">Personagens que dublou</string>
+    <string name="profile_works">Trabalhos</string>
+    <string name="profile_productions">Produções</string>
+    <string name="cast_see_all">Ver todos</string>
+    <string name="profile_nicknames_spoiler">Nomes que entregam a história</string>
+    <string name="profile_type_anime">Anime</string>
+    <string name="profile_type_manga">Mangá</string>
+    <string name="profile_on_list">Na minha lista</string>
+    <string name="profile_sort_popular">Popularidade</string>
+    <string name="profile_sort_newest">Mais recentes</string>
+    <string name="profile_sort_score">Nota</string>
+    <string name="profile_year_unknown">Sem data</string>
+    <string name="profile_media_empty">Nada por aqui</string>
+    <string name="title_data_weighted">Nota ponderada</string>
+    <string name="title_data_mean">Nota média</string>
+    <string name="title_data_percent">%1$d%%</string>
+    <string name="title_data_hashtag">Hashtag</string>
+    <string name="title_data_genres">Gêneros</string>
+    <string name="profile_sort_favourites">Favoritos</string>
+    <string name="profile_sort_oldest">Mais antigos</string>
+    <string name="profile_sort_title">Título</string>
+    <string name="profile_tab_voices">Dublagens</string>
+    <string name="profile_sort">Ordenar</string>
+    <string name="profile_year_count">%1$s · %2$s</string>
+    <plurals name="profile_titles_count">
+        <item quantity="one">%d obra</item>
+        <item quantity="many">%d obras</item>
+        <item quantity="other">%d obras</item>
+    </plurals>
+    <plurals name="profile_favourites">
+        <item quantity="one">%s favorito</item>
+        <item quantity="many">%s favoritos</item>
+        <item quantity="other">%s favoritos</item>
+    </plurals>
+    <string name="dub_language">Vozes: %1$s</string>
+    <string name="profile_voices_none">Sem dubladores neste idioma</string>
+    <string-array name="title_staff_names">
+        <item>Direção</item>
+        <item>Direção-chefe</item>
+        <item>Assistente de direção</item>
+        <item>Direção do episódio</item>
+        <item>Direção de unidade</item>
+        <item>Storyboard</item>
+        <item>Composição da série</item>
+        <item>Roteiro</item>
+        <item>Roteiro</item>
+        <item>Criador original</item>
+        <item>História original</item>
+        <item>Design original de personagens</item>
+        <item>Design de personagens</item>
+        <item>Direção de animação-chefe</item>
+        <item>Direção de animação</item>
+        <item>Assistente de direção de animação</item>
+        <item>Animação-chave</item>
+        <item>Segunda animação-chave</item>
+        <item>Intercalação</item>
+        <item>Layout</item>
+        <item>Arte de fundo</item>
+        <item>Direção de arte</item>
+        <item>Design de arte</item>
+        <item>Design de cores</item>
+        <item>Direção de fotografia</item>
+        <item>Edição</item>
+        <item>Direção de som</item>
+        <item>Efeitos sonoros</item>
+        <item>Produção de som</item>
+        <item>Música</item>
+        <item>Composição do tema</item>
+        <item>Letra do tema</item>
+        <item>Arranjo do tema</item>
+        <item>Interpretação do tema</item>
+        <item>Interpretação da música incidental</item>
+        <item>Produção</item>
+        <item>Produção executiva</item>
+        <item>Produção-chefe</item>
+        <item>Produção de animação</item>
+        <item>Planejamento</item>
+        <item>Produção</item>
+        <item>Design mecânico</item>
+        <item>Design de objetos</item>
+        <item>Design de criaturas</item>
+        <item>Direção de CG</item>
+        <item>Direção 3D</item>
+        <item>Efeitos especiais</item>
+        <item>Pintura digital</item>
+        <item>Finalização</item>
+        <item>Cenário</item>
+        <item>Arte conceitual</item>
+        <item>Animação da abertura</item>
+        <item>Animação do encerramento</item>
+        <item>Fotografia</item>
+        <item>Design de título</item>
+        <item>Som</item>
+        <item>Direção de dublagem</item>
+        <item>Elenco</item>
+        <item>Tradução</item>
+    </string-array>
+    <string name="title_schedule">Próximos episódios</string>
+    <string name="title_schedule_row">Episódio %1$d · %2$s</string>
     <string name="title_error">Não foi possível carregar o título</string>
     <string name="cd_share">Compartilhar</string>
     <string name="home_hero_meta">%1$d • %2$s</string>

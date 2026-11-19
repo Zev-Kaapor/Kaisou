@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -54,17 +55,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 // Image loading
 import coil3.compose.AsyncImage
 // Java networking
 import java.net.URLEncoder
+import java.util.Locale
+import java.time.format.DateTimeFormatter
+import java.time.ZoneId
+import java.time.Instant
 // Project resources
 import com.kaisou.app.R
 import com.kaisou.app.core.browser.InAppBrowser
@@ -87,6 +92,9 @@ import com.kaisou.app.features.title.data.TitleRanking
 import com.kaisou.app.features.title.data.TitleRelation
 import com.kaisou.app.features.title.data.TitleWatchOrder
 import com.kaisou.app.features.title.data.TitlePeople
+import com.kaisou.app.features.home.ui.components.SpoilerText
+import com.kaisou.app.features.profile.data.ProfileRef
+import com.kaisou.app.features.title.data.TitlePerson
 import com.kaisou.app.features.title.data.TitleTag
 import com.kaisou.app.features.title.data.TitleTheme
 import com.kaisou.app.features.title.data.TitleTrailer
@@ -246,13 +254,17 @@ fun LazyListScope.titleDetailsItems(
     onRetryExtras: () -> Unit,
     onRetryNews: () -> Unit,
     onOpenNews: () -> Unit,
+    onOpenProfile: (ProfileRef) -> Unit,
+    onOpenCast: (staff: Boolean) -> Unit,
     onRetryWatchOrder: () -> Unit
 ) {
     when (details) {
         is Load.Done -> {
             val value = details.value
             if (value.rankings.isNotEmpty()) item(key = "details-rankings") { RankingsBlock(value.rankings) }
-            if (value.data.isNotEmpty()) item(key = "details-data") { DataBlock(value.data) }
+            // The next episode is in the card on top, the ones after it are here
+            if (value.schedule.size > 1) item(key = "details-schedule") { ScheduleBlock(value.schedule) }
+            if (value.data.isNotEmpty()) item(key = "details-data") { DataBlock(value.data, onOpenProfile) }
             if (value.tags.isNotEmpty()) item(key = "details-tags") { TagsBlock(value.tags) }
             val prequel = value.relations.firstOrNull { it.type == PrequelType }
             val sequel = value.relations.firstOrNull { it.type == SequelType }
@@ -283,8 +295,18 @@ fun LazyListScope.titleDetailsItems(
     }
     when (people) {
         is Load.Done -> {
-            if (people.value.characters.isNotEmpty()) item(key = "details-characters") { PeopleBlock(R.string.title_section_characters, people.value.characters) }
-            if (people.value.staff.isNotEmpty()) item(key = "details-staff") { PeopleBlock(R.string.title_section_staff, people.value.staff) }
+            // The rows end with a link to all of them when what came is a full page, so there may be more
+            val open: (TitlePerson) -> Unit = { person -> person.ref?.let(onOpenProfile) }
+            if (people.value.characters.isNotEmpty()) {
+                item(key = "details-characters") {
+                    PeopleBlock(R.string.title_section_characters, people.value.characters, open, onSeeAll = { onOpenCast(false) }.takeIf { people.value.characters.size >= PeoplePage }, trailing = { DubLanguageMenu() })
+                }
+            }
+            if (people.value.staff.isNotEmpty()) {
+                item(key = "details-staff") {
+                    PeopleBlock(R.string.title_section_staff, people.value.staff, open, onSeeAll = { onOpenCast(true) }.takeIf { people.value.staff.size >= PeoplePage })
+                }
+            }
         }
         is Load.Failed -> item(key = "people-error") { DetailsError(onRetry = onRetryExtras) }
         else -> item(key = "people-loading") { DetailsSkeleton() }
@@ -371,41 +393,49 @@ private const val RankTopHundred = 100
 @Composable
 private fun SeriesBlock(prequel: TitleRelation?, sequel: TitleRelation?, onOpenTitle: (Int) -> Unit) {
     val dimens = KaisouTheme.dimens
+    val landscape = LocalWindowInfo.current.containerSize.let { it.width > it.height }
 
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop),
-        horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall, Alignment.CenterHorizontally)
-    ) {
-        val relations = listOfNotNull(prequel, sequel)
-        relations.forEach { relation ->
-            run {
-                Box(
-                    modifier = Modifier
-                        .then(if (relations.size == 1) Modifier.fillMaxWidth(SeriesAloneFraction) else Modifier.weight(1f))
-                        .aspectRatio(if (relations.size == 1) TrailerRatio * SeriesAloneFraction / SeriesHalfFraction else TrailerRatio)
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(KaisouTheme.colors.skeleton)
-                        .clickable(role = Role.Button) { onOpenTitle(relation.card.anilistId) }
-                ) {
-                    relation.image?.let {
-                        AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize())
-                    }
+    // Lying down the block is as wide as it can be and stays in the middle, and standing up it takes all the width
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+        Row(
+            modifier = Modifier
+                .then(if (landscape) Modifier.widthIn(max = TitleDimens.SeriesLandscapeMax) else Modifier)
+                .fillMaxWidth()
+                .padding(horizontal = dimens.screenPadding)
+                .padding(top = TitleDimens.BlockTop),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall, Alignment.CenterHorizontally)
+        ) {
+            val relations = listOfNotNull(prequel, sequel)
+            relations.forEach { relation ->
+                run {
                     Box(
                         modifier = Modifier
-                            .matchParentSize()
-                            .background(Brush.verticalGradient(listOf(Color.Transparent, KaisouTheme.colors.veil.copy(alpha = TitleDimens.SeriesScrimAlpha))))
-                    )
-                    CornerTab(shape = RoundedCornerShape(bottomEnd = HomeDimens.TabCorner), modifier = Modifier.align(Alignment.TopStart)) {
-                        Text(text = relation.label, style = MaterialTheme.typography.labelSmall, color = KaisouTheme.colors.onAccentFill)
+                            .then(if (relations.size == 1) Modifier.fillMaxWidth(SeriesAloneFraction) else Modifier.weight(1f))
+                            .aspectRatio(if (relations.size == 1) TrailerRatio * SeriesAloneFraction / SeriesHalfFraction else TrailerRatio)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(KaisouTheme.colors.skeleton)
+                            .clickable(role = Role.Button) { onOpenTitle(relation.card.anilistId) }
+                    ) {
+                        relation.image?.let {
+                            AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize())
+                        }
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(Brush.verticalGradient(listOf(Color.Transparent, KaisouTheme.colors.veil.copy(alpha = TitleDimens.SeriesScrimAlpha))))
+                        )
+                        CornerTab(shape = RoundedCornerShape(bottomEnd = HomeDimens.TabCorner), modifier = Modifier.align(Alignment.TopStart)) {
+                            Text(text = relation.label, style = MaterialTheme.typography.labelSmall, color = KaisouTheme.colors.onAccentFill)
+                        }
+                        Text(
+                            text = relation.card.title,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = KaisouTheme.colors.onMedia,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.align(Alignment.BottomStart).padding(dimens.spaceSmall)
+                        )
                     }
-                    Text(
-                        text = relation.card.title,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = KaisouTheme.colors.onMedia,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.align(Alignment.BottomStart).padding(dimens.spaceSmall)
-                    )
                 }
             }
         }
@@ -473,9 +503,40 @@ private fun ThemesBlock(themes: List<TitleTheme>) {
 private fun themeSearch(theme: TitleTheme): String =
     "https://www.youtube.com/results?search_query=" + URLEncoder.encode(listOfNotNull(theme.song, theme.artist).joinToString(" "), Charsets.UTF_8.name())
 
+// The episodes that are still to air, each with the day and the hour it airs in the time of the phone and how long until it
+@Composable
+private fun ScheduleBlock(schedule: List<NextAiring>) {
+    val dimens = KaisouTheme.dimens
+    val format = remember { DateTimeFormatter.ofPattern(SchedulePattern, Locale.getDefault()).withZone(ZoneId.systemDefault()) }
+
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
+        BlockTitle(stringResource(R.string.title_schedule))
+        schedule.forEach { next ->
+            Row(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.DataLineTop), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.title_schedule_row, next.episode, format.format(Instant.ofEpochSecond(next.airingAt))),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = DateUtils.getRelativeTimeSpanString(next.airingAt * 1000L, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+private const val SchedulePattern = "EEE, d MMM · HH:mm"
+
+// How many people a page of the characters or of the staff has
+private const val PeoplePage = 20
+
 // The data of the title in lines: what it is on the left and what it says on the right, one under the other when it says several things
 @Composable
-private fun DataBlock(data: List<TitleDatum>) {
+internal fun DataBlock(data: List<TitleDatum>, onOpen: (ProfileRef) -> Unit = {}) {
     val dimens = KaisouTheme.dimens
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
@@ -489,8 +550,27 @@ private fun DataBlock(data: List<TitleDatum>) {
                     modifier = Modifier.fillMaxWidth(TitleDimens.DataLabelFraction)
                 )
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)) {
-                    datum.values.forEach { value ->
-                        Text(text = value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground)
+                    datum.values.forEachIndexed { index, value ->
+                        val ref = datum.refs.getOrNull(index)
+                        if (ref != null) {
+                            // A name that opens its page, in the violet
+                            Text(
+                                text = value,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable(role = Role.Button) { onOpen(ref) }
+                            )
+                        } else if ("~!" in value) {
+                            SpoilerText(
+                                text = value,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                linkColor = MaterialTheme.colorScheme.primary,
+                                headingSize = MaterialTheme.typography.bodySmall.fontSize
+                            )
+                        } else {
+                            Text(text = value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground)
+                        }
                     }
                 }
             }
@@ -558,59 +638,69 @@ private fun TrailerBlock(trailer: TitleTrailer) {
     val context = LocalContext.current
     var playing by remember { mutableStateOf(false) }
     val videoId = trailer.youtubeId
+    val landscape = LocalWindowInfo.current.containerSize.let { it.width > it.height }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
-        BlockTitle(stringResource(R.string.title_section_trailer))
-        Box(
+    // Lying down the block is as wide as it can be and stays in the middle, and standing up it takes all the width
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+        Column(
             modifier = Modifier
-                .padding(top = dimens.spaceSmall)
+                .then(if (landscape) Modifier.widthIn(max = TitleDimens.TrailerLandscapeMax) else Modifier)
                 .fillMaxWidth()
-                .aspectRatio(TrailerRatio)
-                .clip(MaterialTheme.shapes.medium)
-                .background(KaisouTheme.colors.skeleton)
-                .then(
-                    if (playing && videoId != null) {
-                        Modifier
-                    } else {
-                        Modifier.clickable(role = Role.Button) { if (videoId != null) playing = true else InAppBrowser.open(context, trailer.url) }
-                    }
-                ),
-            contentAlignment = Alignment.Center
+                .padding(horizontal = dimens.screenPadding)
+                .padding(top = TitleDimens.BlockTop)
         ) {
-            if (playing && videoId != null) {
-                TrailerPlayer(
-                    videoId = videoId,
-                    onFailed = {
-                        playing = false
-                        InAppBrowser.open(context, trailer.url)
-                    }
-                )
-                return@Box
-            }
-            trailer.thumbnail?.let {
-                AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize())
-            }
-            if (videoId != null) {
-                // A video of YouTube has its own mark over it
-                Image(
-                    painter = painterResource(R.drawable.ic_youtube),
-                    contentDescription = stringResource(R.string.cd_trailer),
-                    modifier = Modifier.size(TitleDimens.TrailerYoutube)
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(TitleDimens.TrailerPlay)
-                        .clip(CircleShape)
-                        .background(KaisouTheme.colors.veil.copy(alpha = TitleDimens.TrailerPlayAlpha)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = KaisouIcons.PlayOutline,
-                        contentDescription = stringResource(R.string.cd_trailer),
-                        tint = KaisouTheme.colors.onMedia,
-                        modifier = Modifier.size(TitleDimens.TrailerPlayIcon)
+            BlockTitle(stringResource(R.string.title_section_trailer))
+            Box(
+                modifier = Modifier
+                    .padding(top = dimens.spaceSmall)
+                    .fillMaxWidth()
+                    .aspectRatio(TrailerRatio)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(KaisouTheme.colors.skeleton)
+                    .then(
+                        if (playing && videoId != null) {
+                            Modifier
+                        } else {
+                            Modifier.clickable(role = Role.Button) { if (videoId != null) playing = true else InAppBrowser.open(context, trailer.url) }
+                        }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (playing && videoId != null) {
+                    TrailerPlayer(
+                        videoId = videoId,
+                        onFailed = {
+                            playing = false
+                            InAppBrowser.open(context, trailer.url)
+                        }
                     )
+                    return@Box
+                }
+                trailer.thumbnail?.let {
+                    AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize())
+                }
+                if (videoId != null) {
+                    // A video of YouTube has its own mark over it
+                    Image(
+                        painter = painterResource(R.drawable.ic_youtube),
+                        contentDescription = stringResource(R.string.cd_trailer),
+                        modifier = Modifier.size(TitleDimens.TrailerYoutube)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(TitleDimens.TrailerPlay)
+                            .clip(CircleShape)
+                            .background(KaisouTheme.colors.veil.copy(alpha = TitleDimens.TrailerPlayAlpha)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = KaisouIcons.PlayOutline,
+                            contentDescription = stringResource(R.string.cd_trailer),
+                            tint = KaisouTheme.colors.onMedia,
+                            modifier = Modifier.size(TitleDimens.TrailerPlayIcon)
+                        )
+                    }
                 }
             }
         }

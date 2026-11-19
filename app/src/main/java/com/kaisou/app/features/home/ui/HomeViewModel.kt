@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import com.kaisou.app.core.designsystem.components.ScrollPosition
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 // Kotlin math and Java utilities
@@ -50,6 +51,9 @@ import com.kaisou.app.features.home.data.StorySeen
 
 // Loads the Home as soon as it is asked for and keeps it, so it is not asked again when the user scrolls or comes back to it
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
+    // Where the Home was left, which stays when the phone is turned
+    val scroll = ScrollPosition()
+
     private val repository = HomeRepository(application)
     private val artwork = ArtworkRepository.Shared
     private val storySeen = StorySeen(application)

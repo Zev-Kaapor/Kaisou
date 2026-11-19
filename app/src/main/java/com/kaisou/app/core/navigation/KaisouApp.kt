@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 // Compose state and runtime
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -69,6 +70,11 @@ import com.kaisou.app.features.settings.ui.ThanksScreen
 import com.kaisou.app.features.settings.ui.ThanksSection
 import com.kaisou.app.features.settings.ui.UpdatesSection
 import com.kaisou.app.features.settings.ui.UpdatesSettingsScreen
+import com.kaisou.app.features.profile.data.ProfileKind
+import com.kaisou.app.features.profile.ui.ProfileMediaScreen
+import com.kaisou.app.features.profile.ui.StudioScreen
+import com.kaisou.app.features.profile.ui.ProfileScreen
+import com.kaisou.app.features.title.ui.CastScreen
 import com.kaisou.app.features.title.ui.NewsScreen
 import com.kaisou.app.features.title.ui.TitleScreen
 import com.kaisou.app.features.updates.data.UpdateState
@@ -121,7 +127,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     // The bar shows the tab of the screen that is on, the start tab while there is none yet
     val selected = MainTab.entries.firstOrNull { it.route == backStackEntry?.destination?.route } ?: startTab
     // The page of a title has the whole screen, with no bar and no rail
-    val onTitle = backStackEntry?.destination?.route.let { it == TitleRoute || it == NewsRoute }
+    val onTitle = backStackEntry?.destination?.route.let { it == TitleRoute || it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == CastRoute }
 
     val onSelect: (MainTab) -> Unit = { tab ->
         navController.navigate(tab.route) {
@@ -144,6 +150,10 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
         if (!UpdateStore.updates.value.paused) Updates.check(context, isAsked = false)
     }
 
+    // The links of the texts of AniList to a title or to a person open their pages here, and not in the browser
+    val aniLinks: (String) -> Boolean = { address -> aniLinkRoute(address)?.let { navController.navigate(it) } != null }
+
+    CompositionLocalProvider(LocalAniLinks provides aniLinks) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
@@ -222,6 +232,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
             )
         }
     }
+    }
 }
 
 // The four tabs and the screens of the settings. Switching slides the screens a little to the side the destination is on and fades
@@ -262,6 +273,58 @@ private fun MainNavHost(
                 onBack = { navController.popBackStack() },
                 onOpenTitle = { navController.navigate(titleRoute(it)) },
                 onOpenNews = { id, malId, manga -> navController.navigate(newsRoute(id, malId, manga)) },
+                onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
+                onOpenCast = { id, staff -> navController.navigate(castRoute(id, staff)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        // A character, a person of the staff or a studio open over the title, with no bar
+        composable(
+            route = ProfileRoute,
+            arguments = listOf(navArgument(ProfileKindArg) { type = NavType.StringType }, navArgument(TitleIdArg) { type = NavType.IntType })
+        ) { entry ->
+            // A studio is its productions by year, the others have a page of their own
+            if (entry.arguments?.getString(ProfileKindArg) == ProfileKind.Studio.path) {
+                StudioScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenTitle = { navController.navigate(titleRoute(it)) },
+                    onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
+                    modifier = Modifier.fillMaxSize()
+                )
+                return@composable
+            }
+            ProfileScreen(
+                onBack = { navController.popBackStack() },
+                onOpenTitle = { navController.navigate(titleRoute(it)) },
+                onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
+                onOpenMedia = { ref, tab -> navController.navigate(profileMediaRoute(ref.kind.path, ref.id, tab.path)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        // All the titles of a character, a person of the staff or a studio
+        composable(
+            route = ProfileMediaRoute,
+            arguments = listOf(
+                navArgument(ProfileKindArg) { type = NavType.StringType },
+                navArgument(TitleIdArg) { type = NavType.IntType },
+                navArgument(ProfileTabArg) { type = NavType.StringType; defaultValue = "anime" }
+            )
+        ) {
+            ProfileMediaScreen(
+                onBack = { navController.popBackStack() },
+                onOpenTitle = { navController.navigate(titleRoute(it)) },
+                onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        // All the characters or all the staff of a title
+        composable(
+            route = CastRoute,
+            arguments = listOf(navArgument(TitleIdArg) { type = NavType.IntType }, navArgument(CastKindArg) { type = NavType.StringType })
+        ) {
+            CastScreen(
+                onBack = { navController.popBackStack() },
+                onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
                 modifier = Modifier.fillMaxSize()
             )
         }

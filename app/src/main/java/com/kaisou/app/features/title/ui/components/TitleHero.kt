@@ -1,6 +1,7 @@
 package com.kaisou.app.features.title.ui.components
 
 // Compose animation
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
@@ -242,12 +243,12 @@ private fun ScoreChip(score: Float?, modifier: Modifier = Modifier) {
         Icon(
             imageVector = KaisouIcons.Star,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = KaisouTheme.colors.medalGold,
             modifier = Modifier.size(TitleDimens.ScoreStar)
         )
         Text(
             text = score?.let(format::format) ?: stringResource(R.string.home_card_no_score),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onBackground
         )
     }
@@ -262,8 +263,8 @@ internal fun listStatusIcon(status: ListStatus?, manga: Boolean): ImageVector =
         ListStatus.Planning -> KaisouIcons.Clock
         ListStatus.Completed -> KaisouIcons.ListChecks
         ListStatus.Repeating -> KaisouIcons.Repeat
-        ListStatus.Paused -> KaisouIcons.Pause
-        ListStatus.Dropped -> KaisouIcons.Close
+        ListStatus.Paused -> KaisouIcons.CirclePause
+        ListStatus.Dropped -> KaisouIcons.CircleX
     }
 
 // What the button of the list says: what to do next with the title, by where it is on the list of the user. A title that is done is
@@ -289,7 +290,7 @@ private fun listButtonText(title: TitleUi, season: Int?): String {
 // lines of it show, and a link in the accent opens all of it, which is only there when there is more to show. The text is always laid out
 // whole inside a box whose height is what moves, so it opens and closes the same way
 @Composable
-fun TitleSynopsis(text: String, modifier: Modifier = Modifier) {
+fun TitleSynopsis(text: String, modifier: Modifier = Modifier, @StringRes heading: Int = R.string.title_synopsis, hideSpoilers: Boolean = false) {
     val dimens = KaisouTheme.dimens
     val density = LocalDensity.current
     val style = MaterialTheme.typography.bodySmall
@@ -319,7 +320,7 @@ fun TitleSynopsis(text: String, modifier: Modifier = Modifier) {
             .padding(top = TitleDimens.SynopsisTop)
     ) {
         Text(
-            text = stringResource(R.string.title_synopsis),
+            text = stringResource(heading),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -337,7 +338,8 @@ fun TitleSynopsis(text: String, modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
                     .wrapContentHeight(align = Alignment.Top, unbounded = true)
-                    .onSizeChanged { fullHeight = it.height }
+                    .onSizeChanged { fullHeight = it.height },
+                hideSpoilers = hideSpoilers
             )
             if (canExpand) {
                 Box(

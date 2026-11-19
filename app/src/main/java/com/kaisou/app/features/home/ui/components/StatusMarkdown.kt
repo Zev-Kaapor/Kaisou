@@ -179,6 +179,8 @@ object StatusMarkdown {
         Inline(Regex("~~([^~\\n]+)~~"), Kind.Emphasis, SpanStyle(textDecoration = TextDecoration.LineThrough)),
         Inline(Regex("\\*\\*([^*\\n]+)\\*\\*"), Kind.Emphasis, SpanStyle(fontWeight = FontWeight.Bold)),
         Inline(Regex("(?<!\\*)\\*([^*\\n]+)\\*(?!\\*)"), Kind.Emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
+        Inline(Regex("__([^_\\n]+)__"), Kind.Emphasis, SpanStyle(fontWeight = FontWeight.Bold)),
+        Inline(Regex("(?<![\\w_])_([^_\\n]+)_(?![\\w_])"), Kind.Emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
         Inline(Regex("`([^`\\n]+)`"), Kind.Emphasis, SpanStyle(background = Color(0x30FFFFFF), fontFamily = FontFamily.Monospace)),
         Inline(Regex("\\[([^\\]\\n]+)]\\(([^)\\n]*)\\)"), Kind.Link, null),
         Inline(Regex("(?i)(img|webm|youtube)\\d*\\(([^)\\n]*)\\)"), Kind.Media, null),

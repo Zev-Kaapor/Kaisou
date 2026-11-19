@@ -3,6 +3,9 @@ package com.kaisou.app.features.title.ui
 // Android application and view model
 import android.app.Application
 import android.content.res.Configuration
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -30,6 +33,9 @@ import com.kaisou.app.core.artwork.artRequest
 import com.kaisou.app.core.artwork.logoRequest
 import com.kaisou.app.core.designsystem.components.ComponentDimens
 import com.kaisou.app.core.designsystem.components.Toasts
+import com.kaisou.app.core.anilist.AniDescription
+import com.kaisou.app.core.language.DubPreference
+import kotlinx.coroutines.flow.drop
 import com.kaisou.app.core.language.AppLanguage
 import com.kaisou.app.core.navigation.TitleIdArg
 import com.kaisou.app.core.rating.ContentRating
@@ -52,6 +58,7 @@ import com.kaisou.app.features.title.data.TitleUi
 import com.kaisou.app.features.title.data.TitleUiState
 import com.kaisou.app.features.title.data.TitleWatchOrder
 import com.kaisou.app.features.title.ui.components.TitleTab
+import com.kaisou.app.core.designsystem.components.ScrollPosition
 
 // Loads the title of the page as soon as it is opened and keeps it while the page is on the stack
 class TitleViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
@@ -66,6 +73,11 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
     )
     val state: StateFlow<TitleUiState> = mutableState.asStateFlow()
 
+    // Where the page was left, the tab that is open and the order of the episodes, which stay when the phone is turned
+    val scroll = ScrollPosition()
+    var tab by mutableStateOf(TitleTab.Details)
+    var newestFirst by mutableStateOf(false)
+
     // Whether the favourite is going to AniList, so a second touch while the first is going is left out
     private var turningFavourite = false
 
@@ -74,6 +86,16 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
 
     init {
         load()
+        // The voices of the characters come again when the user chooses another language, nothing else is asked
+        viewModelScope.launch { DubPreference.language.drop(1).collect { reloadPeople() } }
+    }
+
+    private fun reloadPeople() {
+        val title = mutableState.value.title ?: return
+        viewModelScope.launch {
+            val extras = repository.extras(title.anilistId) ?: return@launch
+            mutableState.update { it.copy(people = Load.Done(extras.people)) }
+        }
     }
 
     // The heart of the title: it changes at once and goes back if AniList does not take it. The island says what happened
@@ -106,7 +128,9 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         setEntry(
             ListEntry(
                 before.entry?.id ?: 0, draft.status, draft.progress, draft.progressVolumes, draft.score, draft.repeat, draft.notes,
-                draft.isPrivate, draft.hidden, draft.startedAt, draft.completedAt
+                draft.isPrivate, draft.hidden, draft.startedAt, draft.completedAt,
+                draft.customLists ?: before.entry?.customLists.orEmpty(),
+                draft.advancedScores?.let { scores -> mutableState.value.listOptions?.advancedScoring.orEmpty().zip(scores).toMap() } ?: before.entry?.advancedScores.orEmpty()
             )
         )
         viewModelScope.launch {
@@ -179,6 +203,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
             askedAt = System.currentTimeMillis()
             mutableState.update { it.copy(status = TitleStatus.Content, title = title, art = art) }
             loadExtras()
+            loadListOptions(title.manga)
             if (!title.manga) loadThemes(title)
             loadNews(title)
         }
@@ -243,6 +268,14 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         mutableState.value.title?.let(::loadCommunity)
     }
 
+    // How the user gives a score and the lists they made, from their account. The editor of the list uses them when it opens
+    private fun loadListOptions(manga: Boolean) {
+        viewModelScope.launch {
+            val options = repository.listOptions(manga) ?: return@launch
+            mutableState.update { it.copy(listOptions = options) }
+        }
+    }
+
     // The openings and the endings come from MyAnimeList by its id, so a title without one has none, and they are left out of the page when
     // they cannot be reached
     private fun loadThemes(title: TitleUi) {
@@ -295,7 +328,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
             val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
             coroutineScope {
                 if (AppLanguage.needsTranslation) {
-                    launch { synopsis = GoogleTranslator.translate(title.synopsis.take(TranslatedCharacters), AppLanguage.translationCode) }
+                    launch { synopsis = GoogleTranslator.translate(title.synopsis.take(TranslatedCharacters), AppLanguage.translationCode)?.let(AniDescription::tidy) }
                 }
                 if (title.manga) {
                     posterUrl = title.coverUrl

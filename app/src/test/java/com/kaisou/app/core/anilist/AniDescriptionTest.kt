@@ -39,4 +39,11 @@ class AniDescriptionTest {
     fun manyBlankLinesBecomeOne() {
         assertEquals("a\n\nb", AniDescription.markdown("a\n\n\n\n<br><br>\nb"))
     }
+
+    @Test
+    fun aTranslationThatPutsSpacesInTheMarksIsPutBack() {
+        assertEquals("Ela viu _attack on titan_ ontem", AniDescription.tidy("Ela viu _ attack on titan _ ontem"))
+        assertEquals("Ele é **forte** e ~~fraco~~", AniDescription.tidy("Ele é ** forte ** e ~~ fraco ~~"))
+        assertEquals("snake_case_word e 2 * 3", AniDescription.tidy("snake_case_word e 2 * 3"))
+    }
 }

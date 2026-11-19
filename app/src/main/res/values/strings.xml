@@ -182,11 +182,31 @@
         <item>MAIN</item>
         <item>SUPPORTING</item>
         <item>BACKGROUND</item>
+        <item>Original Creator</item>
+        <item>Story</item>
+        <item>Art</item>
+        <item>Story &amp; Art</item>
+        <item>Director</item>
+        <item>Chief Director</item>
+        <item>Series Composition</item>
+        <item>Character Design</item>
+        <item>Music</item>
+        <item>Original Character Design</item>
     </string-array>
     <string-array name="title_role_names">
         <item>Main</item>
         <item>Supporting</item>
         <item>Background</item>
+        <item>Original Creator</item>
+        <item>Story</item>
+        <item>Art</item>
+        <item>Story &amp; Art</item>
+        <item>Director</item>
+        <item>Chief Director</item>
+        <item>Series Composition</item>
+        <item>Character Design</item>
+        <item>Music</item>
+        <item>Original Character Design</item>
     </string-array>
     <string-array name="title_list_keys" translatable="false">
         <item>CURRENT</item>
@@ -310,7 +330,6 @@
         <item quantity="one">%d vol</item>
         <item quantity="other">%d vols</item>
     </plurals>
-    <string name="title_notify_message">Release alerts</string>
     <string name="title_favourite_added">Added to your favourites</string>
     <string name="title_favourite_removed">Removed from your favourites</string>
     <string name="title_favourite_failed">Could not change your favourites</string>
@@ -331,9 +350,7 @@
     <string name="title_news_empty">No news yet</string>
     <string name="title_section_covers">Covers</string>
     <string name="title_cover_volume">Vol. %1$s</string>
-    <string name="title_list_status">Status</string>
     <string name="title_list_progress">Episodes watched</string>
-    <string name="title_list_progress_total">%1$d / %2$d</string>
     <string name="title_list_score">Your score</string>
     <string name="title_list_repeat_anime">Times you watched it again</string>
     <string name="title_list_repeat_manga">Times you read it again</string>
@@ -352,11 +369,203 @@
     <string name="title_list_hidden">Hide from the lists by status</string>
     <string name="title_list_delete">Delete</string>
     <string name="title_list_clear">Clear</string>
-    <string name="title_list_no_score">No score</string>
     <string name="title_list_started_ask">When did you start?</string>
     <string name="title_list_ended_ask">When did you finish?</string>
     <string name="title_list_today">Today</string>
     <string name="title_list_score_scale">/ 10</string>
+    <string name="title_alert_off_note">You will no longer get alerts for this title</string>
+    <string name="title_list_custom">Your lists</string>
+    <string name="title_list_advanced">Detailed score</string>
+    <string name="title_list_score_scale_100">/ 100</string>
+    <string-array name="title_advanced_keys" translatable="false">
+        <item>Story</item>
+        <item>Characters</item>
+        <item>Visuals</item>
+        <item>Audio</item>
+        <item>Enjoyment</item>
+    </string-array>
+    <string-array name="title_advanced_names">
+        <item>Story</item>
+        <item>Characters</item>
+        <item>Visuals</item>
+        <item>Audio</item>
+        <item>Enjoyment</item>
+    </string-array>
+    <string name="profile_about">About</string>
+    <string name="profile_gender">Gender</string>
+    <string name="profile_age">Age</string>
+    <string name="profile_birthday">Birthday</string>
+    <string name="profile_blood">Blood type</string>
+    <string name="profile_nicknames">Also known as</string>
+    <string name="profile_occupations">Occupations</string>
+    <string name="profile_died">Died</string>
+    <string name="profile_home">Hometown</string>
+    <string name="profile_years">Years active</string>
+    <string name="profile_language">Language</string>
+    <string name="profile_female">Female</string>
+    <string name="profile_male">Male</string>
+    <string name="profile_years_range">%1$d to %2$s</string>
+    <string name="profile_today">today</string>
+    <string name="profile_voices">Voice actors</string>
+    <string name="profile_appears">Appears in</string>
+    <string name="profile_voiced">Characters voiced</string>
+    <string name="profile_works">Works</string>
+    <string name="profile_productions">Productions</string>
+    <string name="cast_see_all">See all</string>
+    <string name="profile_nicknames_spoiler">Names that give away the story</string>
+    <string name="profile_type_anime">Anime</string>
+    <string name="profile_type_manga">Manga</string>
+    <string name="profile_on_list">On my list</string>
+    <string name="profile_sort_popular">Popularity</string>
+    <string name="profile_sort_newest">Newest</string>
+    <string name="profile_sort_score">Score</string>
+    <string name="profile_year_unknown">No date</string>
+    <string name="profile_media_empty">Nothing here</string>
+    <string name="title_data_weighted">Weighted score</string>
+    <string name="title_data_mean">Mean score</string>
+    <string name="title_data_percent">%1$d%%</string>
+    <string name="title_data_hashtag">Hashtag</string>
+    <string name="title_data_genres">Genres</string>
+    <string name="profile_sort_favourites">Favourites</string>
+    <string name="profile_sort_oldest">Oldest</string>
+    <string name="profile_sort_title">Title</string>
+    <string name="profile_tab_voices">Voice roles</string>
+    <string name="profile_sort">Sort</string>
+    <string name="profile_year_count">%1$s · %2$s</string>
+    <plurals name="profile_titles_count">
+        <item quantity="one">%d title</item>
+        <item quantity="other">%d titles</item>
+    </plurals>
+    <plurals name="profile_favourites">
+        <item quantity="one">%s favourite</item>
+        <item quantity="other">%s favourites</item>
+    </plurals>
+    <string name="dub_language">Voices: %1$s</string>
+    <string name="profile_voices_none">No voices in this language</string>
+    <string-array name="title_staff_keys" translatable="false">
+        <item>Director</item>
+        <item>Chief Director</item>
+        <item>Assistant Director</item>
+        <item>Episode Director</item>
+        <item>Unit Director</item>
+        <item>Storyboard</item>
+        <item>Series Composition</item>
+        <item>Script</item>
+        <item>Screenplay</item>
+        <item>Original Creator</item>
+        <item>Original Story</item>
+        <item>Original Character Design</item>
+        <item>Character Design</item>
+        <item>Chief Animation Director</item>
+        <item>Animation Director</item>
+        <item>Assistant Animation Director</item>
+        <item>Key Animation</item>
+        <item>2nd Key Animation</item>
+        <item>In-Between Animation</item>
+        <item>Layout</item>
+        <item>Background Art</item>
+        <item>Art Director</item>
+        <item>Art Design</item>
+        <item>Color Design</item>
+        <item>Director of Photography</item>
+        <item>Editing</item>
+        <item>Sound Director</item>
+        <item>Sound Effects</item>
+        <item>Sound Production</item>
+        <item>Music</item>
+        <item>Theme Song Composition</item>
+        <item>Theme Song Lyrics</item>
+        <item>Theme Song Arrangement</item>
+        <item>Theme Song Performance</item>
+        <item>Insert Song Performance</item>
+        <item>Producer</item>
+        <item>Executive Producer</item>
+        <item>Chief Producer</item>
+        <item>Animation Producer</item>
+        <item>Planning</item>
+        <item>Production</item>
+        <item>Mechanical Design</item>
+        <item>Prop Design</item>
+        <item>Creature Design</item>
+        <item>CG Director</item>
+        <item>3D Director</item>
+        <item>Special Effects</item>
+        <item>Digital Painting</item>
+        <item>Finishing</item>
+        <item>Setting</item>
+        <item>Concept Art</item>
+        <item>Opening Animation</item>
+        <item>Ending Animation</item>
+        <item>Photography</item>
+        <item>Title Design</item>
+        <item>Sound</item>
+        <item>ADR Director</item>
+        <item>Casting</item>
+        <item>Translator</item>
+    </string-array>
+    <string-array name="title_staff_names">
+        <item>Director</item>
+        <item>Chief Director</item>
+        <item>Assistant Director</item>
+        <item>Episode Director</item>
+        <item>Unit Director</item>
+        <item>Storyboard</item>
+        <item>Series Composition</item>
+        <item>Script</item>
+        <item>Screenplay</item>
+        <item>Original Creator</item>
+        <item>Original Story</item>
+        <item>Original Character Design</item>
+        <item>Character Design</item>
+        <item>Chief Animation Director</item>
+        <item>Animation Director</item>
+        <item>Assistant Animation Director</item>
+        <item>Key Animation</item>
+        <item>2nd Key Animation</item>
+        <item>In-Between Animation</item>
+        <item>Layout</item>
+        <item>Background Art</item>
+        <item>Art Director</item>
+        <item>Art Design</item>
+        <item>Color Design</item>
+        <item>Director of Photography</item>
+        <item>Editing</item>
+        <item>Sound Director</item>
+        <item>Sound Effects</item>
+        <item>Sound Production</item>
+        <item>Music</item>
+        <item>Theme Song Composition</item>
+        <item>Theme Song Lyrics</item>
+        <item>Theme Song Arrangement</item>
+        <item>Theme Song Performance</item>
+        <item>Insert Song Performance</item>
+        <item>Producer</item>
+        <item>Executive Producer</item>
+        <item>Chief Producer</item>
+        <item>Animation Producer</item>
+        <item>Planning</item>
+        <item>Production</item>
+        <item>Mechanical Design</item>
+        <item>Prop Design</item>
+        <item>Creature Design</item>
+        <item>CG Director</item>
+        <item>3D Director</item>
+        <item>Special Effects</item>
+        <item>Digital Painting</item>
+        <item>Finishing</item>
+        <item>Setting</item>
+        <item>Concept Art</item>
+        <item>Opening Animation</item>
+        <item>Ending Animation</item>
+        <item>Photography</item>
+        <item>Title Design</item>
+        <item>Sound</item>
+        <item>ADR Director</item>
+        <item>Casting</item>
+        <item>Translator</item>
+    </string-array>
+    <string name="title_schedule">Next episodes</string>
+    <string name="title_schedule_row">Episode %1$d · %2$s</string>
     <string name="title_error">Could not load the title</string>
     <string name="cd_share">Share</string>
     <string name="home_hero_meta">%1$d • %2$s</string>
@@ -559,6 +768,7 @@
     <string name="thanks_youtube_player" translatable="false">android-youtube-player</string>
     <string name="thanks_youtube_player_subtitle">The player that plays the trailers inside the page</string>
     <string name="thanks_youtube_player_address" translatable="false">https://github.com/PierfrancescoSoffritti/android-youtube-player</string>
+    <string name="thanks_youtube_player_icon" translatable="false">https://github.com/PierfrancescoSoffritti.png</string>
     <string name="thanks_mangadex">MangaDex</string>
     <string name="thanks_mangadex_subtitle">The covers of the volumes of the manga</string>
     <string name="thanks_mangadex_address" translatable="false">https://mangadex.org</string>

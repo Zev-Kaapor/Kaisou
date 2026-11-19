@@ -464,7 +464,7 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
   </thead>
   <tbody>
     <tr>
-      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_youtube_player.webp" width="32" height="32" alt="android-youtube-player"></td>
+      <td align="center"><img src="https://github.com/PierfrancescoSoffritti.png" width="32" height="32" alt="android-youtube-player"></td>
       <td><strong><a href="https://github.com/PierfrancescoSoffritti/android-youtube-player">android-youtube-player</a></strong></td>
       <td><a href="https://github.com/PierfrancescoSoffritti">PierfrancescoSoffritti</a></td>
       <td>The player that plays the trailers inside the page</td>

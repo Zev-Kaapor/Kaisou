@@ -3,8 +3,6 @@ package com.kaisou.app.features.title.ui
 // Android framework
 import android.content.Intent
 // Compose animation
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 // Compose layouts and foundations
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 // Material 3 components
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,9 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 // UI styling and utilities
 import androidx.compose.ui.Alignment
@@ -54,12 +49,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaisou.app.R
 import com.kaisou.app.core.alerts.ReleaseAlerts
 import com.kaisou.app.core.designsystem.components.OverlaySheet
+import com.kaisou.app.core.designsystem.components.rememberKeptListState
 import com.kaisou.app.core.designsystem.components.Toasts
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.ui.HomeDimens
 import com.kaisou.app.features.home.ui.components.HeaderAction
 import com.kaisou.app.features.home.ui.components.HomeHeroSkeleton
+import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.title.data.ReleaseState
 import com.kaisou.app.features.title.data.TitleStatus
 import com.kaisou.app.features.title.ui.components.ListEditorSheet
@@ -80,13 +77,15 @@ fun TitleScreen(
     onBack: () -> Unit,
     onOpenTitle: (Int) -> Unit,
     onOpenNews: (id: Int, malId: Int?, manga: Boolean) -> Unit,
+    onOpenProfile: (ProfileRef) -> Unit,
+    onOpenCast: (id: Int, staff: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TitleViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    val listState = rememberLazyListState()
-    var tab by rememberSaveable { mutableStateOf(TitleTab.Details) }
-    var newestFirst by rememberSaveable { mutableStateOf(false) }
+    val listState = rememberKeptListState(viewModel.scroll)
+    var tab by viewModel::tab
+    var newestFirst by viewModel::newestFirst
     // The tabs that ask for their own data do it when they are opened
     LaunchedEffect(tab, state.status) { if (state.status == TitleStatus.Content) viewModel.openTab(tab) }
     val alerts by ReleaseAlerts.titles.collectAsState()
@@ -136,6 +135,7 @@ fun TitleScreen(
                                 OverlaySheet.show {
                                     ListEditorSheet(
                                         title = title,
+                                        options = state.listOptions,
                                         onSave = viewModel::saveEntry,
                                         onRemove = viewModel::removeEntry,
                                         onDismiss = OverlaySheet::dismiss
@@ -165,6 +165,8 @@ fun TitleScreen(
                             onRetryExtras = viewModel::loadExtras,
                             onRetryNews = viewModel::retryNews,
                             onOpenNews = { onOpenNews(title.anilistId, title.malId, title.manga) },
+                            onOpenProfile = onOpenProfile,
+                            onOpenCast = { staff -> onOpenCast(title.anilistId, staff) },
                             onRetryWatchOrder = viewModel::retryWatchOrder
                         )
                         TitleTab.Episodes -> titleEpisodesItems(
@@ -186,6 +188,7 @@ fun TitleScreen(
         val alertsOn = state.title?.anilistId in alerts
         val alertOnMessage = stringResource(R.string.title_alert_on)
         val alertOffMessage = stringResource(R.string.title_alert_off)
+        val alertOffNote = stringResource(R.string.title_alert_off_note)
         // What the bell is for depends on where the title is: each new episode or chapter, a new season or what comes after, the return
         // after a pause, or the release. A title that was cancelled has nothing to follow. The notices are not there yet, so the island
         // says what they will do
@@ -209,7 +212,7 @@ fun TitleScreen(
                         val on = ReleaseAlerts.toggle(title.anilistId)
                         Toasts.show(
                             message = if (on) alertOnMessage else alertOffMessage,
-                            subtitle = text,
+                            subtitle = if (on) text else alertOffNote,
                             icon = if (on) KaisouIcons.BellRinging else KaisouIcons.Bell
                         )
                     }

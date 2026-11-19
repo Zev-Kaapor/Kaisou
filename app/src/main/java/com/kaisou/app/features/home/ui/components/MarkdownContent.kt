@@ -38,6 +38,7 @@ import coil3.compose.AsyncImage
 // Project resources
 import com.kaisou.app.R
 import com.kaisou.app.core.browser.InAppBrowser
+import com.kaisou.app.core.navigation.LocalAniLinks
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.ui.HomeDimens
@@ -45,11 +46,12 @@ import com.kaisou.app.features.home.ui.HomeDimens
 // A text of AniList on a screen: the text with its markers resolved and its links that open when touched, a picture as a picture
 // that opens at full size outside the app when touched, and a video as a card that opens it outside the app
 @Composable
-fun MarkdownContent(text: String, style: TextStyle, color: Color, modifier: Modifier = Modifier, textAlign: TextAlign? = null) {
+fun MarkdownContent(text: String, style: TextStyle, color: Color, modifier: Modifier = Modifier, textAlign: TextAlign? = null, hideSpoilers: Boolean = false) {
     val dimens = KaisouTheme.dimens
     val link = MaterialTheme.colorScheme.primary
     val context = LocalContext.current
-    val uriHandler = remember(context) { InAppUriHandler(context) }
+    val aniLinks = LocalAniLinks.current
+    val uriHandler = remember(context, aniLinks) { InAppUriHandler(context, aniLinks) }
     val blocks = remember(text) { StatusMarkdown.blocks(text) }
 
     // The links of the text, and the pictures and the videos, open in the browser that stays over the app
@@ -57,7 +59,9 @@ fun MarkdownContent(text: String, style: TextStyle, color: Color, modifier: Modi
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)) {
         blocks.forEach { block ->
             when (block) {
-                is MarkdownBlock.Text -> {
+                is MarkdownBlock.Text -> if (hideSpoilers) {
+                    SpoilerText(block.text, style, color, link, HomeDimens.StatusHeadingSize, textAlign = textAlign)
+                } else {
                     val rendered = remember(block.text, link) { StatusMarkdown.render(block.text, link, HomeDimens.StatusHeadingSize) }
                     Text(text = rendered, style = style, color = color, textAlign = textAlign, modifier = Modifier.fillMaxWidth())
                 }
@@ -100,6 +104,9 @@ fun MarkdownContent(text: String, style: TextStyle, color: Color, modifier: Modi
 }
 
 // Opens the addresses of the links of a text in the browser that stays over the app
-private class InAppUriHandler(private val context: Context) : UriHandler {
-    override fun openUri(uri: String) = InAppBrowser.open(context, uri)
+private class InAppUriHandler(private val context: Context, private val inApp: (String) -> Boolean) : UriHandler {
+    // The addresses of a title, a character, a person of the staff or a studio open their own pages, the others open in the browser
+    override fun openUri(uri: String) {
+        if (!inApp(uri)) InAppBrowser.open(context, uri)
+    }
 }

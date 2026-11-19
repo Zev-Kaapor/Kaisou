@@ -195,11 +195,11 @@ object KaisouIcons {
     )
     val Clock = strokeIcon("Clock", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "M12 6v6l4 2")
     val Repeat = strokeIcon("Repeat", "m17 2 4 4-4 4", "M3 11v-1a4 4 0 0 1 4-4h14", "m7 22-4-4 4-4", "M21 13v1a4 4 0 0 1-4 4H3")
-    val Pause = strokeIcon(
-        "Pause",
-        "M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z",
-        "M6 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"
-    )
+    val Frown = strokeIcon("Frown", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "M16 16s-1.5-2-4-2-4 2-4 2", "M9 9h.01", "M15 9h.01")
+    val Meh = strokeIcon("Meh", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "M8 15h8", "M9 9h.01", "M15 9h.01")
+    val Smile = strokeIcon("Smile", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "M8 14s1.5 2 4 2 4-2 4-2", "M9 9h.01", "M15 9h.01")
+    val CirclePause = strokeIcon("CirclePause", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "M10 15V9", "M14 15V9")
+    val CircleX = strokeIcon("CircleX", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "m15 9-6 6", "m9 9 6 6")
     val Heart = strokeIcon(
         "Heart",
         "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
@@ -215,6 +215,8 @@ object KaisouIcons {
         "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
     )
     val Back = strokeIcon("Back", "m12 19-7-7 7-7", "M19 12H5")
+    val ChevronDown = strokeIcon("ChevronDown", "m6 9 6 6 6-6")
+    val ArrowUpDown = strokeIcon("ArrowUpDown", "m21 16-4 4-4-4", "M17 20V4", "m3 8 4-4 4 4", "M7 4v16")
     val ChevronRight = strokeIcon("ChevronRight", "m9 18 6-6-6-6")
     val Check = strokeIcon("Check", "M20 6 9 17l-5-5")
     val Info = strokeIcon(

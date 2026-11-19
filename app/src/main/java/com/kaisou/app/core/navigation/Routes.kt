@@ -13,6 +13,26 @@ const val TitleRoute = "title/{$TitleIdArg}"
 
 fun titleRoute(id: Int): String = "title/$id"
 
+// The page of a character, a person of the staff or a studio, by its kind and its id on AniList
+const val ProfileKindArg = "kind"
+const val ProfileRoute = "profile/{$ProfileKindArg}/{$TitleIdArg}"
+
+fun profileRoute(kind: String, id: Int): String = "profile/$kind/$id"
+
+// All the titles of a character, a person of the staff or a studio
+const val ProfileTabArg = "tab"
+const val ProfileMediaRoute = "profile/{$ProfileKindArg}/{$TitleIdArg}/media?$ProfileTabArg={$ProfileTabArg}"
+
+fun profileMediaRoute(kind: String, id: Int, tab: String): String = "profile/$kind/$id/media?$ProfileTabArg=$tab"
+
+// All the characters or all the staff of a title
+const val CastKindArg = "kind"
+const val CastCharacters = "characters"
+const val CastStaff = "staff"
+const val CastRoute = "title/{$TitleIdArg}/cast/{$CastKindArg}"
+
+fun castRoute(id: Int, staff: Boolean): String = "title/$id/cast/${if (staff) CastStaff else CastCharacters}"
+
 // All the news of a title: its id on AniList, the one on MyAnimeList (none is -1) and whether it is a manga, which say where they are asked
 const val NewsMalArg = "mal"
 const val NewsMangaArg = "manga"

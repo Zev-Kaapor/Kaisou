@@ -49,7 +49,7 @@ private class Thanks(
 
 // The projects, the sites and the apps that inspired Kaisou, the order is made by their names
 private val SpecialThanks = listOf(
-    Thanks(R.string.thanks_youtube_player, R.string.thanks_youtube_player_subtitle, R.string.thanks_youtube_player_address, pictureRes = R.drawable.thanks_youtube_player),
+    Thanks(R.string.thanks_youtube_player, R.string.thanks_youtube_player_subtitle, R.string.thanks_youtube_player_address, iconRes = R.string.thanks_youtube_player_icon),
     Thanks(R.string.thanks_anilist, R.string.thanks_anilist_subtitle, R.string.thanks_anilist_address, pictureRes = R.drawable.ic_anilist),
     Thanks(R.string.thanks_crunchyroll, R.string.thanks_crunchyroll_subtitle, R.string.thanks_crunchyroll_address, R.drawable.thanks_crunchyroll),
     Thanks(R.string.thanks_dantotsu, R.string.thanks_dantotsu_subtitle, R.string.thanks_dantotsu_address, R.drawable.thanks_dantotsu),

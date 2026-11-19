@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 // Material 3 components
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 // Compose state and runtime
@@ -33,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import coil3.compose.AsyncImage
 // Project resources
 import com.kaisou.app.R
+import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.browser.InAppBrowser
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.data.CardUi
@@ -45,7 +48,7 @@ import com.kaisou.app.features.title.ui.TitleDimens
 // A row of titles that slides, as the cards of the Home, each one opens the page of its title. It can start at a card that is not the
 // first, like the place of this title in its series
 @Composable
-fun CardsBlock(title: Int, cards: List<CardUi>, onOpenTitle: (Int) -> Unit, startIndex: Int = 0) {
+fun CardsBlock(title: Int, cards: List<CardUi>, onOpenTitle: (Int) -> Unit, startIndex: Int = 0, onSeeAll: (() -> Unit)? = null) {
     val dimens = KaisouTheme.dimens
 
     Column(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
@@ -59,19 +62,38 @@ fun CardsBlock(title: Int, cards: List<CardUi>, onOpenTitle: (Int) -> Unit, star
             items(cards, key = { it.anilistId }) { card ->
                 TitleCard(card, HomeDimens.PosterWidth, HomeDimens.PosterRatio, showWide = false, onClick = { onOpenTitle(card.anilistId) })
             }
+            if (onSeeAll != null) {
+                item(key = "see-all") {
+                    Column(
+                        modifier = Modifier
+                            .width(HomeDimens.PosterWidth)
+                            .aspectRatio(HomeDimens.PosterRatio)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(KaisouTheme.colors.elevated)
+                            .clickable(role = Role.Button, onClick = onSeeAll),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(imageVector = KaisouIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = stringResource(R.string.cast_see_all), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
         }
     }
 }
 
-// A row of people that slides, the characters with their voices or the staff with what they did, each one opens its page on AniList in the
-// browser that stays over the app
+// A row of people that slides, the characters with their voices or the staff with what they did, each one opens its page. When there is a way
+// to see all of them it is the last card of the row
 @Composable
-fun PeopleBlock(title: Int, people: List<TitlePerson>) {
+fun PeopleBlock(title: Int, people: List<TitlePerson>, onOpen: (TitlePerson) -> Unit, onSeeAll: (() -> Unit)? = null, trailing: (@Composable () -> Unit)? = null) {
     val dimens = KaisouTheme.dimens
-    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
-        BlockTitle(text = stringResource(title), modifier = Modifier.padding(horizontal = dimens.screenPadding))
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding), verticalAlignment = Alignment.CenterVertically) {
+            BlockTitle(text = stringResource(title), modifier = Modifier.weight(1f))
+            trailing?.invoke()
+        }
         LazyRow(
             contentPadding = PaddingValues(horizontal = dimens.screenPadding),
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
@@ -81,7 +103,7 @@ fun PeopleBlock(title: Int, people: List<TitlePerson>) {
                 Column(
                     modifier = Modifier
                         .width(TitleDimens.PersonWidth)
-                        .clickable(role = Role.Button) { InAppBrowser.open(context, person.url) }
+                        .clickable(role = Role.Button) { onOpen(person) }
                 ) {
                     Box(
                         modifier = Modifier
@@ -110,6 +132,27 @@ fun PeopleBlock(title: Int, people: List<TitlePerson>) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+            if (onSeeAll != null) {
+                item(key = "see-all") {
+                    Column(
+                        modifier = Modifier
+                            .width(TitleDimens.PersonWidth)
+                            .aspectRatio(TitleDimens.PersonRatio)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(KaisouTheme.colors.elevated)
+                            .clickable(role = Role.Button, onClick = onSeeAll),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(imageVector = KaisouIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = stringResource(R.string.cast_see_all),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }

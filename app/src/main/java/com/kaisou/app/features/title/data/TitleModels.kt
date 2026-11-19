@@ -13,6 +13,7 @@ import java.time.LocalDate
 import com.kaisou.app.R
 import com.kaisou.app.core.artwork.ArtQuery
 import com.kaisou.app.features.home.data.CardUi
+import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.home.data.HeroArt
 
 // The states a title can have on the list of the user, as AniList names them
@@ -32,9 +33,27 @@ enum class ListStatus(val apiName: String) {
     }
 }
 
-// The entry of a title on the list of the user: where it is, how far they are in chapters or episodes and in volumes, the score from 0 to
-// 10, how many times it was done again, their notes, whether it is private or hidden from the lists of its status, and the days it started
-// and ended
+// The ways the user chose on AniList to give a score: from 0 to 100, from 0 to 10 with a decimal, from 0 to 10, with five stars and with
+// three faces. The score of an entry is always in the way of the user
+enum class ScoreFormat(val apiName: String) {
+    Point100("POINT_100"), Point10Decimal("POINT_10_DECIMAL"), Point10("POINT_10"), Point5("POINT_5"), Point3("POINT_3");
+
+    companion object {
+        fun of(name: String?): ScoreFormat = entries.firstOrNull { it.apiName == name } ?: Point10Decimal
+    }
+}
+
+// What the account of the user says about the lists of a kind of title: how the score is given, the lists that the user made and the
+// parts of the detailed score when they use it
+data class ListOptions(
+    val scoreFormat: ScoreFormat = ScoreFormat.Point10Decimal,
+    val customLists: List<String> = emptyList(),
+    val advancedScoring: List<String> = emptyList()
+)
+
+// The entry of a title on the list of the user: where it is, how far they are in chapters or episodes and in volumes, the score in the way
+// of the user, how many times it was done again, their notes, whether it is private or hidden from the lists of its status, the days it
+// started and ended, the lists of their own that it is in and the parts of the detailed score
 data class ListEntry(
     val id: Int,
     val status: ListStatus,
@@ -46,7 +65,9 @@ data class ListEntry(
     val isPrivate: Boolean,
     val hidden: Boolean,
     val startedAt: LocalDate?,
-    val completedAt: LocalDate?
+    val completedAt: LocalDate?,
+    val customLists: List<String> = emptyList(),
+    val advancedScores: Map<String, Float> = emptyMap()
 ) {
     // The episode or chapter that comes next: the one after the last the user did, or the first when it is not started or is done
     val nextUnit: Int
@@ -64,7 +85,10 @@ data class ListDraft(
     val isPrivate: Boolean,
     val hidden: Boolean,
     val startedAt: LocalDate?,
-    val completedAt: LocalDate?
+    val completedAt: LocalDate?,
+    // Null when the lists of the user or their detailed score are not known, so they are not sent and nothing is taken away
+    val customLists: List<String>? = null,
+    val advancedScores: List<Float>? = null
 )
 
 // Where a title is in its life, as AniList names it. It is what the releases that the user can follow depend on: a title that is out
@@ -138,7 +162,7 @@ data class TitleUi(
 
 // One line of the data of a title, the name of what it is and what it says. A line that says several things, like the names it goes by,
 // has one for each, so a name with a comma in it is not taken for two
-data class TitleDatum(val label: String, val values: List<String>)
+data class TitleDatum(val label: String, val values: List<String>, val refs: List<ProfileRef?> = emptyList())
 
 // A place of the title among the best rated or the most popular: its number, which colors its star, and the words that say it
 data class TitleRanking(val rank: Int, val text: String)
@@ -170,6 +194,8 @@ class TitleExtras(val details: TitleDetails, val recommendations: List<CardUi>, 
 
 // What the tab of the details of a title shows, which comes after the top
 data class TitleDetails(
+    // The episodes that are still to air, the next one first
+    val schedule: List<NextAiring> = emptyList(),
     val rankings: List<TitleRanking>,
     val data: List<TitleDatum>,
     val tags: List<TitleTag>,
@@ -179,10 +205,15 @@ data class TitleDetails(
 )
 
 // Someone in the title, a character or a person of the staff: the name, the picture, what they do in it and, for a character, the voice
-data class TitlePerson(val name: String, val image: String?, val role: String?, val voice: String?, val url: String)
+data class TitlePerson(val name: String, val image: String?, val role: String?, val voice: String?, val url: String, val ref: ProfileRef? = null, val language: String? = null)
+
+
+// A page of the characters or of the staff of a title, and whether there are more
+class CastPage(val people: List<TitlePerson>, val hasMore: Boolean)
 
 // The characters and the staff of a title
-data class TitlePeople(val characters: List<TitlePerson>, val staff: List<TitlePerson>)
+// The creators are the ones that made the title what it is, the author, the director, the music, to be opened from the data
+data class TitlePeople(val characters: List<TitlePerson>, val staff: List<TitlePerson>, val creators: List<TitlePerson> = emptyList())
 
 // An episode of an anime: its number, its name, a picture of it, how long it is in minutes and the day it aired as the phone writes it
 data class TitleEpisode(val number: Int, val title: String?, val image: String?, val minutes: Int?, val aired: String?)
@@ -235,6 +266,8 @@ data class TitleUiState(
     val community: Load<TitleCommunity> = Load.Idle,
     // The openings and the endings, and the news, which come from other sites and are only shown when they are there
     val themes: Load<List<TitleTheme>> = Load.Idle,
+    // How the user gives a score and what lists they made, null until the account answers
+    val listOptions: ListOptions? = null,
     // The covers of the volumes of a manga, empty for an anime or when none was found
     val covers: List<MangaCover> = emptyList(),
     val news: Load<List<TitleNews>> = Load.Idle,

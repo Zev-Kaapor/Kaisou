@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import com.kaisou.app.core.designsystem.components.rememberKeptListState
 // Material 3 components
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -64,7 +64,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    val listState = rememberLazyListState()
+    val listState = rememberKeptListState(viewModel.scroll)
 
     // The news of the friends come without pulling: when the user comes to the app and then every few minutes while the Home is on the
     // screen. Nothing is asked while the app is in the background. The time between is a sleep, nothing is checked meanwhile

@@ -4,6 +4,7 @@ package com.kaisou.app
 import android.app.Application
 // Project resources
 import com.kaisou.app.core.alerts.ReleaseAlerts
+import com.kaisou.app.core.language.DubPreference
 import com.kaisou.app.core.cache.AppStore
 import com.kaisou.app.core.designsystem.components.Toasts
 import com.kaisou.app.core.net.Gates
@@ -19,6 +20,7 @@ class KaisouApplication : Application() {
         AppStore.init(File(cacheDir, "store"))
         UpdateStore.init(this)
         ReleaseAlerts.init(this)
+        DubPreference.init(this)
         // When AniList asks the app to rest, the island says so and for how long, since pages would otherwise just take long or fail
         Gates.AniList.onRest = { millis ->
             val seconds = ceil(millis / MillisPerSecond).toInt().coerceAtLeast(1)

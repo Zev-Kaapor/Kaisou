@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.dp
 // Sizes that only the page of a title uses
 object TitleDimens {
     // The star of the score under the name of the title, and the lines of the synopsis before it is opened
-    val ScoreStar = 14.dp
+    val ScoreStar = 20.dp
     const val SynopsisLines = 4
     // The gap above the synopsis, and how faint the bell is while the notices of its releases are off
     val SynopsisTop = 16.dp
@@ -15,6 +15,8 @@ object TitleDimens {
     val TagTipGap = 40.dp
     const val NewsPreview = 3
     val TrailerYoutube = 64.dp
+    val SeriesLandscapeMax = 520.dp
+    val TrailerLandscapeMax = 400.dp
     val CoverWidth = 112.dp
     val StepButton = 36.dp
     val ListCover = 56.dp
@@ -25,11 +27,15 @@ object TitleDimens {
     val ListPercentWidth = 40.dp
     val ListNumber = 52.dp
     val ListScoreBox = 72.dp
+    val ListScoreIcon = 32.dp
+    val ProfileImageWidth = 112.dp
+    val ProfileImageHeight = 160.dp
+    val ProfileMark = 40.dp
+    val CastImageWidth = 56.dp
+    val CastImageHeight = 80.dp
     val ListNumberBig = 72.dp
-    val ListSuffixLift = 4.dp
     const val CoverRatio = 2f / 3f
     const val NewsLines = 3
-    val NewsImage = 64.dp
     // The gap above each block under the synopsis, and the room inside a chip of the strip, of the tags and of the links
     val BlockTop = 24.dp
     val ChipHorizontal = 12.dp
@@ -47,7 +53,6 @@ object TitleDimens {
     const val TrailerPlayAlpha = 0.55f
     // The icon of a link, and how faint the tags that give away the story are
     val LinkIcon = 14.dp
-    const val SpoilerAlpha = 0.6f
     // How dark the foot of the wide picture of the prequel and of the sequel is, under their names
     // How tall the placeholder of the details is
     const val DetailsSkeletonLines = 6
