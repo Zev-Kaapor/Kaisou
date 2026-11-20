@@ -100,7 +100,18 @@ jobs:
             echo "::warning::Missing TMDB_TOKEN, TVDB_KEY or MAL_CLIENT_ID secret, this release will lack artwork or ratings"
           fi
           chmod +x ./gradlew
-          ./gradlew assembleRelease
+          # Tries again when a download fails, since a library that exists can fail to come once from the repositories
+          for ATTEMPT in 1 2 3; do
+            if ./gradlew assembleRelease; then
+              break
+            fi
+            if [ "$ATTEMPT" -eq 3 ]; then
+              echo "::error::The build failed 3 times"
+              exit 1
+            fi
+            echo "::warning::The build failed, trying again ($ATTEMPT of 3)"
+            sleep 20
+          done
 
       # Friendly file names for the release assets
       - name: Collect APKs

@@ -6,7 +6,7 @@ plugins {
 }
 
 // App version: bumping it makes the release workflow publish a new GitHub release
-val appVersionName = "0.1.0"
+val appVersionName = "0.2.0"
 
 // Keys of the services come from the environment of the CI or from the ignored local.properties, never from the code
 val localProperties = Properties().apply {
@@ -25,7 +25,7 @@ android {
         applicationId = "com.kaisou.app"
         minSdk = 26
         targetSdk = 37
-        // versionCode follows the version name, 0.1.0 becomes 100
+        // versionCode follows the version name, 0.2.0 becomes 200
         versionCode = appVersionName.split(".").let { (major, minor, patch) ->
             major.toInt() * 10000 + minor.toInt() * 100 + patch.toInt()
         }
