@@ -28,6 +28,15 @@ object TitleDimens {
     val ListNumber = 52.dp
     val ListScoreBox = 72.dp
     val ListScoreIcon = 32.dp
+    val HintIcon = 12.dp
+    val SkeletonSortWidth = 96.dp
+    val SkeletonSortHeight = 28.dp
+    val SkeletonPillHeight = 32.dp
+    val SkeletonPills = listOf(72.dp, 104.dp, 88.dp, 120.dp)
+    val SkeletonFacts = listOf(64.dp, 96.dp, 80.dp, 72.dp)
+    val SkeletonTabWidth = 72.dp
+    val SortIcon = 16.dp
+    val HintGap = 4.dp
     val ProfileImageWidth = 112.dp
     val ProfileImageHeight = 160.dp
     val ProfileMark = 40.dp
@@ -40,10 +49,9 @@ object TitleDimens {
     val BlockTop = 24.dp
     val ChipHorizontal = 12.dp
     val ChipVertical = 6.dp
-    // The tabs: how tall each is, how thick the line under the one that is on, and how far apart they are
+    // The tabs: how tall each is and how thick the line under the one that is on
     val TabHeight = 44.dp
     val TabIndicator = 2.dp
-    val TabGap = 24.dp
     // The lines of data: how much of the width the name takes, and the room above each line
     const val DataLabelFraction = 0.38f
     val DataLineTop = 6.dp
@@ -66,8 +74,12 @@ object TitleDimens {
     const val WatchedAlpha = 0.45f
     val WatchedMark = 28.dp
     val WatchedMarkIcon = 16.dp
-    // The community: the picture of a friend and of who wrote a review, the lines of a review, the bars of the scores and of the lists
-    val AvatarSize = 36.dp
+    // The community: a friend on the row, how wide it is, the picture, the ring of the user and how far the score sticks out under the
+    // picture, then the picture of who wrote a review, the lines of a review, the bars of the scores and of the lists
+    val FriendWidth = 84.dp
+    val FriendAvatar = 72.dp
+    val FriendRing = 2.dp
+    val FriendBadgeOffset = 8.dp
     val ReviewAvatar = 28.dp
     const val ReviewLines = 3
     val ScoreBarHeight = 64.dp

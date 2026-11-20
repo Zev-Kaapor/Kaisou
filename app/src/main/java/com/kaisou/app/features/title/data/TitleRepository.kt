@@ -2,6 +2,7 @@ package com.kaisou.app.features.title.data
 
 // Android framework
 import android.content.Context
+import android.net.Uri
 // UI styling and utilities
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
@@ -13,6 +14,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 // Java time and utilities
+import java.net.URLEncoder
 import java.text.Collator
 import java.text.NumberFormat
 import java.time.Instant
@@ -364,10 +366,11 @@ class TitleRepository(context: Context) {
         val titles = media.optJSONObject("title")
         val studios = studios(media)
         val data = buildList {
-            fun addAll(label: Int, values: List<String>, refs: List<ProfileRef?> = emptyList()) {
-                if (values.isNotEmpty()) add(TitleDatum(resources.getString(label), values, refs))
+            fun addAll(label: Int, values: List<String>, refs: List<ProfileRef?> = emptyList(), urls: List<String?> = emptyList(), help: DatumHelp? = null) {
+                if (values.isNotEmpty()) add(TitleDatum(resources.getString(label), values, refs, urls, help))
             }
-            fun add(label: Int, value: String?) = addAll(label, listOfNotNull(value?.takeIf { it.isNotBlank() }))
+            fun add(label: Int, value: String?, url: String? = null, help: DatumHelp? = null) =
+                addAll(label, listOfNotNull(value?.takeIf { it.isNotBlank() }), urls = listOf(url), help = help)
             // In the order of the page of AniList: what it is, how long, when, how it is rated and liked, who made it, where it came from and
             // its names
             add(R.string.title_data_format, text(media, "format")?.let { formatNames[it] })
@@ -384,9 +387,17 @@ class TitleRepository(context: Context) {
             if (!manga) {
                 val season = text(media, "season")?.let { seasonNames[it] }
                 val year = number(media, "seasonYear")
-                add(R.string.title_data_season, if (season != null && year != null) resources.getString(R.string.title_season_year, season, year) else null)
+                // The season is a link to the search of AniList for the titles of that season
+                val seasonName = text(media, "season")
+                val seasonUrl = if (seasonName != null && year != null) "$SearchUrl/anime?year=$year%25&season=$seasonName" else null
+                add(R.string.title_data_season, if (season != null && year != null) resources.getString(R.string.title_season_year, season, year) else null, seasonUrl)
             }
-            add(R.string.title_data_weighted, number(media, "averageScore")?.let { resources.getString(R.string.title_data_percent, it) })
+            // The weighted score has a hint that is a question mark, and the page of AniList that explains it
+            add(
+                R.string.title_data_weighted,
+                number(media, "averageScore")?.let { resources.getString(R.string.title_data_percent, it) },
+                help = DatumHelp(resources.getString(R.string.title_weighted_hint), WeightedScoreUrl)
+            )
             add(R.string.title_data_mean, number(media, "meanScore")?.let { resources.getString(R.string.title_data_percent, it) })
             add(R.string.title_data_popularity, number(media, "popularity")?.let(numbers::format))
             add(R.string.title_data_favourites, number(media, "favourites")?.let(numbers::format))
@@ -397,8 +408,13 @@ class TitleRepository(context: Context) {
             addAll(R.string.title_data_producers, others.map { it.name }, others.map(::studioRef))
             add(R.string.title_data_source, text(media, "source")?.let { sourceNames[it] })
             add(R.string.title_data_origin, text(media, "countryOfOrigin")?.let { Locale.Builder().setRegion(it).build().getDisplayCountry(Locale.getDefault()).takeIf { name -> name.isNotBlank() } })
-            add(R.string.title_data_hashtag, text(media, "hashtag"))
-            addAll(R.string.title_data_genres, strings(media.optJSONArray("genres")).map { genreNames[it] ?: it })
+            // The hashtags search for them on X, and each genre searches for the titles of it on AniList, as the pages of AniList do
+            val hashtag = text(media, "hashtag")
+            val hashtagUrl = hashtag?.split(Regex("\\s+"))?.filter { it.startsWith("#") }?.takeIf { it.isNotEmpty() }
+                ?.let { "$HashtagUrl${URLEncoder.encode(it.joinToString(" OR "), Charsets.UTF_8.name())}&src=typd" }
+            add(R.string.title_data_hashtag, hashtag, hashtagUrl)
+            val genres = strings(media.optJSONArray("genres"))
+            addAll(R.string.title_data_genres, genres.map { genreNames[it] ?: it }, urls = genres.map { "$SearchUrl/${if (manga) "manga" else "anime"}/${Uri.encode(it)}" })
             add(R.string.title_data_romaji, titles?.let { text(it, "romaji") })
             add(R.string.title_data_english, titles?.let { text(it, "english") })
             add(R.string.title_data_native, titles?.let { text(it, "native") })
@@ -520,7 +536,8 @@ class TitleRepository(context: Context) {
             startedAt = json.optJSONObject("startedAt")?.let(::localDate),
             completedAt = json.optJSONObject("completedAt")?.let(::localDate),
             customLists = json.optJSONObject("customLists")?.let { lists -> lists.keys().asSequence().filter { lists.optBoolean(it) }.toList() }.orEmpty(),
-            advancedScores = json.optJSONObject("advancedScores")?.let { scores -> scores.keys().asSequence().associateWith { scores.optDouble(it, 0.0).toFloat() } }.orEmpty()
+            advancedScores = json.optJSONObject("advancedScores")?.let { scores -> scores.keys().asSequence().associateWith { scores.optDouble(it, 0.0).toFloat() } }.orEmpty(),
+            scoreOutOfTen = json.optInt("userScore") / ScoreTenScale
         )
     }
 
@@ -601,7 +618,7 @@ class TitleRepository(context: Context) {
     // A value that is null on the server comes as the text "null" with the plain getters, and a field that was not asked for is not there
     private fun text(json: JSONObject, key: String): String? = if (json.isNull(key)) null else json.getString(key).takeIf { it.isNotBlank() }
 
-    private companion object {
+    internal companion object {
         const val MangaType = "MANGA"
         const val MovieFormat = "MOVIE"
         const val PrequelRelation = "PREQUEL"
@@ -613,8 +630,8 @@ class TitleRepository(context: Context) {
         const val MaxHops = 6
         const val AnimeType = "ANIME"
         // Where what AniList says of a title and of its series is kept on the phone, and for how long: half an hour, since it changes slowly
-        const val ExtrasSpace = "title-extras6"
-        const val SeriesSpace = "title-series1"
+        const val ExtrasSpace = "title-extras7"
+        const val SeriesSpace = "title-series2"
         const val KeptMillis = 30L * 60L * 1000L
         // The ties that make the order of a series: before, after, apart from the story and from it
         val SeriesTies = setOf("PREQUEL", "SEQUEL", "SIDE_STORY", "SPIN_OFF", "PARENT")
@@ -640,7 +657,9 @@ class TitleRepository(context: Context) {
         const val ScoreScale = 10f
 
         // What is asked of an entry of the list: the score is asked from 0 to 100, whatever the user chose to see on AniList
-        const val EntryFields = "id status progress progressVolumes score repeat notes private hiddenFromStatusLists customLists advancedScores " +
+        // The score of AniList that is from 0 to 100, shown from 0 to 10
+        const val ScoreTenScale = 10f
+        const val EntryFields = "id status progress progressVolumes score userScore: score(format: POINT_100) repeat notes private hiddenFromStatusLists customLists advancedScores " +
             "startedAt { year month day } completedAt { year month day }"
         // What the top of the page and the strip under the synopsis need of a title. The filter is only there to make each question new
         const val HeaderQuery = "query (\$id: Int, \$fresh: Int) { Media(id: \$id, popularity_greater: \$fresh) { id idMal type status isAdult isFavourite format " +
@@ -685,6 +704,9 @@ class TitleRepository(context: Context) {
             "customLists: \$customLists, advancedScores: \$advancedScores, " +
             "repeat: \$repeat, notes: \$notes, private: \$private, hiddenFromStatusLists: \$hidden, startedAt: \$startedAt, completedAt: \$completedAt) { $EntryFields } }"
         const val RemoveEntryQuery = "mutation (\$id: Int) { DeleteMediaListEntry(id: \$id) { deleted } }"
+        const val SearchUrl = "https://anilist.co/search"
+        const val HashtagUrl = "https://x.com/search?q="
+        const val WeightedScoreUrl = "https://anilist.co/forum/thread/89398"
         const val OptionsQuery = "{ Viewer { mediaListOptions { scoreFormat " +
             "animeList { customLists advancedScoring advancedScoringEnabled } mangaList { customLists advancedScoring advancedScoringEnabled } } } }"
         const val OptionsSpace = "list-options1"

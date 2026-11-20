@@ -7,11 +7,9 @@
     <!-- Home -->
     <string name="home_error">Could not load the Home</string>
     <string name="home_retry">Try again</string>
-    <string name="home_cta_watch">Watch E%1$d</string>
-    <string name="home_cta_continue">Continue E%1$d</string>
-    <string name="home_cta_watch_season">Watch S%1$d E%2$d</string>
-    <string name="home_cta_continue_season">Continue S%1$d E%2$d</string>
-    <string name="home_cta_watch_movie">Watch movie</string>
+    <string name="home_cta_details">See details · E%1$d</string>
+    <string name="home_cta_details_season">See details · S%1$d E%2$d</string>
+    <string name="home_cta_details_movie">See details</string>
     <string name="home_shelf_watching">Continue watching</string>
     <string name="home_shelf_reading">Continue reading</string>
     <string name="home_shelf_new_episodes">New episodes</string>
@@ -38,6 +36,8 @@
     <string name="home_card_separator" translatable="false">" · "</string>
     <string name="home_card_progress_separator" translatable="false">" | "</string>
     <string name="home_card_progress_unknown" translatable="false">~</string>
+    <string name="home_card_unit_episodes">eps</string>
+    <string name="home_card_unit_chapters">chs</string>
     <string name="home_card_soon">Coming soon</string>
     <string name="home_card_ongoing">Ongoing</string>
     <string name="home_card_hiatus">On hiatus</string>
@@ -109,19 +109,9 @@
     <string name="story_paused">Paused %1$s</string>
     <string name="story_dropped">Dropped %1$s</string>
     <string name="story_other" translatable="false">%1$s %2$s</string>
-    <string name="home_add_to_list">Add to my list</string>
     <!-- Page of a title, prototype -->
     <string name="title_show_more">Show more</string>
     <string name="title_show_less">Show less</string>
-    <string name="title_cta_watch">Watch %1$s</string>
-    <string name="title_cta_continue">Continue %1$s</string>
-    <string name="title_cta_resume">Resume %1$s</string>
-    <string name="title_cta_read">Read %1$s</string>
-    <string name="title_cta_watch_again">Watch again</string>
-    <string name="title_cta_read_again">Read again</string>
-    <string name="title_unit_episode">E%1$d</string>
-    <string name="title_unit_season_episode">S%1$dE%2$d</string>
-    <string name="title_unit_chapter">Ch. %1$d</string>
     <string name="title_synopsis">Synopsis</string>
     <string name="title_section_watch_order">Watch order</string>
     <string name="title_watch_current">You are here</string>
@@ -566,6 +556,13 @@
     </string-array>
     <string name="title_schedule">Next episodes</string>
     <string name="title_schedule_row">Episode %1$d · %2$s</string>
+    <string name="title_weighted_hint">Average score weighted using the number of ratings to prevent skewed rankings.\n\nTouch to know more.</string>
+    <string name="cd_help">More information</string>
+    <string name="tag_order_alphabetical">Alphabetical</string>
+    <string name="tag_order_percentage">Percentage</string>
+    <string name="title_cta_add_to_list">Add to my list</string>
+    <string name="cd_your_score">Your score</string>
+    <string name="title_friend_you">You</string>
     <string name="title_error">Could not load the title</string>
     <string name="cd_share">Share</string>
     <string name="home_hero_meta">%1$d • %2$s</string>

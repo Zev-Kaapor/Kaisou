@@ -59,6 +59,7 @@ import com.kaisou.app.features.title.data.TitleUiState
 import com.kaisou.app.features.title.data.TitleWatchOrder
 import com.kaisou.app.features.title.ui.components.TitleTab
 import com.kaisou.app.core.designsystem.components.ScrollPosition
+import com.kaisou.app.features.title.data.ListChanges
 
 // Loads the title of the page as soon as it is opened and keeps it while the page is on the stack
 class TitleViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
@@ -138,6 +139,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
             val saved = repository.saveEntry(before.anilistId, draft)
             if (saved != null) {
                 setEntry(saved)
+                ListChanges.changed()
                 Toasts.show(application.getString(R.string.title_list_saved))
             } else {
                 setEntry(before.entry)
@@ -157,6 +159,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         viewModelScope.launch {
             val application = getApplication<Application>()
             if (repository.removeEntry(entry.id)) {
+                ListChanges.changed()
                 Toasts.show(application.getString(R.string.title_list_removed))
             } else {
                 setEntry(entry)

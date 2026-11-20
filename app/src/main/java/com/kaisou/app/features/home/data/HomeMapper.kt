@@ -202,7 +202,8 @@ class HomeMapper(private val resources: Resources) {
             total = total,
             details = details,
             query = if (wide) art else null,
-            rating = RatingQuery(source.id, source.malId, source.adult, source.format in MangaFormats, art)
+            rating = RatingQuery(source.id, source.malId, source.adult, source.format in MangaFormats, art),
+            userScore = source.userScore?.let { it / ScoreScale }
         )
     }
 

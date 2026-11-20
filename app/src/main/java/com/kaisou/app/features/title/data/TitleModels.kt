@@ -67,7 +67,9 @@ data class ListEntry(
     val startedAt: LocalDate?,
     val completedAt: LocalDate?,
     val customLists: List<String> = emptyList(),
-    val advancedScores: Map<String, Float> = emptyMap()
+    val advancedScores: Map<String, Float> = emptyMap(),
+    // The score from 0 to 10 whatever way the account gives them, 0 when there is none, to show next to the one of AniList
+    val scoreOutOfTen: Float = 0f
 ) {
     // The episode or chapter that comes next: the one after the last the user did, or the first when it is not started or is done
     val nextUnit: Int
@@ -162,7 +164,17 @@ data class TitleUi(
 
 // One line of the data of a title, the name of what it is and what it says. A line that says several things, like the names it goes by,
 // has one for each, so a name with a comma in it is not taken for two
-data class TitleDatum(val label: String, val values: List<String>, val refs: List<ProfileRef?> = emptyList())
+data class TitleDatum(
+    val label: String,
+    val values: List<String>,
+    // A value that opens a page of the app, or an address in the browser, by its place in the values
+    val refs: List<ProfileRef?> = emptyList(),
+    val urls: List<String?> = emptyList(),
+    val help: DatumHelp? = null
+)
+
+// What a small question mark next to the name of a datum says when it is pressed and held, and where it goes when it is touched
+data class DatumHelp(val text: String, val url: String)
 
 // A place of the title among the best rated or the most popular: its number, which colors its star, and the words that say it
 data class TitleRanking(val rank: Int, val text: String)
@@ -219,7 +231,16 @@ data class TitlePeople(val characters: List<TitlePerson>, val staff: List<TitleP
 data class TitleEpisode(val number: Int, val title: String?, val image: String?, val minutes: Int?, val aired: String?)
 
 // A friend that has the title on a list, with where it is, how far and the score on the scale of ten
-data class TitleFriend(val name: String, val avatar: String?, val status: String, val progress: Int?, val score: Float?, val url: String)
+data class TitleFriend(
+    val name: String,
+    val avatar: String?,
+    val status: String,
+    val progress: Int?,
+    val score: Float?,
+    val url: String,
+    // Whether it is the user, who comes first on the row
+    val isMe: Boolean = false
+)
 
 // A review of the title: who wrote it, the score they gave, how it starts and how many people found it useful
 data class TitleReview(val id: Int, val author: String, val avatar: String?, val score: Int?, val summary: String, val helpful: Int, val url: String)

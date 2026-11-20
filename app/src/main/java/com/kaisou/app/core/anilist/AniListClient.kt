@@ -464,8 +464,8 @@ class AniListClient {
         """
 
         // Where the two parts of the shelves are kept on the disk, and how far back the new episodes go
-        const val TopSpace = "top1"
-        const val BelowSpace = "below1"
+        const val TopSpace = "top2"
+        const val BelowSpace = "below2"
         const val MillisPerSecond = 1000L
         const val NewEpisodesSeconds = 48L * 60L * 60L
 
@@ -491,15 +491,15 @@ class AniListClient {
         const val SaveReplyQuery = "mutation (${'$'}id: Int, ${'$'}text: String) { SaveActivityReply(activityId: ${'$'}id, text: ${'$'}text) { $ReplyFields } }"
 
         // Recommendations: where they are kept, how many come at a time, and how many manga of the user they are taken from
-        const val RecommendedSpace = "recommended1"
+        const val RecommendedSpace = "recommended2"
         const val RecommendationsPage = 50
         const val MangaSeeds = 25
         const val PerMangaSeed = 6
         const val RecommendedCard = "$ShelfCard type mediaListEntry { status }"
 
         // Sequels: where they are kept, how many titles are asked at a time and how many times at most
-        const val SequelsSpace = "sequels1"
-        const val SequelIdsSpace = "sequelids1"
+        const val SequelsSpace = "sequels2"
+        const val SequelIdsSpace = "sequelids2"
         const val SequelIdsMillis = 6L * 60L * 60L * 1000L
         const val SequelBatch = 50
         const val MaxSequelBatches = 4

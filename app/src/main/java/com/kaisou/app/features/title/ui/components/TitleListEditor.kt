@@ -241,7 +241,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                         value = progress,
                         max = totalUnits ?: MaxUnits,
                         onValueChange = { progress = it },
-                        suffix = "/ ${totalUnits ?: "?"}",
+                        suffix = "/ ${totalUnits ?: UnknownTotal}",
                         big = true
                     )
                     StepButton(symbol = PlusSymbol, onClick = { move(1) })
@@ -256,7 +256,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                             modifier = Modifier.weight(1f)
                         )
                         StepButton(symbol = MinusSymbol, onClick = { volumes = (volumes - 1).coerceAtLeast(0) })
-                        NumberInput(value = volumes, max = totalVolumes ?: MaxUnits, onValueChange = { volumes = it }, suffix = "/ ${totalVolumes ?: "?"}", big = false)
+                        NumberInput(value = volumes, max = totalVolumes ?: MaxUnits, onValueChange = { volumes = it }, suffix = "/ ${totalVolumes ?: UnknownTotal}", big = false)
                         StepButton(symbol = PlusSymbol, onClick = { volumes = (volumes + 1).coerceAtMost(totalVolumes ?: MaxUnits) })
                     }
                 }
@@ -682,6 +682,19 @@ private fun isScoreText(format: ScoreFormat, text: String): Boolean {
     return (text.replace(',', '.').toFloatOrNull() ?: return false) <= scoreMax(format)
 }
 
+// The score one step up or down by the way to give it, a few points at a time on the scale of a hundred and half a point with decimals,
+// and nothing when it goes down to zero
+private fun stepScore(format: ScoreFormat, text: String, direction: Int): String {
+    val step = when (format) {
+        ScoreFormat.Point100 -> ScorePointsStep
+        ScoreFormat.Point10Decimal -> ScoreDecimalStep
+        else -> 1f
+    }
+    val next = ((text.replace(',', '.').toFloatOrNull() ?: 0f) + direction * step).coerceIn(0f, scoreMax(format))
+    val rounded = Math.round(next * 10f) / 10f
+    return if (rounded <= 0f) "" else scoreText(rounded)
+}
+
 // The score as a row of its own: a number written over a line, five stars or three faces, by the way the user chose to give it
 @Composable
 private fun ScoreRow(format: ScoreFormat, label: String, value: String, onValueChange: (String) -> Unit) {
@@ -726,19 +739,29 @@ private fun ScoreRow(format: ScoreFormat, label: String, value: String, onValueC
                         .clickable(role = Role.Button) { onValueChange(if (number == chosen) "" else number.toString()) }
                 )
             }
-            else -> {
-                WriteBox(
-                    value = value,
-                    onValueChange = { text -> if (isScoreText(format, text)) onValueChange(text) },
-                    placeholder = "0",
-                    keyboardType = if (format == ScoreFormat.Point10Decimal) KeyboardType.Decimal else KeyboardType.Number,
-                    width = TitleDimens.ListScoreBox
-                )
-                Text(
-                    text = stringResource(if (format == ScoreFormat.Point100) R.string.title_list_score_scale_100 else R.string.title_list_score_scale),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            // A number: the same buttons, number and sizes as the progress, so both rows go together
+            else -> Row(verticalAlignment = Alignment.CenterVertically) {
+                StepButton(symbol = MinusSymbol, onClick = { onValueChange(stepScore(format, value, -1)) })
+                Row(
+                    modifier = Modifier.padding(horizontal = dimens.spaceSmall),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
+                ) {
+                    WriteBox(
+                        value = value,
+                        onValueChange = { text -> if (isScoreText(format, text)) onValueChange(text) },
+                        placeholder = "0",
+                        keyboardType = if (format == ScoreFormat.Point10Decimal) KeyboardType.Decimal else KeyboardType.Number,
+                        width = TitleDimens.ListNumberBig,
+                        big = true
+                    )
+                    Text(
+                        text = stringResource(if (format == ScoreFormat.Point100) R.string.title_list_score_scale_100 else R.string.title_list_score_scale),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                StepButton(symbol = PlusSymbol, onClick = { onValueChange(stepScore(format, value, 1)) })
             }
         }
     }
@@ -763,6 +786,10 @@ private const val FirstYear = 1900
 private const val MaxRepeat = 99
 private const val MaxDigits = 4
 private const val MaxScore = 10f
+private const val ScorePointsStep = 5f
+private const val ScoreDecimalStep = 0.5f
+// What the total says when it is not known
+private const val UnknownTotal = "??"
 private const val StarCount = 5
 private const val FaintAlpha = 0.35f
 private const val StatusesPerLine = 3

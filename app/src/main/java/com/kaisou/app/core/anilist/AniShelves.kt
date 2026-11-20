@@ -25,7 +25,9 @@ data class AniCard(
     val aired: Int?,
     // The id on MyAnimeList, which gives the rating of an anime, and whether AniList marks the title for adults
     val malId: Int? = null,
-    val adult: Boolean = false
+    val adult: Boolean = false,
+    // The score the user gave it from 0 to 100, null when it is not on their list or has no score
+    val userScore: Int? = null
 )
 
 // A title on the list of the user and how far the user is in it
@@ -117,7 +119,7 @@ class AniRecommended(val anime: List<AniCard>, val manga: List<AniCard>)
 // Reads the answer of the one request that brings every shelf
 object AniShelvesParser {
     // What a card needs of a title, asked of AniList
-    const val CardFields = "id idMal isAdult title { romaji english } status format episodes chapters nextAiringEpisode { episode } startDate { year } averageScore meanScore bannerImage coverImage { extraLarge large }"
+    const val CardFields = "id idMal isAdult title { romaji english } status format episodes chapters nextAiringEpisode { episode } startDate { year } averageScore meanScore bannerImage coverImage { extraLarge large } mediaListEntry { userScore: score(format: POINT_100) }"
 
     private const val RecommendedSize = 20
 
@@ -282,7 +284,8 @@ object AniShelvesParser {
             chapters = number(media, "chapters"),
             aired = media.optJSONObject("nextAiringEpisode")?.let { number(it, "episode") }?.minus(1)?.takeIf { it > 0 },
             malId = number(media, "idMal"),
-            adult = media.optBoolean("isAdult")
+            adult = media.optBoolean("isAdult"),
+            userScore = media.optJSONObject("mediaListEntry")?.let { number(it, "userScore") }
         )
     }
 

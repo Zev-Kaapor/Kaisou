@@ -27,6 +27,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 // Material 3 components
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.PlainTooltip
@@ -42,6 +44,7 @@ import androidx.compose.material3.Text
 // Compose state and runtime
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -69,10 +72,12 @@ import java.net.URLEncoder
 import java.util.Locale
 import java.time.format.DateTimeFormatter
 import java.time.ZoneId
+import java.text.Collator
 import java.time.Instant
 // Project resources
 import com.kaisou.app.R
 import com.kaisou.app.core.browser.InAppBrowser
+import com.kaisou.app.core.designsystem.components.ComponentDimens
 import com.kaisou.app.core.designsystem.components.SkeletonHost
 import com.kaisou.app.core.designsystem.components.SkeletonLines
 import com.kaisou.app.core.designsystem.components.skeleton
@@ -84,6 +89,9 @@ import com.kaisou.app.features.home.ui.components.CornerTab
 import com.kaisou.app.features.title.data.Load
 import com.kaisou.app.features.title.data.MangaCover
 import com.kaisou.app.features.title.data.NextAiring
+import com.kaisou.app.core.language.TagOrder
+import com.kaisou.app.core.language.TagOrderPreference
+import com.kaisou.app.features.title.data.DatumHelp
 import com.kaisou.app.features.title.data.TitleDatum
 import com.kaisou.app.features.title.data.TitleDetails
 import com.kaisou.app.features.title.data.TitleLink
@@ -92,6 +100,7 @@ import com.kaisou.app.features.title.data.TitleRanking
 import com.kaisou.app.features.title.data.TitleRelation
 import com.kaisou.app.features.title.data.TitleWatchOrder
 import com.kaisou.app.features.title.data.TitlePeople
+import com.kaisou.app.features.home.ui.components.CardTextSkeleton
 import com.kaisou.app.features.home.ui.components.SpoilerText
 import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.title.data.TitlePerson
@@ -206,14 +215,13 @@ fun TitleTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, modi
     val dimens = KaisouTheme.dimens
 
     Column(modifier = modifier.padding(top = TitleDimens.BlockTop).fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(horizontal = dimens.screenPadding),
-            horizontalArrangement = Arrangement.spacedBy(TitleDimens.TabGap)
-        ) {
+        // Each tab takes the same share of the width, so all of them are on the screen with their name in the middle
+        Row(modifier = Modifier.padding(horizontal = dimens.screenPadding)) {
             labels.forEachIndexed { index, label ->
                 val on = index == selected
                 Box(
                     modifier = Modifier
+                        .weight(1f)
                         .height(TitleDimens.TabHeight)
                         .clickable(role = Role.Tab) { onSelect(index) },
                     contentAlignment = Alignment.Center
@@ -278,20 +286,20 @@ fun LazyListScope.titleDetailsItems(
             }
             if (covers.isNotEmpty()) item(key = "details-covers") { CoversBlock(covers) }
             if (value.relations.isNotEmpty()) {
-                item(key = "details-relations") { CardsBlock(R.string.title_section_relations, value.relations.map { it.card }, onOpenTitle) }
+                item(key = "details-relations") { CardsBlock(R.string.title_section_relations, value.relations.map { it.card }, onOpenTitle, simple = true) }
             }
         }
         is Load.Failed -> item(key = "details-error") { DetailsError(onRetry = onRetryExtras) }
-        else -> item(key = "details-loading") { DetailsSkeleton() }
+        else -> item(key = "details-loading") { DetailsInfoSkeleton() }
     }
     when (watchOrder) {
         is Load.Done -> if (watchOrder.value.cards.size > 1) {
             item(key = "details-watch-order") {
-                CardsBlock(R.string.title_section_watch_order, watchOrder.value.cards, onOpenTitle, startIndex = watchOrder.value.current)
+                CardsBlock(R.string.title_section_watch_order, watchOrder.value.cards, onOpenTitle, startIndex = watchOrder.value.current, simple = true)
             }
         }
         is Load.Failed -> item(key = "watch-order-error") { DetailsError(onRetry = onRetryWatchOrder) }
-        else -> item(key = "watch-order-loading") { DetailsSkeleton() }
+        else -> item(key = "watch-order-loading") { CardsRowSkeleton() }
     }
     when (people) {
         is Load.Done -> {
@@ -309,14 +317,14 @@ fun LazyListScope.titleDetailsItems(
             }
         }
         is Load.Failed -> item(key = "people-error") { DetailsError(onRetry = onRetryExtras) }
-        else -> item(key = "people-loading") { DetailsSkeleton() }
+        else -> item(key = "people-loading") { PeopleRowSkeleton() }
     }
     when (recommendations) {
         is Load.Done -> if (recommendations.value.isNotEmpty()) {
-            item(key = "details-recommendations") { CardsBlock(R.string.title_section_recommendations, recommendations.value, onOpenTitle) }
+            item(key = "details-recommendations") { CardsBlock(R.string.title_section_recommendations, recommendations.value, onOpenTitle, simple = true) }
         }
         is Load.Failed -> item(key = "recommendations-error") { DetailsError(onRetry = onRetryExtras) }
-        else -> item(key = "recommendations-loading") { DetailsSkeleton() }
+        else -> item(key = "recommendations-loading") { CardsRowSkeleton() }
     }
     if (details is Load.Done) {
         val watch = details.value.links.filter { it.streaming }
@@ -503,6 +511,91 @@ private fun ThemesBlock(themes: List<TitleTheme>) {
 private fun themeSearch(theme: TitleTheme): String =
     "https://www.youtube.com/results?search_query=" + URLEncoder.encode(listOfNotNull(theme.song, theme.artist).joinToString(" "), Charsets.UTF_8.name())
 
+// The order of the tags in use, which opens the menu of the two: alphabetical and by the percentage. What is chosen is kept on the phone
+@Composable
+private fun TagOrderMenu(selected: TagOrder) {
+    val dimens = KaisouTheme.dimens
+    var open by remember { mutableStateOf(false) }
+    val labels = mapOf(TagOrder.Alphabetical to R.string.tag_order_alphabetical, TagOrder.Percentage to R.string.tag_order_percentage)
+    val icons = mapOf(TagOrder.Alphabetical to KaisouIcons.SortAlphabetical, TagOrder.Percentage to KaisouIcons.Percent)
+
+    Box {
+        Row(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(KaisouTheme.colors.elevated)
+                .clickable(role = Role.DropdownList) { open = true }
+                .padding(start = dimens.spaceMedium, end = dimens.spaceSmall, top = dimens.spaceExtraSmall, bottom = dimens.spaceExtraSmall),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(imageVector = icons.getValue(selected), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(TitleDimens.SortIcon))
+            Text(text = stringResource(labels.getValue(selected)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+            Icon(imageVector = KaisouIcons.ChevronDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(TitleDimens.SortIcon))
+        }
+        DropdownMenu(
+            expanded = open,
+            onDismissRequest = { open = false },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            shape = MaterialTheme.shapes.large
+        ) {
+            TagOrder.entries.forEach { order ->
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(
+                            imageVector = icons.getValue(order),
+                            contentDescription = null,
+                            tint = if (order == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(TitleDimens.ListIcon)
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = stringResource(labels.getValue(order)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (order == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                        )
+                    },
+                    trailingIcon = if (order == selected) {
+                        { Icon(imageVector = KaisouIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(TitleDimens.ListIcon)) }
+                    } else {
+                        null
+                    },
+                    onClick = {
+                        open = false
+                        TagOrderPreference.set(order)
+                    }
+                )
+            }
+        }
+    }
+}
+
+// A small question mark next to the name of a datum: a touch opens the page that explains it and pressing and holding says in a few words
+// what it is
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HintIcon(help: DatumHelp) {
+    val context = LocalContext.current
+
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above, TitleDimens.TagTipGap),
+        tooltip = { PlainTooltip { Text(text = help.text) } },
+        state = rememberTooltipState()
+    ) {
+        Icon(
+            imageVector = KaisouIcons.QuestionCircle,
+            contentDescription = stringResource(R.string.cd_help),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .padding(start = TitleDimens.HintGap)
+                .size(TitleDimens.HintIcon)
+                .clip(CircleShape)
+                .clickable(role = Role.Button) { InAppBrowser.open(context, help.url) }
+        )
+    }
+}
+
 // The episodes that are still to air, each with the day and the hour it airs in the time of the phone and how long until it
 @Composable
 private fun ScheduleBlock(schedule: List<NextAiring>) {
@@ -538,21 +631,33 @@ private const val PeoplePage = 20
 @Composable
 internal fun DataBlock(data: List<TitleDatum>, onOpen: (ProfileRef) -> Unit = {}) {
     val dimens = KaisouTheme.dimens
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
         BlockTitle(stringResource(R.string.title_section_data))
         data.forEach { datum ->
             Row(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.DataLineTop)) {
-                Text(
-                    text = datum.label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(TitleDimens.DataLabelFraction)
-                )
+                Row(modifier = Modifier.fillMaxWidth(TitleDimens.DataLabelFraction), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = datum.label,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    datum.help?.let { HintIcon(it) }
+                }
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)) {
                     datum.values.forEachIndexed { index, value ->
                         val ref = datum.refs.getOrNull(index)
-                        if (ref != null) {
+                        val url = datum.urls.getOrNull(index)
+                        if (url != null) {
+                            // A value that opens an address in the browser that stays over the app, in the violet
+                            Text(
+                                text = value,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable(role = Role.Button) { InAppBrowser.open(context, url) }
+                            )
+                        } else if (ref != null) {
                             // A name that opens its page, in the violet
                             Text(
                                 text = value,
@@ -585,15 +690,23 @@ internal fun DataBlock(data: List<TitleDatum>, onOpen: (ProfileRef) -> Unit = {}
 private fun TagsBlock(tags: List<TitleTag>) {
     val dimens = KaisouTheme.dimens
     var shown by rememberSaveable { mutableStateOf(listOf<String>()) }
+    val order by TagOrderPreference.order.collectAsState()
+    val collator = remember { Collator.getInstance(Locale.getDefault()) }
+    val sorted = remember(tags, order) {
+        if (order == TagOrder.Percentage) tags.sortedByDescending { it.rank } else tags.sortedWith(compareBy(collator) { it.name })
+    }
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
-        BlockTitle(stringResource(R.string.title_section_tags))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            BlockTitle(stringResource(R.string.title_section_tags), modifier = Modifier.weight(1f))
+            TagOrderMenu(order)
+        }
         FlowRow(
             modifier = Modifier.padding(top = dimens.spaceSmall),
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
             verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
         ) {
-            tags.forEach { tag ->
+            sorted.forEach { tag ->
                 val covered = tag.spoiler && tag.name !in shown
                 val chip: @Composable () -> Unit = {
                     Chip(
@@ -753,6 +866,158 @@ internal fun DetailsSkeleton() {
 }
 
 private const val DetailsSkeletonTitle = 0.3f
+
+// The placeholder of the data and the tags: the lines of data with a name at the start and a value, then the name of the tags with the
+// button of the order at its end and some pills
+@Composable
+internal fun DetailsInfoSkeleton() {
+    val dimens = KaisouTheme.dimens
+    val values = listOf(0.5f, 0.3f, 0.6f, 0.4f, 0.5f, 0.35f)
+
+    SkeletonHost(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
+        Box(modifier = Modifier.fillMaxWidth(DetailsSkeletonTitle).height(dimens.spaceLarge).skeleton())
+        values.forEach { value ->
+            Row(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.DataLineTop), verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.fillMaxWidth(TitleDimens.DataLabelFraction)) {
+                    Box(modifier = Modifier.fillMaxWidth(DataNameFraction).height(ComponentDimens.SkeletonLineHeight).skeleton())
+                }
+                Box(modifier = Modifier.fillMaxWidth(value).height(ComponentDimens.SkeletonLineHeight).skeleton())
+            }
+        }
+        Row(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop), verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.weight(1f)) {
+                Box(modifier = Modifier.fillMaxWidth(DetailsSkeletonTitle).height(dimens.spaceLarge).skeleton())
+            }
+            Box(modifier = Modifier.size(TitleDimens.SkeletonSortWidth, TitleDimens.SkeletonSortHeight).skeleton(CircleShape))
+        }
+        Row(modifier = Modifier.padding(top = dimens.spaceSmall), horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
+            TitleDimens.SkeletonPills.forEach { width -> Box(modifier = Modifier.size(width, TitleDimens.SkeletonPillHeight).skeleton(CircleShape)) }
+        }
+    }
+}
+
+private const val DataNameFraction = 0.6f
+
+// The placeholder of what is under the hero before the details: the synopsis with its name and some lines, the strip of facts as pills and
+// the tabs with the line under them
+@Composable
+internal fun TitleBodySkeleton() {
+    val dimens = KaisouTheme.dimens
+
+    SkeletonHost(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.SynopsisTop)) {
+            Box(modifier = Modifier.fillMaxWidth(DetailsSkeletonTitle).height(dimens.spaceLarge).skeleton())
+            SkeletonLines(lines = TitleDimens.SynopsisLines, modifier = Modifier.padding(top = dimens.spaceSmall))
+            Row(modifier = Modifier.padding(top = dimens.spaceMedium), horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
+                TitleDimens.SkeletonFacts.forEach { width -> Box(modifier = Modifier.size(width, TitleDimens.SkeletonPillHeight).skeleton(CircleShape)) }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            repeat(TabsSkeletonCount) { Box(modifier = Modifier.size(TitleDimens.SkeletonTabWidth, dimens.spaceLarge).skeleton()) }
+        }
+    }
+}
+
+private const val TabsSkeletonCount = 3
+
+// The placeholder of a row of cards that slide, with the name of the block, as the ones of the relations, of the order and of what is
+// recommended: a picture, a bar for the name and under it the square of the rating with a bar for the line
+@Composable
+internal fun CardsRowSkeleton() {
+    val dimens = KaisouTheme.dimens
+
+    SkeletonHost(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
+        Box(modifier = Modifier.padding(horizontal = dimens.screenPadding).fillMaxWidth(DetailsSkeletonTitle).height(dimens.spaceLarge).skeleton())
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = dimens.screenPadding),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+            userScrollEnabled = false,
+            modifier = Modifier.padding(top = dimens.spaceSmall)
+        ) {
+            items(HomeDimens.SkeletonCards) {
+                Column(modifier = Modifier.width(HomeDimens.PosterWidth)) {
+                    Box(modifier = Modifier.fillMaxWidth().aspectRatio(HomeDimens.PosterRatio).skeleton(MaterialTheme.shapes.medium))
+                    CardTextSkeleton()
+                }
+            }
+        }
+    }
+}
+
+// The placeholder of the row of friends: the name of the block and round pictures with a bar for the name and one for the state under each
+@Composable
+internal fun FriendsRowSkeleton() {
+    val dimens = KaisouTheme.dimens
+
+    SkeletonHost(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
+        Box(modifier = Modifier.padding(horizontal = dimens.screenPadding).fillMaxWidth(DetailsSkeletonTitle).height(dimens.spaceLarge).skeleton())
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = dimens.screenPadding),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+            userScrollEnabled = false,
+            modifier = Modifier.padding(top = dimens.spaceSmall)
+        ) {
+            items(HomeDimens.SkeletonFriends) {
+                Column(modifier = Modifier.width(TitleDimens.FriendWidth), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(modifier = Modifier.size(TitleDimens.FriendAvatar).skeleton(CircleShape))
+                    Box(
+                        modifier = Modifier
+                            .padding(top = TitleDimens.FriendBadgeOffset + dimens.spaceExtraSmall)
+                            .fillMaxWidth(HomeDimens.SkeletonTitleFraction)
+                            .height(ComponentDimens.SkeletonLineHeight)
+                            .skeleton()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .padding(top = dimens.spaceExtraSmall)
+                            .fillMaxWidth(HomeDimens.SkeletonDetailsFraction)
+                            .height(ComponentDimens.SkeletonLineHeight)
+                            .skeleton()
+                    )
+                }
+            }
+        }
+    }
+}
+
+// The placeholder of a row of people that slide, with the name of the block: a picture, a bar for the name and one for what they do
+@Composable
+internal fun PeopleRowSkeleton() {
+    val dimens = KaisouTheme.dimens
+
+    SkeletonHost(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
+        Box(modifier = Modifier.padding(horizontal = dimens.screenPadding).fillMaxWidth(DetailsSkeletonTitle).height(dimens.spaceLarge).skeleton())
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = dimens.screenPadding),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+            userScrollEnabled = false,
+            modifier = Modifier.padding(top = dimens.spaceSmall)
+        ) {
+            items(HomeDimens.SkeletonCards) {
+                Column(modifier = Modifier.width(TitleDimens.PersonWidth)) {
+                    Box(modifier = Modifier.fillMaxWidth().aspectRatio(TitleDimens.PersonRatio).skeleton(MaterialTheme.shapes.medium))
+                    Box(
+                        modifier = Modifier
+                            .padding(top = dimens.spaceExtraSmall)
+                            .fillMaxWidth(HomeDimens.SkeletonTitleFraction)
+                            .height(ComponentDimens.SkeletonLineHeight)
+                            .skeleton()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .padding(top = dimens.spaceExtraSmall)
+                            .fillMaxWidth(HomeDimens.SkeletonDetailsFraction)
+                            .height(ComponentDimens.SkeletonLineHeight)
+                            .skeleton()
+                    )
+                }
+            }
+        }
+    }
+}
 
 // Shown when the details could not be asked, a tap asks again
 @Composable

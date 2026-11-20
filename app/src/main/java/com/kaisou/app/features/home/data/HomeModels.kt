@@ -96,7 +96,9 @@ data class CardUi(
     // What the other sites are asked by to find a better picture of the title, only for the cards that look for one
     val query: ArtQuery?,
     // What the advisory rating of the title is found by, it comes in when the card is on the screen
-    val rating: RatingQuery
+    val rating: RatingQuery,
+    // The score the user gave it from 0 to 10, null when it has none
+    val userScore: Float? = null
 )
 
 // A shelf of the Home: what it is, the shape of its cards and the titles on it

@@ -1,7 +1,6 @@
 package com.kaisou.app.features.home.ui
 
 // Compose animation
-import androidx.compose.animation.animateColorAsState
 // Compose layouts and foundations
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +28,6 @@ import androidx.compose.runtime.setValue
 // UI styling and utilities
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -53,6 +51,10 @@ import com.kaisou.app.features.home.ui.components.HomeShelf
 import com.kaisou.app.features.home.ui.components.homeShelvesSkeleton
 import com.kaisou.app.features.home.ui.components.StatusEditor
 import com.kaisou.app.features.home.ui.components.StoryViewer
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import com.kaisou.app.core.designsystem.components.OverlaySheet
+import com.kaisou.app.features.title.ui.components.ListEditorSheet
 
 // Home of the user: the hero at the top with the header over it, the rest of the screen arrives piece by piece
 @Composable
@@ -64,6 +66,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val scope = rememberCoroutineScope()
     val listState = rememberKeptListState(viewModel.scroll)
 
     // The news of the friends come without pulling: when the user comes to the app and then every few minutes while the Home is on the
@@ -89,13 +92,12 @@ fun HomeScreen(
         // The header is clear over the art of the hero and turns solid before the details of the hero get under it, so its
         // icons never sit over the text and the buttons
         val solidOffset = with(LocalDensity.current) { heroHeight.toPx() } * HomeDimens.HeaderSolidFraction
-        val heroGone by remember(solidOffset) {
-            derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > solidOffset }
+        // How far along the fade is: none at the top, all of it where the details get under the header, in between it follows the scroll
+        val headerProgress by remember(solidOffset) {
+            derivedStateOf {
+                if (listState.firstVisibleItemIndex > 0) 1f else (listState.firstVisibleItemScrollOffset / solidOffset).coerceIn(0f, 1f)
+            }
         }
-        val headerColor by animateColorAsState(
-            targetValue = if (heroGone) MaterialTheme.colorScheme.background else Color.Transparent,
-            label = "headerColor"
-        )
 
         // The user and the friends that have something to show, in the order the stories play, and the person whose story is open
         val own = remember(viewer, state.ownStory) { StoryUi(viewer.id, viewer.name, viewer.avatar, state.ownStory) }
@@ -135,8 +137,20 @@ fun HomeScreen(
                         logoSize = state.logoSize,
                         height = heroHeight,
                         landscape = landscape,
-                        onPlay = {},
-                        onAddToList = {},
+                        onEditList = { id ->
+                            scope.launch {
+                                val editor = viewModel.listEditor(id) ?: return@launch
+                                OverlaySheet.show {
+                                    ListEditorSheet(
+                                        title = editor.title,
+                                        options = editor.options,
+                                        onSave = { draft -> viewModel.saveEntry(id, draft) },
+                                        onRemove = { viewModel.removeEntry(editor.title.entry?.id) },
+                                        onDismiss = OverlaySheet::dismiss
+                                    )
+                                }
+                            }
+                        },
                         onOpenTitle = onOpenTitle
                     )
                 }
@@ -149,7 +163,7 @@ fun HomeScreen(
 
         HomeHeader(
             viewer = viewer,
-            containerColor = headerColor,
+            containerColor = MaterialTheme.colorScheme.background.copy(alpha = headerProgress),
             onNotifications = {},
             onSearch = {},
             onProfile = onProfile,

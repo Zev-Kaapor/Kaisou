@@ -179,7 +179,7 @@ private fun PillButton(
         ) {
             if (leading != null) {
                 leading()
-                Spacer(modifier = Modifier.width(dimens.spaceSmall))
+                Spacer(modifier = Modifier.width(dimens.spaceExtraSmall))
             }
             // A long label gives way before it runs under the icon or out of the button
             Text(

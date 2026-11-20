@@ -89,8 +89,11 @@ object KaisouIcons {
         "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2",
         "M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"
     )
+    val PersonFilled = fillIcon(
+        "PersonFilled",
+        "M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1z"
+    )
     val PlayOutline = strokeIcon("PlayOutline", "M6 3l14 9-14 9V3z")
-    val Bookmark = strokeIcon("Bookmark", "m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z")
     val Image = strokeIcon(
         "Image",
         "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
@@ -215,6 +218,20 @@ object KaisouIcons {
         "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
     )
     val Back = strokeIcon("Back", "m12 19-7-7 7-7", "M19 12H5")
+    val QuestionCircle = fillIcon(
+        "QuestionCircle",
+        "M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z",
+        grid = 512f
+    )
+    // The two ways to order the tags: by the letters, with an A over a Z and an arrow down, and by the percentage
+    val SortAlphabetical = strokeIcon(
+        "SortAlphabetical",
+        "M3 10 5.5 4 8 10", "M4 8h3", "M3 14h5l-5 6h5", "M17 4v16", "m13.5 16.5 3.5 3.5 3.5-3.5"
+    )
+    val Percent = strokeIcon(
+        "Percent",
+        "M19 5 5 19", "M6.5 4a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z", "M17.5 15a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"
+    )
     val ChevronDown = strokeIcon("ChevronDown", "m6 9 6 6 6-6")
     val ArrowUpDown = strokeIcon("ArrowUpDown", "m21 16-4 4-4-4", "M17 20V4", "m3 8 4-4 4 4", "M7 4v16")
     val ChevronRight = strokeIcon("ChevronRight", "m9 18 6-6-6-6")

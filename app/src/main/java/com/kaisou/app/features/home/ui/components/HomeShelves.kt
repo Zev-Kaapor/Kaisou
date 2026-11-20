@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -50,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -214,7 +216,7 @@ fun HomeShelf(shelf: ShelfUi, onOpenTitle: (Int) -> Unit, modifier: Modifier = M
 // a thin line around it so dark covers do not melt into the page, then its name and a line with how far the user is in it, the part
 // done in the violet of the app, or the details of the title
 @Composable
-fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, detailsLines: Int = 2) {
     val dimens = KaisouTheme.dimens
     val colors = KaisouTheme.colors
     val accent = MaterialTheme.colorScheme.primary
@@ -228,7 +230,7 @@ fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, onClick:
                 .background(colors.skeleton)
         ) {
             CardPicture(card, showWide)
-            CardTab(episode = card.episode, score = card.score, modifier = Modifier.align(Alignment.BottomEnd))
+            CardTab(episode = card.episode, score = card.score, userScore = card.userScore, modifier = Modifier.align(Alignment.BottomEnd))
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -237,19 +239,22 @@ fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, onClick:
         }
         Text(
             text = card.title,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = dimens.spaceSmall)
+            modifier = Modifier.padding(top = dimens.spaceExtraSmall)
         )
         val separator = stringResource(R.string.home_card_progress_separator)
         val unknown = stringResource(R.string.home_card_progress_unknown)
+        val unit = stringResource(if (card.rating.manga) R.string.home_card_unit_chapters else R.string.home_card_unit_episodes)
         val line = if (card.done != null) {
             buildAnnotatedString {
                 withStyle(SpanStyle(color = accent)) { append(card.done.toString()) }
                 append(separator)
                 append(card.total?.toString() ?: unknown)
+                append(" ")
+                append(unit)
             }
         } else {
             buildAnnotatedString { append(card.details) }
@@ -257,14 +262,22 @@ fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, onClick:
         val rating = rememberCardRating(card.rating)
         // The room of the rating is kept while it is looked for, so the line does not move when it comes up
         val showRating = !rating.loaded || rating.rating != null
-        if (line.isNotEmpty() || showRating) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
+        // The room of two lines is kept under the line, so the shelf does not change its height when a card with two lines comes by,
+        // while what is in it stays at the top as it is with one line
+        val detailsStyle = MaterialTheme.typography.labelSmall.copy(fontSize = HomeDimens.CardDetailsSize)
+        val detailsRoom = with(LocalDensity.current) { (detailsStyle.lineHeight * detailsLines).toDp() + HomeDimens.CardDetailsTop }
+        Box(modifier = Modifier.heightIn(min = detailsRoom)) {
+            Row(
+                modifier = Modifier.padding(top = HomeDimens.CardDetailsTop),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(HomeDimens.CardDetailsGap)
+            ) {
                 if (showRating) CardRating(rating.rating)
                 Text(
                     text = line,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = detailsStyle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
+                    maxLines = detailsLines,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
@@ -294,15 +307,30 @@ fun CornerTab(shape: Shape, modifier: Modifier = Modifier, content: @Composable 
 // The tab of a card: the episode that aired, if it is a new one, a line, and the score with its star, like E7 | 6,2 *. A title with
 // no score yet has dashes in its place, since zero would say people did not like it
 @Composable
-private fun CardTab(episode: Int?, score: Float?, modifier: Modifier = Modifier) {
+private fun CardTab(episode: Int?, score: Float?, userScore: Float?, modifier: Modifier = Modifier) {
     val colors = KaisouTheme.colors
-    val format = remember { NumberFormat.getNumberInstance(Locale.getDefault()).apply { minimumFractionDigits = 1; maximumFractionDigits = 1 } }
+    val format = rememberScoreFormat()
 
     CornerTab(shape = RoundedCornerShape(topStart = HomeDimens.TabCorner), modifier = modifier) {
         if (episode != null) {
             Text(text = stringResource(R.string.home_card_episode, episode), style = MaterialTheme.typography.labelSmall, color = colors.onAccentFill)
         }
         if (episode != null) {
+            Box(
+                modifier = Modifier
+                    .size(KaisouTheme.dimens.hairline, HomeDimens.TabStar)
+                    .background(colors.onAccentFill.copy(alpha = HomeDimens.MetaDividerAlpha))
+            )
+        }
+        // What the user gave it comes first with a person, and the score of AniList after it with its star
+        if (userScore != null) {
+            Text(text = format.format(userScore), style = MaterialTheme.typography.labelSmall, color = colors.onAccentFill)
+            Icon(
+                imageVector = KaisouIcons.PersonFilled,
+                contentDescription = stringResource(R.string.cd_your_score),
+                tint = colors.onAccentFill,
+                modifier = Modifier.size(HomeDimens.TabStar)
+            )
             Box(
                 modifier = Modifier
                     .size(KaisouTheme.dimens.hairline, HomeDimens.TabStar)
@@ -323,12 +351,17 @@ private fun CardTab(episode: Int?, score: Float?, modifier: Modifier = Modifier)
     }
 }
 
+// The way a score of a card is written: one decimal, in the language of the phone
+@Composable
+internal fun rememberScoreFormat(): NumberFormat =
+    remember { NumberFormat.getNumberInstance(Locale.getDefault()).apply { minimumFractionDigits = 1; maximumFractionDigits = 1 } }
+
 // What is known of the rating of a card: whether it was looked for already, and the rating, null when the title has none
-private class CardRatingState(val loaded: Boolean, val rating: ContentRating?)
+internal class CardRatingState(val loaded: Boolean, val rating: ContentRating?)
 
 // Looks for the rating of a title only while its card is on the screen, from what is kept first
 @Composable
-private fun rememberCardRating(query: RatingQuery): CardRatingState {
+internal fun rememberCardRating(query: RatingQuery): CardRatingState {
     val region = AppLanguage.region
     val kept = RatingRepository.known(region, query)
     val state by produceState(CardRatingState(kept.first, kept.second), query.anilistId, region) {
@@ -340,7 +373,7 @@ private fun rememberCardRating(query: RatingQuery): CardRatingState {
 // The square of the rating at the start of the line under a card, a gray square of the placeholder while it is looked for, that gives
 // way to it softly when found
 @Composable
-private fun CardRating(rating: ContentRating?) {
+internal fun CardRating(rating: ContentRating?) {
     val alpha by animateFloatAsState(
         targetValue = if (rating != null) 1f else 0f,
         animationSpec = tween(HomeDimens.CardRatingFadeMillis),
@@ -426,6 +459,35 @@ private fun FriendsSkeleton() {
     }
 }
 
+// What is under a card: a bar for the name and under it the square of the rating with a bar for the line of details
+@Composable
+internal fun CardTextSkeleton() {
+    val dimens = KaisouTheme.dimens
+
+    Column {
+        Box(
+            modifier = Modifier
+                .padding(top = dimens.spaceExtraSmall)
+                .fillMaxWidth(HomeDimens.SkeletonTitleFraction)
+                .height(HomeDimens.SkeletonLineHeight)
+                .skeleton(MaterialTheme.shapes.extraSmall)
+        )
+        Row(
+            modifier = Modifier.padding(top = dimens.spaceExtraSmall),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.size(HomeDimens.CardRatingSize).skeleton(MaterialTheme.shapes.extraSmall))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(HomeDimens.SkeletonDetailsFraction)
+                    .height(HomeDimens.SkeletonLineHeight)
+                    .skeleton(MaterialTheme.shapes.extraSmall)
+            )
+        }
+    }
+}
+
 // The name of a shelf as a bar and a row of cards with two lines under each, like the placeholder of the shelves of Wavvy
 @Composable
 private fun ShelfSkeleton(shape: CardShape) {
@@ -449,20 +511,7 @@ private fun ShelfSkeleton(shape: CardShape) {
             items(HomeDimens.SkeletonCards) {
                 Column(modifier = Modifier.width(width)) {
                     Box(modifier = Modifier.fillMaxWidth().aspectRatio(ratio).skeleton(MaterialTheme.shapes.medium))
-                    Box(
-                        modifier = Modifier
-                            .padding(top = dimens.spaceSmall)
-                            .fillMaxWidth(HomeDimens.SkeletonTitleFraction)
-                            .height(HomeDimens.SkeletonLineHeight)
-                            .skeleton(MaterialTheme.shapes.extraSmall)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .padding(top = dimens.spaceExtraSmall)
-                            .fillMaxWidth(HomeDimens.SkeletonDetailsFraction)
-                            .height(HomeDimens.SkeletonLineHeight)
-                            .skeleton(MaterialTheme.shapes.extraSmall)
-                    )
+                    CardTextSkeleton()
                 }
             }
         }

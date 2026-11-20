@@ -60,7 +60,11 @@ import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.title.data.ReleaseState
 import com.kaisou.app.features.title.data.TitleStatus
 import com.kaisou.app.features.title.ui.components.ListEditorSheet
+import com.kaisou.app.features.title.ui.components.CardsRowSkeleton
+import com.kaisou.app.features.title.ui.components.DetailsInfoSkeleton
 import com.kaisou.app.features.title.ui.components.NextEpisodeCard
+import com.kaisou.app.features.title.ui.components.PeopleRowSkeleton
+import com.kaisou.app.features.title.ui.components.TitleBodySkeleton
 import com.kaisou.app.features.title.ui.components.TitleFacts
 import com.kaisou.app.features.title.ui.components.TitleHero
 import com.kaisou.app.features.title.ui.components.TitleSynopsis
@@ -100,6 +104,7 @@ fun TitleScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        val context = LocalContext.current
         val landscape = maxWidth > maxHeight
         // Standing up the art is a poster as tall as the screen is wide times a ratio, lying down it takes a share of the height, so
         // the synopsis shows under it
@@ -117,6 +122,12 @@ fun TitleScreen(
         when (state.status) {
             TitleStatus.Loading -> LazyColumn(modifier = Modifier.fillMaxSize(), userScrollEnabled = false) {
                 item(key = "hero-skeleton") { HomeHeroSkeleton(height = heroHeight, landscape = landscape) }
+                // Under it the rest of the page, as the real one has it, so the placeholder fills the screen as the one of the Home
+                item(key = "body-skeleton") { TitleBodySkeleton() }
+                item(key = "details-skeleton") { DetailsInfoSkeleton() }
+                item(key = "order-skeleton") { CardsRowSkeleton() }
+                item(key = "people-skeleton") { PeopleRowSkeleton() }
+                item(key = "recommendations-skeleton") { CardsRowSkeleton() }
             }
             TitleStatus.Error -> TitleError(onRetry = viewModel::load)
             TitleStatus.Content -> state.title?.let { title ->
@@ -129,8 +140,7 @@ fun TitleScreen(
                             backdropSize = state.backdropSize,
                             logoSize = state.logoSize,
                             landscape = landscape,
-                            // The list button has no action yet, the heart is the favourite of AniList
-                            onListButton = {},
+                            // The list of the user opens the editor, and the heart is the favourite of AniList
                             onEditList = {
                                 OverlaySheet.show {
                                     ListEditorSheet(
@@ -176,14 +186,13 @@ fun TitleScreen(
                             onToggleOrder = { newestFirst = !newestFirst },
                             onRetry = viewModel::retryEpisodes
                         )
-                        TitleTab.Community -> titleCommunityItems(state.community, onRetry = viewModel::retryCommunity)
+                        TitleTab.Community -> titleCommunityItems(state.community, title = title, onRetry = viewModel::retryCommunity)
                     }
                     item(key = "end") { Spacer(modifier = Modifier.height(KaisouTheme.dimens.spaceLarge)) }
                 }
             }
         }
 
-        val context = LocalContext.current
         val siteUrl = state.title?.siteUrl
         val alertsOn = state.title?.anilistId in alerts
         val alertOnMessage = stringResource(R.string.title_alert_on)

@@ -46,22 +46,41 @@ import com.kaisou.app.features.title.data.TitleScoreBar
 import com.kaisou.app.features.title.data.TitleStatusShare
 import com.kaisou.app.features.title.data.TitleThread
 import com.kaisou.app.features.title.ui.TitleDimens
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import com.kaisou.app.core.auth.AniListSession
+import com.kaisou.app.features.home.ui.HomeDimens
+import com.kaisou.app.features.home.ui.components.CornerTab
+import com.kaisou.app.features.home.ui.components.rememberScoreFormat
+import com.kaisou.app.features.title.data.TitleUi
 
 // The tab of the community: the friends that have the title, the reviews, how the scores and the lists are spread, and the threads of the
 // forum. A block that has nothing is left out, and when all of them have nothing the tab says so
-fun LazyListScope.titleCommunityItems(community: Load<TitleCommunity>, onRetry: () -> Unit) {
+fun LazyListScope.titleCommunityItems(community: Load<TitleCommunity>, title: TitleUi, onRetry: () -> Unit) {
     when (community) {
         is Load.Done -> {
             val value = community.value
             val empty = value.friends.isEmpty() && value.reviews.isEmpty() && value.scores.isEmpty() && value.statuses.isEmpty() && value.threads.isEmpty()
             if (empty) item(key = "community-empty") { CommunityMessage() }
-            if (value.friends.isNotEmpty()) item(key = "community-friends") { FriendsBlock(value.friends) }
+            if (value.friends.isNotEmpty()) item(key = "community-friends") { FriendsBlock(value.friends, title) }
             if (value.reviews.isNotEmpty()) item(key = "community-reviews") { ReviewsBlock(value.reviews) }
             if (value.scores.isNotEmpty() || value.statuses.isNotEmpty()) item(key = "community-stats") { StatsBlock(value.scores, value.statuses) }
             if (value.threads.isNotEmpty()) item(key = "community-threads") { ThreadsBlock(value.threads) }
         }
         is Load.Failed -> item(key = "community-error") { DetailsError(onRetry = onRetry) }
-        else -> item(key = "community-loading") { DetailsSkeleton() }
+        else -> {
+            item(key = "community-loading-friends") { FriendsRowSkeleton() }
+            item(key = "community-loading") { DetailsSkeleton() }
+        }
     }
 }
 
@@ -79,7 +98,7 @@ private fun CommunityMessage() {
 // The score on the scale of ten with its star, in the accent
 @Composable
 private fun ScoreMark(score: Float) {
-    val format = remember { NumberFormat.getNumberInstance(Locale.getDefault()).apply { minimumFractionDigits = 1; maximumFractionDigits = 1 } }
+    val format = rememberScoreFormat()
 
     Row(horizontalArrangement = Arrangement.spacedBy(KaisouTheme.dimens.spaceExtraSmall), verticalAlignment = Alignment.CenterVertically) {
         Icon(imageVector = KaisouIcons.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(TitleDimens.ScoreStar))
@@ -87,38 +106,115 @@ private fun ScoreMark(score: Float) {
     }
 }
 
-// Each friend that has the title with where it is on their list, how far they are and the score they gave
+// The friends that have the title in a row that slides, the user first. Each has the picture with the score they gave on it, the name, where
+// the title is on their list and how far they are. A tap opens their page on AniList
 @Composable
-private fun FriendsBlock(friends: List<TitleFriend>) {
+private fun FriendsBlock(friends: List<TitleFriend>, title: TitleUi) {
+    val dimens = KaisouTheme.dimens
+    val viewer = remember { AniListSession.viewer }
+    val keys = stringArrayResource(R.array.title_list_keys)
+    val names = stringArrayResource(if (title.manga) R.array.title_list_names_manga else R.array.title_list_names_anime)
+    val you = stringResource(R.string.title_friend_you)
+    val total = (if (title.manga) title.chapters else title.episodes)?.takeIf { it > 0 }
+    val entry = title.entry
+    // The user is the first of them when the title is on their list
+    val me = if (entry != null && viewer != null) {
+        TitleFriend(
+            name = you,
+            avatar = viewer.avatar,
+            status = names.getOrNull(keys.indexOf(entry.status.apiName)).orEmpty(),
+            progress = entry.progress,
+            score = entry.scoreOutOfTen.takeIf { it > 0f },
+            url = "https://anilist.co/user/${viewer.name}",
+            isMe = true
+        )
+    } else {
+        null
+    }
+    val everyone = listOfNotNull(me) + friends
+
+    Column(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
+        BlockTitle(text = stringResource(R.string.title_section_friends), modifier = Modifier.padding(horizontal = dimens.screenPadding))
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = dimens.screenPadding),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+            modifier = Modifier.padding(top = dimens.spaceSmall)
+        ) {
+            items(everyone, key = { it.url }) { friend -> FriendItem(friend = friend, total = total, manga = title.manga) }
+        }
+    }
+}
+
+// One friend: the picture with the score on its bottom, a ring in the accent when it is the user, the name, the state on the list and how far
+// they are, which says what it counts like the cards do
+@Composable
+private fun FriendItem(friend: TitleFriend, total: Int?, manga: Boolean) {
     val dimens = KaisouTheme.dimens
     val context = LocalContext.current
-    val separator = stringResource(R.string.home_card_separator)
+    val format = rememberScoreFormat()
+    val accent = MaterialTheme.colorScheme.primary
+    val separator = stringResource(R.string.home_card_progress_separator)
+    val unknown = stringResource(R.string.home_card_progress_unknown)
+    val unit = stringResource(if (manga) R.string.home_card_unit_chapters else R.string.home_card_unit_episodes)
+    val progress = buildAnnotatedString {
+        friend.progress?.let { done ->
+            withStyle(SpanStyle(color = accent)) { append(done.toString()) }
+            append(separator)
+            append(total?.toString() ?: unknown)
+            append(" ")
+            append(unit)
+        }
+    }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
-        BlockTitle(stringResource(R.string.title_section_friends))
-        friends.forEach { friend ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = dimens.spaceSmall)
-                    .clickable(role = Role.Button) { InAppBrowser.open(context, friend.url) },
-                horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RoundImage(url = friend.avatar, size = TitleDimens.AvatarSize)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = friend.name, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        text = listOfNotNull(friend.status.takeIf { it.isNotEmpty() }, friend.progress?.toString()).joinToString(separator),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+    Column(
+        modifier = Modifier
+            .width(TitleDimens.FriendWidth)
+            .clickable(role = Role.Button) { InAppBrowser.open(context, friend.url) },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(contentAlignment = Alignment.BottomCenter) {
+            RoundImage(
+                url = friend.avatar,
+                size = TitleDimens.FriendAvatar,
+                modifier = if (friend.isMe) Modifier.border(TitleDimens.FriendRing, accent, CircleShape) else Modifier
+            )
+            friend.score?.let { score ->
+                CornerTab(shape = CircleShape, modifier = Modifier.offset(y = TitleDimens.FriendBadgeOffset)) {
+                    Text(text = format.format(score), style = MaterialTheme.typography.labelSmall, color = KaisouTheme.colors.onAccentFill)
+                    Icon(
+                        imageVector = KaisouIcons.Star,
+                        contentDescription = null,
+                        tint = KaisouTheme.colors.onAccentFill,
+                        modifier = Modifier.size(HomeDimens.TabStar)
                     )
                 }
-                friend.score?.let { ScoreMark(it) }
             }
         }
+        Text(
+            text = friend.name,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = TitleDimens.FriendBadgeOffset + dimens.spaceExtraSmall)
+        )
+        Text(
+            text = friend.status,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = progress,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

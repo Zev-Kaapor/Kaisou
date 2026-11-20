@@ -57,8 +57,6 @@ import androidx.compose.ui.text.withStyle
 import coil3.compose.AsyncImage
 import coil3.size.Size
 // Java utilities
-import java.text.NumberFormat
-import java.util.Locale
 import kotlin.math.roundToInt
 // Project resources
 import com.kaisou.app.R
@@ -82,6 +80,8 @@ import com.kaisou.app.features.home.ui.components.MarkdownContent
 import com.kaisou.app.features.title.data.ListStatus
 import com.kaisou.app.features.title.data.TitleUi
 import com.kaisou.app.features.title.ui.TitleDimens
+import androidx.compose.ui.res.stringArrayResource
+import com.kaisou.app.features.home.ui.components.rememberScoreFormat
 
 // The top of the page of a title: the art fading into the page, with the name, the details, the score and the buttons anchored to its
 // bottom, on the left side when lying down. Prototype, built on the same look as the hero of the Home
@@ -94,7 +94,6 @@ fun TitleHero(
     backdropSize: Size,
     logoSize: Size,
     landscape: Boolean,
-    onListButton: () -> Unit,
     onEditList: () -> Unit,
     onFavourite: () -> Unit,
     modifier: Modifier = Modifier
@@ -170,7 +169,7 @@ fun TitleHero(
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ScoreChip(score = title.score)
+                ScoreChip(score = title.score, userScore = title.entry?.scoreOutOfTen?.takeIf { it > 0f })
                 art?.rating?.let { AgeRatingBadge(it) }
                 title.releaseDay?.let { WeeklyReleaseBadge(it) }
                 // Year and format, then a faint divider and the genres, as in 2026 • TV | Action, Mystery
@@ -199,7 +198,7 @@ fun TitleHero(
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // The button says where the title is on the list of the user and what comes next
+                // The list of the user: it opens the editor, says where the title is on it and has the icon of that place, a plus when it is not on it
                 OutlineButton(
                     // Lying down the button is not stretched over the whole column
                     modifier = if (landscape) {
@@ -207,16 +206,10 @@ fun TitleHero(
                     } else {
                         Modifier.weight(1f)
                     },
-                    text = listButtonText(title, art?.season),
-                    onClick = onListButton,
-                    leading = { ButtonIcon(icon = KaisouIcons.PlayOutline, tint = MaterialTheme.colorScheme.primary) },
+                    text = listButtonText(title),
+                    onClick = onEditList,
+                    leading = { ButtonIcon(icon = listStatusIcon(title.entry?.status, title.manga), tint = MaterialTheme.colorScheme.primary) },
                     grouped = true
-                )
-                // The list of the user: it opens the editor, and the icon says where the title is on the list, a plus when it is not on it
-                OutlineIconButton(
-                    icon = listStatusIcon(title.entry?.status, title.manga),
-                    contentDescription = stringResource(R.string.cd_list),
-                    onClick = onEditList
                 )
                 OutlineIconButton(
                     icon = if (title.isFavourite) KaisouIcons.HeartFilled else KaisouIcons.Heart,
@@ -228,30 +221,54 @@ fun TitleHero(
     }
 }
 
-// The score of the title with its star, first on the line of details. A title with no score yet has dashes in its place, since zero would
-// say people did not like it
+// The score of the title with its star, first on the line of details, and before it the one the user gave with a person when they did. A
+// title with no score yet has dashes in its place, since zero would say people did not like it
 @Composable
-private fun ScoreChip(score: Float?, modifier: Modifier = Modifier) {
+private fun ScoreChip(score: Float?, userScore: Float?, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
-    val format = remember { NumberFormat.getNumberInstance(Locale.getDefault()).apply { minimumFractionDigits = 1; maximumFractionDigits = 1 } }
+    val format = rememberScoreFormat()
 
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (userScore != null) {
+            Text(text = format.format(userScore), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+            Icon(
+                imageVector = KaisouIcons.PersonFilled,
+                contentDescription = stringResource(R.string.cd_your_score),
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(TitleDimens.ScoreStar)
+            )
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = dimens.spaceExtraSmall)
+                    .size(dimens.hairline, TitleDimens.ScoreStar)
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant)
+            )
+        }
+        Text(
+            text = score?.let(format::format) ?: stringResource(R.string.home_card_no_score),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
         Icon(
             imageVector = KaisouIcons.Star,
             contentDescription = null,
             tint = KaisouTheme.colors.medalGold,
             modifier = Modifier.size(TitleDimens.ScoreStar)
         )
-        Text(
-            text = score?.let(format::format) ?: stringResource(R.string.home_card_no_score),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
     }
+}
+
+// What the big button of the list says: where the title is on the list of the user, in the names of the editor, and to add it when it is not
+@Composable
+private fun listButtonText(title: TitleUi): String {
+    val entry = title.entry ?: return stringResource(R.string.title_cta_add_to_list)
+    val keys = stringArrayResource(R.array.title_list_keys)
+    val names = stringArrayResource(if (title.manga) R.array.title_list_names_manga else R.array.title_list_names_anime)
+    return names.getOrNull(keys.indexOf(entry.status.apiName)) ?: stringResource(R.string.title_cta_add_to_list)
 }
 
 // The icon of the list for where the title is on it: a plus when it is not on the list, then watching or reading, planned, done, done again,
@@ -266,25 +283,6 @@ internal fun listStatusIcon(status: ListStatus?, manga: Boolean): ImageVector =
         ListStatus.Paused -> KaisouIcons.CirclePause
         ListStatus.Dropped -> KaisouIcons.CircleX
     }
-
-// What the button of the list says: what to do next with the title, by where it is on the list of the user. A title that is done is
-// done again from the start, a movie has no episode and a manga has chapters
-@Composable
-private fun listButtonText(title: TitleUi, season: Int?): String {
-    val unit = when {
-        title.manga -> stringResource(R.string.title_unit_chapter, title.nextUnit)
-        season != null -> stringResource(R.string.title_unit_season_episode, season, title.nextUnit)
-        else -> stringResource(R.string.title_unit_episode, title.nextUnit)
-    }
-    return when {
-        title.listStatus == ListStatus.Completed ->
-            stringResource(if (title.manga) R.string.title_cta_read_again else R.string.title_cta_watch_again)
-        title.query.movie && !title.manga -> stringResource(R.string.home_cta_watch_movie)
-        title.listStatus == ListStatus.Current || title.listStatus == ListStatus.Repeating -> stringResource(R.string.title_cta_continue, unit)
-        title.listStatus == ListStatus.Paused || title.listStatus == ListStatus.Dropped -> stringResource(R.string.title_cta_resume, unit)
-        else -> stringResource(if (title.manga) R.string.title_cta_read else R.string.title_cta_watch, unit)
-    }
-}
 
 // The synopsis under the top, with its name, in the small text of the app and with the formats and the breaks that AniList wrote. A few
 // lines of it show, and a link in the accent opens all of it, which is only there when there is more to show. The text is always laid out

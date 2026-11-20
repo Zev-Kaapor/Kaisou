@@ -185,7 +185,7 @@ fun ProfileMediaContent(viewModel: ProfileMediaViewModel, onOpenTitle: (Int) -> 
                         val card = item.card
                         val person = item.person
                         if (card != null) {
-                            TitleCard(card, HomeDimens.PosterWidth, HomeDimens.PosterRatio, showWide = false, onClick = { onOpenTitle(card.anilistId) })
+                            TitleCard(card, HomeDimens.PosterWidth, HomeDimens.PosterRatio, showWide = false, onClick = { onOpenTitle(card.anilistId) }, detailsLines = 2)
                         } else if (person != null) {
                             PersonCard(person, onOpen = { person.ref?.let(onOpenProfile) })
                         }

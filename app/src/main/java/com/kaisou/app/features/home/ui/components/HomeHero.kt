@@ -68,6 +68,8 @@ import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.data.HeroArt
 import com.kaisou.app.features.home.data.HeroUi
 import com.kaisou.app.features.home.ui.HomeDimens
+import com.kaisou.app.features.title.data.ListStatus
+import com.kaisou.app.features.title.ui.components.listStatusIcon
 
 // What the carousel shows while the poster of the title that is on is not ready
 private const val NotReady = -1
@@ -84,8 +86,7 @@ fun HomeHeroCarousel(
     logoSize: Size,
     height: Dp,
     landscape: Boolean,
-    onPlay: () -> Unit,
-    onAddToList: () -> Unit,
+    onEditList: (Int) -> Unit,
     onOpenTitle: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -134,8 +135,7 @@ fun HomeHeroCarousel(
                     backdropSize = backdropSize,
                     logoSize = logoSize,
                     landscape = landscape,
-                    onPlay = onPlay,
-                    onAddToList = onAddToList,
+                    onEditList = { onEditList(heroes[page].anilistId) },
                     onOpen = { onOpenTitle(heroes[page].anilistId) },
                     modifier = Modifier.fillMaxSize()
                 )
@@ -155,8 +155,7 @@ private fun HomeHero(
     backdropSize: Size,
     logoSize: Size,
     landscape: Boolean,
-    onPlay: () -> Unit,
-    onAddToList: () -> Unit,
+    onEditList: () -> Unit,
     onOpen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -281,25 +280,19 @@ private fun HomeHero(
                         Modifier.weight(1f)
                     },
                     text = when {
-                        hero.query.movie -> stringResource(R.string.home_cta_watch_movie)
-                        season != null -> stringResource(
-                            if (hero.continuing) R.string.home_cta_continue_season else R.string.home_cta_watch_season,
-                            season,
-                            hero.nextEpisode
-                        )
-                        else -> stringResource(
-                            if (hero.continuing) R.string.home_cta_continue else R.string.home_cta_watch,
-                            hero.nextEpisode
-                        )
+                        hero.query.movie -> stringResource(R.string.home_cta_details_movie)
+                        season != null -> stringResource(R.string.home_cta_details_season, season, hero.nextEpisode)
+                        else -> stringResource(R.string.home_cta_details, hero.nextEpisode)
                     },
-                    onClick = onPlay,
-                    leading = { ButtonIcon(icon = KaisouIcons.PlayOutline, tint = KaisouTheme.colors.onAccentFill) },
+                    onClick = onOpen,
+                    leading = { ButtonIcon(icon = KaisouIcons.Info, tint = KaisouTheme.colors.onAccentFill) },
                     grouped = true
                 )
+                // The list of the user: it opens the editor, and the icon says if the title is on it, a plus when it is not
                 OutlineIconButton(
-                    icon = KaisouIcons.Bookmark,
-                    contentDescription = stringResource(R.string.home_add_to_list),
-                    onClick = onAddToList
+                    icon = listStatusIcon(if (hero.continuing) ListStatus.Current else null, manga = false),
+                    contentDescription = stringResource(R.string.cd_list),
+                    onClick = onEditList
                 )
             }
         }

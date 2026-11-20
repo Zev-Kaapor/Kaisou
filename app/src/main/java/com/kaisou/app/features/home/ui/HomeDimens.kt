@@ -119,6 +119,10 @@ object HomeDimens {
     const val CardCrossfadeMillis = 700
     // The advisory rating at the start of the line under a card: how big its square is and how long it takes to come up
     val CardRatingSize = 16.dp
+    // The line next to it: a size between the small and the medium, the room above it and the one between it and the square of the rating
+    val CardDetailsSize = 11.sp
+    val CardDetailsTop = 2.dp
+    val CardDetailsGap = 6.dp
     const val CardRatingFadeMillis = 300
     // The line between the episode and the score in the tab
     // Row of the friends, as on Dantotsu: the picture, the ring around it split in one piece for each activity, how thick the ring

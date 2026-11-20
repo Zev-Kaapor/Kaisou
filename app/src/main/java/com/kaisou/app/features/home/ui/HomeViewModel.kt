@@ -48,6 +48,13 @@ import com.kaisou.app.features.home.data.RepliesUi
 import com.kaisou.app.features.home.data.ReplyUi
 import com.kaisou.app.features.home.data.StoryItemUi
 import com.kaisou.app.features.home.data.StorySeen
+import com.kaisou.app.R
+import com.kaisou.app.core.designsystem.components.Toasts
+import com.kaisou.app.features.title.data.ListDraft
+import com.kaisou.app.features.title.data.ListOptions
+import com.kaisou.app.features.title.data.TitleRepository
+import com.kaisou.app.features.title.data.TitleUi
+import com.kaisou.app.features.title.data.ListChanges
 
 // Loads the Home as soon as it is asked for and keeps it, so it is not asked again when the user scrolls or comes back to it
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
@@ -55,6 +62,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val scroll = ScrollPosition()
 
     private val repository = HomeRepository(application)
+    // The list of the user is the one of the page of the title, so the editor is the same
+    private val titles = TitleRepository(application)
     private val artwork = ArtworkRepository.Shared
     private val storySeen = StorySeen(application)
     private val mutableState = MutableStateFlow(
@@ -67,6 +76,44 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     )
     val state: StateFlow<HomeUiState> = mutableState.asStateFlow()
 
+    // What the editor of the list needs for a title: the title with the entry of the user and how the account gives scores and keeps lists
+    class ListEditor(val title: TitleUi, val options: ListOptions?)
+
+    suspend fun listEditor(id: Int): ListEditor? = coroutineScope {
+        val options = async { titles.listOptions(manga = false) }
+        val title = titles.header(id) ?: return@coroutineScope null
+        ListEditor(title, options.await())
+    }
+
+    // Puts the title on the list or changes its entry, the island says what happened
+    fun saveEntry(id: Int, draft: ListDraft) {
+        viewModelScope.launch {
+            val application = getApplication<Application>()
+            if (titles.saveEntry(id, draft) != null) {
+                ListChanges.changed()
+                refreshIfStale(Long.MAX_VALUE)
+                Toasts.show(application.getString(R.string.title_list_saved))
+            } else {
+                Toasts.show(application.getString(R.string.title_list_failed), isError = true)
+            }
+        }
+    }
+
+    // Takes the title off the list
+    fun removeEntry(entryId: Int?) {
+        if (entryId == null) return
+        viewModelScope.launch {
+            val application = getApplication<Application>()
+            if (titles.removeEntry(entryId)) {
+                ListChanges.changed()
+                refreshIfStale(Long.MAX_VALUE)
+                Toasts.show(application.getString(R.string.title_list_removed))
+            } else {
+                Toasts.show(application.getString(R.string.title_list_failed), isError = true)
+            }
+        }
+    }
+
     // The request that is running, so a new one replaces it, the one that looks for news on its own, and when the Home was last asked for
     private var loadJob: Job? = null
     private var quietJob: Job? = null
@@ -75,6 +122,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     // The activities whose like is going to AniList
     private val liking = mutableSetOf<Int>()
     private var loadedAt = 0L
+    // The last change of the list that the shelves were asked again for
+    private var seenListVersion = ListChanges.version.value
 
     init {
         // TheTVDB is logged in to while the titles come, so the first title does not wait for it
@@ -232,7 +281,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshIfStale(minAgeMillis: Long) {
         val current = mutableState.value
         if (current.status != HomeStatus.Content || current.isRefreshing || loadJob?.isActive == true || quietJob?.isActive == true) return
-        if (SystemClock.elapsedRealtime() - loadedAt < minAgeMillis) return
+        // A change of the list is asked for whatever the time since the last question
+        val listChanged = ListChanges.version.value != seenListVersion
+        if (!listChanged && SystemClock.elapsedRealtime() - loadedAt < minAgeMillis) return
+        seenListVersion = ListChanges.version.value
         refreshUnder()
     }
 
