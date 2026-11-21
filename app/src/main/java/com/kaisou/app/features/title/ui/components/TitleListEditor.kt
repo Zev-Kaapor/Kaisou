@@ -241,14 +241,14 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                         value = progress,
                         max = totalUnits ?: MaxUnits,
                         onValueChange = { progress = it },
-                        suffix = "/ ${totalUnits ?: UnknownTotal}",
-                        big = true
+                        suffix = "/ ${totalUnits ?: UnknownTotal}"
                     )
                     StepButton(symbol = PlusSymbol, onClick = { move(1) })
                 }
                 ProgressBar(fraction = if (totalUnits != null) progress / totalUnits.toFloat() else null)
                 if (title.manga) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Apart from the chapters, with room between them so the two rows are not read as one
+                    Row(modifier = Modifier.padding(top = dimens.spaceSmall), verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = stringResource(R.string.title_list_volumes),
                             style = MaterialTheme.typography.bodyMedium,
@@ -256,7 +256,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                             modifier = Modifier.weight(1f)
                         )
                         StepButton(symbol = MinusSymbol, onClick = { volumes = (volumes - 1).coerceAtLeast(0) })
-                        NumberInput(value = volumes, max = totalVolumes ?: MaxUnits, onValueChange = { volumes = it }, suffix = "/ ${totalVolumes ?: UnknownTotal}", big = false)
+                        NumberInput(value = volumes, max = totalVolumes ?: MaxUnits, onValueChange = { volumes = it }, suffix = "/ ${totalVolumes ?: UnknownTotal}")
                         StepButton(symbol = PlusSymbol, onClick = { volumes = (volumes + 1).coerceAtMost(totalVolumes ?: MaxUnits) })
                     }
                 }
@@ -315,7 +315,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                             modifier = Modifier.weight(1f)
                         )
                         StepButton(symbol = MinusSymbol, onClick = { repeat = (repeat - 1).coerceAtLeast(0) })
-                        NumberInput(value = repeat, max = MaxRepeat, onValueChange = { repeat = it }, suffix = null, big = false)
+                        NumberInput(value = repeat, max = MaxRepeat, onValueChange = { repeat = it }, suffix = null)
                         StepButton(symbol = PlusSymbol, onClick = { repeat = (repeat + 1).coerceAtMost(MaxRepeat) })
                     }
                     if (account.advancedScoring.isNotEmpty()) {
@@ -482,7 +482,7 @@ private fun ProgressBar(fraction: Float?) {
 
 // A number that is written over a line, with how many there are in all after it when there is a total, big when it is the one that matters
 @Composable
-private fun NumberInput(value: Int, max: Int, onValueChange: (Int) -> Unit, suffix: String?, big: Boolean) {
+private fun NumberInput(value: Int, max: Int, onValueChange: (Int) -> Unit, suffix: String?) {
     val dimens = KaisouTheme.dimens
 
     Row(modifier = Modifier.padding(horizontal = dimens.spaceSmall), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
@@ -491,8 +491,8 @@ private fun NumberInput(value: Int, max: Int, onValueChange: (Int) -> Unit, suff
             onValueChange = { text -> onValueChange((text.filter(Char::isDigit).take(MaxDigits).toIntOrNull() ?: 0).coerceAtMost(max)) },
             placeholder = "0",
             keyboardType = KeyboardType.Number,
-            width = if (big) TitleDimens.ListNumberBig else TitleDimens.ListNumber,
-            big = big
+            width = TitleDimens.ListNumberBig,
+            big = true
         )
         if (suffix != null) {
             Text(text = suffix, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

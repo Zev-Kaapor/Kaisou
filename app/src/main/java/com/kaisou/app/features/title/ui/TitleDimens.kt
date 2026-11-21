@@ -25,7 +25,6 @@ object TitleDimens {
     val ListBar = 8.dp
     val ListPill = 44.dp
     val ListPercentWidth = 40.dp
-    val ListNumber = 52.dp
     val ListScoreBox = 72.dp
     val ListScoreIcon = 32.dp
     val HintIcon = 12.dp
