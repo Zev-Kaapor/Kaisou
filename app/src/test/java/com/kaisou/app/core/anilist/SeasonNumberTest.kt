@@ -59,4 +59,34 @@ class SeasonNumberTest {
         assertEquals(1, SeasonNumber.resolve(byDate = null, marker = null, hasPrequel = false))
         assertNull(SeasonNumber.resolve(byDate = null, marker = null, hasPrequel = true))
     }
+
+    @Test
+    fun theSecondPartOfASeasonGoesOnInThatSeason() {
+        val chitose = mapOf(1 to LocalDate.of(2025, 10, 7))
+        assertEquals(true, SeasonNumber.isContinuation(listOf("Chitose Is in the Ramune Bottle 2nd Cour")))
+        assertEquals(true, SeasonNumber.isContinuation(listOf("Chitose-kun wa Ramune Bin no Naka Part 2")))
+        assertEquals(false, SeasonNumber.isContinuation(listOf("Chitose-kun wa Ramune Bin no Naka")))
+        assertEquals(1, SeasonNumber.of(LocalDate.of(2026, 10, 13), chitose, null, hasPrequel = true, continuation = true))
+        assertEquals(4, SeasonNumber.of(LocalDate.of(2022, 1, 10), revengers + (4 to LocalDate.of(2020, 12, 7)) - 1, null, hasPrequel = true, continuation = true))
+    }
+
+    @Test
+    fun aSecondPartIsNotASeasonWhenThereIsNoPartInTheName() {
+        assertNull(SeasonNumber.of(LocalDate.of(2026, 10, 13), mapOf(1 to LocalDate.of(2025, 10, 7)), null, hasPrequel = true, continuation = false))
+    }
+
+    @Test
+    fun aLaterStageOfASeasonGoesOnInIt() {
+        val jojo = mapOf(5 to LocalDate.of(2022, 1, 8), 6 to LocalDate.of(2026, 3, 19))
+        assertEquals(true, SeasonNumber.isContinuation(listOf("JoJo no Kimyou na Bouken: Steel Ball Run - 2nd & 3rd STAGE")))
+        assertEquals(false, SeasonNumber.isContinuation(listOf("JoJo no Kimyou na Bouken: Steel Ball Run - 1st STAGE")))
+        assertEquals(6, SeasonNumber.of(LocalDate.of(2026, 9, 25), jojo, null, hasPrequel = true, continuation = true))
+    }
+
+    @Test
+    fun aTitleBetweenTwoSeasonsIsInTheFirstOfThem() {
+        val series = mapOf(1 to LocalDate.of(2020, 1, 1), 2 to LocalDate.of(2023, 1, 1))
+        assertEquals(1, SeasonNumber.of(LocalDate.of(2021, 6, 1), series, null, hasPrequel = true, continuation = false))
+        assertNull(SeasonNumber.of(LocalDate.of(2025, 6, 1), series, null, hasPrequel = true, continuation = false))
+    }
 }

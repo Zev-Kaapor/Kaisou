@@ -126,6 +126,7 @@ data class TitleUi(
     val adult: Boolean,
     // The season its name says, if it does, and whether another title comes before it in the series
     val seasonMarker: Int?,
+    val isContinuation: Boolean,
     val hasPrequel: Boolean,
     val startDate: LocalDate?,
     val title: String,

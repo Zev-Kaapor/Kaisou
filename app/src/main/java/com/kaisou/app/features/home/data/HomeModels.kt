@@ -25,6 +25,7 @@ data class HeroUi(
     val adult: Boolean,
     // The season its name says, if it does, and whether another title comes before it in the series
     val seasonMarker: Int?,
+    val isContinuation: Boolean,
     val hasPrequel: Boolean,
     // The day it started, which tells its season by the days the seasons of the series aired
     val startDate: LocalDate?,
@@ -58,7 +59,10 @@ class HeroArt(
     val synopsis: String?,
     val rating: ContentRating?,
     val season: Int?
-)
+) {
+    // The same, with the season that was found after it
+    fun withSeason(season: Int?) = HeroArt(posterUrl, backdropUrl, logoUrl, synopsis, rating, season)
+}
 
 // The shelves of posters and wide cards under the hero, in the order they show, and the words that name each one
 enum class ShelfId(@StringRes val titleRes: Int) {

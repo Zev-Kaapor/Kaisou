@@ -417,7 +417,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         var logoUrl: String? = null
         var synopsis: String? = null
         var rating: ContentRating? = null
-        var season: Int? = null
+        // The season does not wait for the pictures, nor is it lost when one of the sites is slow: it goes on after the time of the pictures
+        // ends and is put in the title when it comes
+        val seasonJob = viewModelScope.async {
+            SeasonNumber.of(hero.startDate, artwork.seasonStarts(hero.anilistId, hero.query), hero.seasonMarker, hero.hasPrequel, hero.isContinuation)
+        }
         withTimeoutOrNull(ArtWaitMillis) {
             val context = getApplication<Application>()
             val loader = SingletonImageLoader.get(context)
@@ -428,7 +432,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 if (AppLanguage.needsTranslation) launch { synopsis = GoogleTranslator.translate(hero.synopsis.take(TranslatedCharacters), AppLanguage.translationCode) }
                 launch {
                     val found = artwork.art(hero.anilistId, hero.query, AppLanguage.code)
-                    season = SeasonNumber.resolve(SeasonNumber.byDate(hero.startDate, found.seasonStarts), hero.seasonMarker, hero.hasPrequel)
                     // The picture of the way the screen is in is downloaded now, so it comes up whole. The other one is only known,
                     // and comes when the screen turns
                     posterUrl = found.posterUrl
@@ -458,7 +461,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+        val season = if (seasonJob.isCompleted) seasonJob.await() else null
         mutableState.update { it.copy(art = it.art + (hero.anilistId to HeroArt(posterUrl, backdropUrl, logoUrl, synopsis, rating, season))) }
+        if (!seasonJob.isCompleted) {
+            viewModelScope.launch {
+                val late = seasonJob.await() ?: return@launch
+                mutableState.update { state -> state.art[hero.anilistId]?.let { state.copy(art = state.art + (hero.anilistId to it.withSeason(late))) } ?: state }
+            }
+        }
     }
 
     private companion object {

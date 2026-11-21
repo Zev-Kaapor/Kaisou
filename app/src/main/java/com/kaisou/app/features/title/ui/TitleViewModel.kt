@@ -58,6 +58,8 @@ import com.kaisou.app.features.title.ui.components.TitleTab
 import com.kaisou.app.core.designsystem.components.ScrollPosition
 import com.kaisou.app.features.title.data.ListChanges
 import com.kaisou.app.features.title.data.TitleTrailer
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 
 // Loads the title of the page as soon as it is opened and keeps it while the page is on the stack
 class TitleViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
@@ -320,8 +322,12 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         var logoUrl: String? = null
         var synopsis: String? = null
         var rating: ContentRating? = null
-        var season: Int? = null
         var covers = emptyList<MangaCover>()
+        // The season does not wait for the pictures, nor is it lost when one of the sites is slow: it goes on after the time of the pictures
+        // ends and is put in the title when it comes
+        val seasonJob = if (title.manga) null else viewModelScope.async {
+            SeasonNumber.of(title.startDate, ArtworkRepository.Shared.seasonStarts(title.anilistId, title.query), title.seasonMarker, title.hasPrequel, title.isContinuation)
+        }
         withTimeoutOrNull(ArtWaitMillis) {
             val context = getApplication<Application>()
             val loader = SingletonImageLoader.get(context)
@@ -349,7 +355,6 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
                 }
                 launch {
                     val found = ArtworkRepository.Shared.art(title.anilistId, title.query, AppLanguage.code)
-                    season = SeasonNumber.resolve(SeasonNumber.byDate(title.startDate, found.seasonStarts), title.seasonMarker, title.hasPrequel)
                     posterUrl = found.posterUrl
                     backdropUrl = found.backdropUrl
                     coroutineScope {
@@ -378,6 +383,15 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
             }
         }
         mutableState.update { it.copy(covers = covers) }
+        val season = if (seasonJob?.isCompleted == true) seasonJob.await() else null
+        if (seasonJob != null && !seasonJob.isCompleted) {
+            viewModelScope.launch {
+                val late = seasonJob.await() ?: return@launch
+                // The page puts the pictures in when this ends, so the season is put in after them
+                val shown = mutableState.first { it.art != null }
+                mutableState.update { state -> state.art?.let { state.copy(art = it.withSeason(late)) } ?: shown }
+            }
+        }
         return HeroArt(posterUrl, backdropUrl, logoUrl, synopsis, rating, season)
     }
 

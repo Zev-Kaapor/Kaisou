@@ -38,6 +38,7 @@ class HomeMapper(private val resources: Resources) {
             malId = media.malId,
             adult = media.adult,
             seasonMarker = SeasonNumber.marker(media.names),
+            isContinuation = SeasonNumber.isContinuation(media.names),
             hasPrequel = media.hasPrequel,
             startDate = media.startDate,
             title = media.title,

@@ -7,10 +7,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+// Java time
+import java.time.LocalDate
 // Project resources
 import com.kaisou.app.core.anilist.AniListClient
 import com.kaisou.app.core.cache.AppStore
 import com.kaisou.app.core.cache.TimedCache
+import kotlinx.coroutines.delay
 
 // Finds the poster, the backdrop, the logos, the ratings of the countries and the seasons of the series of a title. Everything that can go on together does: the two sites are asked at the same
 // time, and the pictures are picked among what both have, as soon as both answered or the slower one waited too long
@@ -23,7 +26,62 @@ class ArtworkRepository {
     private val cache = TimedCache<TitleArt>(CacheMillis, MaxEntries)
 
     // The ratings alone, by title: they do not depend on the language
+    // The ids of the titles, which are asked once
+    private val idsCache = TimedCache<TitleIds>(CacheMillis, MaxEntries)
+
     private val certificationsCache = TimedCache<Map<String, String>>(CacheMillis, CertificationsMaxEntries)
+
+    // The ids a title has on TMDB and TheTVDB, kept in memory and on the phone for a month since they do not change, so the pictures, the ratings and
+    // the seasons of a title do not each ask for them again. Null when nothing is known of the title, which is not kept. Throws when it could not
+    // be asked
+    private suspend fun idsOf(anilistId: Int, query: ArtQuery): TitleIds? {
+        idsCache.get(anilistId)?.let { return it.value }
+        withContext(Dispatchers.IO) { AppStore.get(IdsSpace, anilistId.toString(), IdsStoreMillis) }?.let(::readIds)?.let {
+            idsCache.put(anilistId, it)
+            return it
+        }
+        val found = withContext(Dispatchers.IO) { ids.resolve(anilistId, query) } ?: return null
+        idsCache.put(anilistId, found)
+        withContext(Dispatchers.IO) { AppStore.put(IdsSpace, anilistId.toString(), listOf(found.kind, found.tmdbId, found.tvdbId, found.imdbId).joinToString(IdsSeparator) { it?.toString().orEmpty() }) }
+        return found
+    }
+
+    private fun readIds(text: String): TitleIds? {
+        val parts = text.split(IdsSeparator)
+        if (parts.size != IdsParts || parts[0].isEmpty()) return null
+        return TitleIds(parts[0], parts[1].toIntOrNull(), parts[2].toIntOrNull(), parts[3].ifEmpty { null })
+    }
+
+    // The day each season of the series of a title first aired, asked apart from the pictures and the ratings so a slow one of them does not take it
+    // away. The answer is kept on the phone by series for a day, so the titles of the same series and the next times do not ask again, and a
+    // failed question is asked again a few times before it is given up. Empty when the title is not a series or it could not be found
+    suspend fun seasonStarts(anilistId: Int, query: ArtQuery): Map<Int, LocalDate> {
+        val resolved = try {
+            idsOf(anilistId, query)
+        } catch (_: Exception) {
+            null
+        } ?: return emptyMap()
+        val tvdbId = resolved.tvdbId?.takeIf { resolved.kind == "tv" } ?: return emptyMap()
+        val key = tvdbId.toString()
+        withContext(Dispatchers.IO) { AppStore.get(SeasonsSpace, key, SeasonsStoreMillis) }?.let(::readSeasons)?.let { return it }
+        repeat(SeasonAttempts) { attempt ->
+            val found = withContext(Dispatchers.IO) { TvdbClient.seasonStarts(tvdbId) }
+            if (!found.failed) {
+                withContext(Dispatchers.IO) { AppStore.put(SeasonsSpace, key, found.byNumber.entries.joinToString(",") { "${it.key}=${it.value}" }) }
+                return found.byNumber
+            }
+            if (attempt < SeasonAttempts - 1) delay(SeasonRetryMillis)
+        }
+        return emptyMap()
+    }
+
+    // The seasons as they were kept, as 1=2012-10-06,2=2014-04-05, and nothing for a series that has none. Null when the text is not one of these
+    private fun readSeasons(text: String): Map<Int, LocalDate>? =
+        try {
+            if (text.isBlank()) emptyMap() else text.split(",").associate { part -> part.substringBefore("=").toInt() to LocalDate.parse(part.substringAfter("=")) }
+        } catch (_: Exception) {
+            null
+        }
 
     // Logs in to TheTVDB ahead of time, so the first title does not wait for it
     suspend fun prewarm() {
@@ -72,7 +130,7 @@ class ArtworkRepository {
                 return it
             }
         val resolved = try {
-            withContext(Dispatchers.IO) { ids.resolve(anilistId, query) }
+            idsOf(anilistId, query)
         } catch (_: Exception) {
             return null
         }
@@ -85,7 +143,7 @@ class ArtworkRepository {
 
     private suspend fun fetch(anilistId: Int, query: ArtQuery, language: String): Found = coroutineScope {
         val resolved = try {
-            withContext(Dispatchers.IO) { ids.resolve(anilistId, query) }
+            idsOf(anilistId, query)
         } catch (_: Exception) {
             return@coroutineScope Found(TitleArt.None, failed = true)
         } ?: return@coroutineScope Found(TitleArt.None, failed = false)
@@ -95,9 +153,6 @@ class ArtworkRepository {
         }
         val certified = async(Dispatchers.IO) {
             resolved.tmdbId?.let { TmdbClient.certifications(resolved.kind, it) } ?: Certified.None
-        }
-        val seasons = async(Dispatchers.IO) {
-            if (resolved.kind == "tv" && resolved.tvdbId != null) TvdbClient.seasonStarts(resolved.tvdbId) else SeasonStarts.None
         }
         val tvdb = async(Dispatchers.IO) {
             coroutineScope {
@@ -124,19 +179,16 @@ class ArtworkRepository {
         // The ratings and the seasons were asked from the start, so they are almost always there by now
         val ratings = withTimeoutOrNull(OtherSiteWaitMillis) { certified.await() }
         if (ratings == null) certified.cancel()
-        val starts = withTimeoutOrNull(OtherSiteWaitMillis) { seasons.await() }
-        if (starts == null) seasons.cancel()
         Found(
             art = TitleArt(
                 posterUrl = PosterPicker.pick(posters, language)?.url,
                 backdropUrl = BackdropPicker.pick(backdrops, language)?.url,
                 logos = LogoPicker.pick(logos, language),
                 certifications = ratings?.byCountry.orEmpty(),
-                seasonStarts = starts?.byNumber.orEmpty(),
                 tmdbKind = resolved.kind,
                 tmdbId = resolved.tmdbId
             ),
-            failed = (first.failed && (second?.failed ?: true)) || ratings == null || ratings.failed || starts == null || starts.failed
+            failed = (first.failed && (second?.failed ?: true)) || ratings == null || ratings.failed
         )
     }
 
@@ -150,7 +202,17 @@ class ArtworkRepository {
         private const val MaxEntries = 200
 
         // What is kept on the disk and for how long: a day, since a title does not change its pictures or its ratings that fast
-        private const val StoreSpace = "art4"
+        private const val StoreSpace = "art5"
+        // Where the ids of the titles are kept, and for how long: a month
+        private const val IdsSpace = "ids1"
+        private const val IdsStoreMillis = 30L * 24L * 60L * 60L * 1000L
+        private const val IdsSeparator = "|"
+        private const val IdsParts = 4
+        // Where the seasons of a series are kept, for how long and how many times they are asked when they fail, with how long between them
+        private const val SeasonsSpace = "seasons1"
+        private const val SeasonsStoreMillis = 24L * 60L * 60L * 1000L
+        private const val SeasonAttempts = 3
+        private const val SeasonRetryMillis = 1_500L
         // Where the trailers are kept, and for how long: a week, a title seldom gets one
         private const val TrailerSpace = "trailer1"
         private const val TrailerStoreMillis = 7L * 24L * 60L * 60L * 1000L
