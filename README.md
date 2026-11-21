@@ -497,6 +497,12 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
       <td>The catalog, the lists and the account of the user, and the link between their ids and the ones of the other sites</td>
     </tr>
     <tr>
+      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_anymex.webp" width="32" height="32" alt="AnymeX"></td>
+      <td><strong><a href="https://github.com/RyanYuuki/AnymeX">AnymeX</a></strong></td>
+      <td><a href="https://github.com/RyanYuuki">RyanYuuki</a></td>
+      <td>Inspiration for the pages of the title and for the order to watch</td>
+    </tr>
+    <tr>
       <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_chiaki.webp" width="32" height="32" alt="Chiaki"></td>
       <td><strong>Chiaki</strong></td>
       <td><a href="https://chiaki.site">Chiaki</a></td>
@@ -582,8 +588,27 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
 
 <h3>Thanks to the Services</h3>
 
-<p>Thank you to <strong>AniList</strong>, which gives the catalog, the lists and the sign in, to <strong>TMDB</strong>, to <strong>TheTVDB</strong> and to <strong>MyAnimeList</strong>, which give the pictures, the seasons and the ratings, to <strong>Jikan</strong>, which gives the openings and the endings, and to <strong>Kuroiru</strong> and <strong>MangaBaka</strong>, which give the news.<br>
+<p>Thank you to <strong>AniList</strong>, which gives the catalog, the lists and the sign in, to <strong>TMDB</strong>, to <strong>TheTVDB</strong> and to <strong>MyAnimeList</strong>, which give the pictures, the seasons, the ratings and the trailers, to <strong>Jikan</strong> and to the public mirrors of the community, which give the openings and the endings, to <strong>Chiaki</strong>, which gives the order to watch the anime, to <strong>Kuroiru</strong> and <strong>MangaBaka</strong>, which give the news, to <strong>MangaDex</strong>, which gives the covers of the volumes of the manga, to <strong>Google Translate</strong>, which translates the texts, and to <strong>GitHub</strong>, which holds the releases that the updates look for.<br>
 <em>This product uses the TMDB API but is not endorsed or certified by TMDB. Metadata provided by <a href="https://www.thetvdb.com">TheTVDB</a>. Kaisou is independent and is not affiliated with or endorsed by any of them.</em></p>
+
+<h3>Development Helpers</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th align="center">Person</th>
+      <th align="center">What it brought</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_walppxk.webp" width="32" height="32" alt="Walppxk"></td>
+      <td><strong><a href="https://www.instagram.com/walppxk">Walppxk</a></strong></td>
+      <td>Beta Tester and QA Analyst</td>
+    </tr>
+  </tbody>
+</table>
 
 <h3>Helper Tools</h3>
 

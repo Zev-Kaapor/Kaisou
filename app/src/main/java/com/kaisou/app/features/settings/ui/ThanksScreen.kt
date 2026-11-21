@@ -44,13 +44,16 @@ private class Thanks(
     val subtitleRes: Int,
     val addressRes: Int? = null,
     val pictureRes: Int? = null,
-    val iconRes: Int? = null
+    val iconRes: Int? = null,
+    // A picture that is not square is shown whole inside its circle, with room around it, and not cut to fill it
+    val inset: Boolean = false
 )
 
 // The projects, the sites and the apps that inspired Kaisou, the order is made by their names
 private val SpecialThanks = listOf(
     Thanks(R.string.thanks_youtube_player, R.string.thanks_youtube_player_subtitle, R.string.thanks_youtube_player_address, iconRes = R.string.thanks_youtube_player_icon),
     Thanks(R.string.thanks_anilist, R.string.thanks_anilist_subtitle, R.string.thanks_anilist_address, pictureRes = R.drawable.ic_anilist),
+    Thanks(R.string.thanks_anymex, R.string.thanks_anymex_subtitle, R.string.thanks_anymex_address, R.drawable.thanks_anymex),
     Thanks(R.string.thanks_chiaki, R.string.thanks_chiaki_subtitle, R.string.thanks_chiaki_address, R.drawable.thanks_chiaki),
     Thanks(R.string.thanks_crunchyroll, R.string.thanks_crunchyroll_subtitle, R.string.thanks_crunchyroll_address, R.drawable.thanks_crunchyroll),
     Thanks(R.string.thanks_dantotsu, R.string.thanks_dantotsu_subtitle, R.string.thanks_dantotsu_address, R.drawable.thanks_dantotsu),
@@ -63,7 +66,12 @@ private val SpecialThanks = listOf(
     Thanks(R.string.thanks_thetvdb, R.string.thanks_thetvdb_subtitle, R.string.thanks_thetvdb_address, R.drawable.thanks_thetvdb),
     Thanks(R.string.thanks_tmdb, R.string.thanks_tmdb_subtitle, R.string.thanks_tmdb_address, R.drawable.thanks_tmdb),
     Thanks(R.string.thanks_tomato, R.string.thanks_tomato_subtitle, R.string.thanks_tomato_address, R.drawable.thanks_tomato),
-    Thanks(R.string.thanks_wavvy, R.string.thanks_wavvy_subtitle, R.string.thanks_wavvy_address, iconRes = R.string.thanks_wavvy_icon)
+    Thanks(R.string.thanks_wavvy, R.string.thanks_wavvy_subtitle, R.string.thanks_wavvy_address, iconRes = R.string.thanks_wavvy_icon, inset = true)
+)
+
+// The people that helped in the development, with their picture and their page
+private val HelperThanks = listOf(
+    Thanks(R.string.thanks_walppxk, R.string.thanks_walppxk_subtitle, R.string.thanks_walppxk_address, R.drawable.thanks_walppxk)
 )
 
 // The tools that took part in the development, in the order of their names, they are thanked apart from the projects
@@ -84,6 +92,15 @@ fun ThanksScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     SettingsPage(title = stringResource(R.string.settings_about_thanks_special), onBack = onBack, modifier = modifier) {
         SettingsGroup(title = stringResource(R.string.thanks_projects_group)) {
             ordered.forEachIndexed { index, thanks ->
+                if (index > 0) SettingsDivider()
+                ThanksRow(thanks = thanks, onClick = { open(thanks) })
+            }
+        }
+
+        // The people that helped in the development, under a line
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        SettingsGroup(title = stringResource(R.string.thanks_helpers_group)) {
+            HelperThanks.forEachIndexed { index, thanks ->
                 if (index > 0) SettingsDivider()
                 ThanksRow(thanks = thanks, onClick = { open(thanks) })
             }
@@ -120,7 +137,12 @@ private fun ThanksRow(thanks: Thanks, onClick: () -> Unit) {
         if (thanks.pictureRes != null) {
             Image(painter = painterResource(thanks.pictureRes), contentDescription = null, contentScale = ContentScale.Fit, modifier = pictureModifier)
         } else {
-            AsyncImage(model = thanks.iconRes?.let { stringResource(it) }, contentDescription = null, contentScale = ContentScale.Crop, modifier = pictureModifier)
+            AsyncImage(
+                model = thanks.iconRes?.let { stringResource(it) },
+                contentDescription = null,
+                contentScale = if (thanks.inset) ContentScale.Fit else ContentScale.Crop,
+                modifier = if (thanks.inset) pictureModifier.padding(SettingsDimens.ThanksInset) else pictureModifier
+            )
         }
 
         Column(modifier = Modifier.weight(1f).padding(start = SettingsDimens.RowIconGap)) {

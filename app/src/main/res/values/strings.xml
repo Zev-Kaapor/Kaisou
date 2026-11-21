@@ -749,10 +749,14 @@
     <string name="settings_about_thanks_special">Special thanks</string>
     <string name="settings_about_thanks_special_subtitle">The projects and tools that inspired the app</string>
     <string name="thanks_projects_group">Projects and inspirations</string>
+    <string name="thanks_helpers_group">Development helpers</string>
     <string name="thanks_ai_group">Helper tools</string>
     <string name="thanks_anilist" translatable="false">AniList &amp; ani.zip</string>
     <string name="thanks_anilist_subtitle">The catalog, the lists and the account of the user, and the link between their ids and the ones of the other sites</string>
     <string name="thanks_anilist_address" translatable="false">https://anilist.co</string>
+    <string name="thanks_anymex">AnymeX</string>
+    <string name="thanks_anymex_subtitle">Inspiration for the pages of the title and for the order to watch</string>
+    <string name="thanks_anymex_address" translatable="false">https://github.com/RyanYuuki/AnymeX</string>
     <string name="thanks_chiaki">Chiaki</string>
     <string name="thanks_chiaki_subtitle">The order to watch the anime, made by hand</string>
     <string name="thanks_chiaki_address" translatable="false">https://chiaki.site</string>
@@ -760,7 +764,7 @@
     <string name="thanks_crunchyroll_subtitle">Inspiration for the look of the Home and of the title</string>
     <string name="thanks_crunchyroll_address" translatable="false">https://www.crunchyroll.com</string>
     <string name="thanks_jikan">Jikan</string>
-    <string name="thanks_jikan_subtitle">The openings and the endings of the anime, from MyAnimeList</string>
+    <string name="thanks_jikan_subtitle">The openings and the endings of the anime, from MyAnimeList, and the public mirrors of the community that answer when it is out of reach</string>
     <string name="thanks_jikan_address" translatable="false">https://jikan.moe</string>
     <string name="thanks_kuroiru">Kuroiru</string>
     <string name="thanks_kuroiru_subtitle">The news of the anime, with the headlines of Anime News Network</string>
@@ -788,7 +792,7 @@
     <string name="thanks_thetvdb_subtitle">The posters, the backdrops, the logos and the seasons of the series. Metadata provided by TheTVDB</string>
     <string name="thanks_thetvdb_address" translatable="false">https://www.thetvdb.com</string>
     <string name="thanks_tmdb">TMDB</string>
-    <string name="thanks_tmdb_subtitle">The posters, the backdrops, the logos and the ratings. This product uses the TMDB API but is not endorsed or certified by TMDB</string>
+    <string name="thanks_tmdb_subtitle">The posters, the backdrops, the logos, the ratings and the trailers. This product uses the TMDB API but is not endorsed or certified by TMDB</string>
     <string name="thanks_tmdb_address" translatable="false">https://www.themoviedb.org</string>
     <string name="thanks_tomato">Tomato</string>
     <string name="thanks_tomato_subtitle">Inspiration for the details of the title and for the tag of the weekly release</string>
@@ -797,6 +801,9 @@
     <string name="thanks_wavvy_subtitle">The structure, the identity and the way of building the screens</string>
     <string name="thanks_wavvy_address" translatable="false">https://github.com/Zev-Kaapor/Wavvy</string>
     <string name="thanks_wavvy_icon" translatable="false">https://raw.githubusercontent.com/Zev-Kaapor/Wavvy/main/assets/branding/wavvy_logo.png</string>
+    <string name="thanks_walppxk" translatable="false">Walppxk</string>
+    <string name="thanks_walppxk_subtitle">Beta tester and QA analyst</string>
+    <string name="thanks_walppxk_address" translatable="false">https://www.instagram.com/walppxk</string>
     <string name="thanks_claude">Claude Code</string>
     <string name="thanks_claude_subtitle">Development assistant and Tech Lead</string>
     <string name="thanks_claude_address" translatable="false">https://claude.ai</string>

@@ -33,6 +33,7 @@ object SettingsDimens {
     val NotesDetailTop = 4.dp
 
     // The picture of each project on the screen of the thanks, and how many lines of words a project may take
+    val ThanksInset = 8.dp
     val ThanksIcon = 40.dp
     const val ThanksLines = 4
 
