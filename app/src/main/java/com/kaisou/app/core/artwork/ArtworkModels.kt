@@ -48,13 +48,16 @@ class SeasonStarts(val byNumber: Map<Int, LocalDate>, val failed: Boolean) {
 }
 
 // What is known of a title: the address of its best poster and of its best backdrop, the addresses of its logos in the order they
-// are worth trying, the ratings of the countries and the day each season of its series first aired
+// are worth trying, the ratings of the countries, the day each season of its series first aired and where it is on TMDB, which is what its trailer
+// is asked by
 class TitleArt(
     val posterUrl: String?,
     val backdropUrl: String?,
     val logos: List<String>,
     val certifications: Map<String, String>,
-    val seasonStarts: Map<Int, LocalDate>
+    val seasonStarts: Map<Int, LocalDate>,
+    val tmdbKind: String? = null,
+    val tmdbId: Int? = null
 ) {
     companion object {
         val None = TitleArt(null, null, emptyList(), emptyMap(), emptyMap())

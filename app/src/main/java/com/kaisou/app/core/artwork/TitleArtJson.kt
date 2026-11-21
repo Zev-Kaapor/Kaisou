@@ -15,6 +15,8 @@ object TitleArtJson {
             .put("logos", JSONArray(art.logos))
             .put("certifications", JSONObject(art.certifications))
             .put("seasons", JSONObject(art.seasonStarts.entries.associate { it.key.toString() to it.value.toString() }))
+            .put("tmdbKind", art.tmdbKind ?: JSONObject.NULL)
+            .put("tmdbId", art.tmdbId ?: JSONObject.NULL)
             .toString()
 
     // The ratings of the countries alone, as text
@@ -41,7 +43,9 @@ object TitleArtJson {
                 backdropUrl = if (json.isNull("backdrop")) null else json.getString("backdrop"),
                 logos = (0 until logos.length()).map { logos.getString(it) },
                 certifications = certifications.keys().asSequence().associateWith { certifications.getString(it) },
-                seasonStarts = seasons.keys().asSequence().associate { it.toInt() to LocalDate.parse(seasons.getString(it)) }
+                seasonStarts = seasons.keys().asSequence().associate { it.toInt() to LocalDate.parse(seasons.getString(it)) },
+                tmdbKind = if (json.isNull("tmdbKind")) null else json.getString("tmdbKind"),
+                tmdbId = if (json.isNull("tmdbId")) null else json.getInt("tmdbId")
             )
         } catch (_: Exception) {
             null

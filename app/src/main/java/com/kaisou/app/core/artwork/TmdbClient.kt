@@ -40,6 +40,21 @@ object TmdbClient {
         }
     }
 
+    // The id on YouTube of the trailer TMDB has for a title, the official ones first and then the newest. Empty when TMDB has none, and null
+    // when the answer failed, so only the first is kept. Blocks on the network
+    fun trailer(kind: String, id: Int): String? {
+        if (!isSet) return null
+        return try {
+            val list = get("/$kind/$id/videos")?.optJSONArray("results") ?: return ""
+            (0 until list.length()).map { list.getJSONObject(it) }
+                .filter { it.optString("site") == "YouTube" && it.optString("type") == "Trailer" }
+                .sortedWith(compareByDescending<JSONObject> { it.optBoolean("official") }.thenByDescending { it.optString("published_at") })
+                .firstOrNull()?.optString("key").orEmpty()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     // The id of a series on TheTVDB, null when TMDB does not have it or the answer failed. Blocks on the network
     fun tvdbIdOf(tmdbId: Int): Int? {
         if (!isSet) return null

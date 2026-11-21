@@ -5,8 +5,9 @@ package com.kaisou.app.core.artwork
 object LogoPicker {
     // The narrowest logo that is still sharp at the size it is shown
     const val MinWidth = 400
-    // The ones taller than wide are left out, stacked on a short line they would come out tiny
-    const val MinAspect = 1f
+    // The ones that are not clearly wider than tall are left out: stacked or square they would come out tiny, and a square one is usually
+    // not the logo but a picture
+    const val MinAspect = 1.5f
     // How many are kept, the first ones can be turned down when they are drawn in black
     const val MaxCandidates = 3
 

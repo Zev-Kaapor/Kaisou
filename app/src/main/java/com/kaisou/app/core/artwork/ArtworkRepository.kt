@@ -48,6 +48,19 @@ class ArtworkRepository {
         return found.art
     }
 
+    // The id on YouTube of the trailer TMDB has for a title, for the ones AniList has none for: one question to TMDB, once for a title, with the
+    // answer kept, even when it is that there is none. The place of the title on TMDB is already known from its pictures. Null when there is
+    // none or it could not be asked, which is not kept
+    suspend fun trailer(anilistId: Int, query: ArtQuery, language: String): String? {
+        val key = anilistId.toString()
+        withContext(Dispatchers.IO) { AppStore.get(TrailerSpace, key, TrailerStoreMillis) }?.let { return it.takeIf(String::isNotEmpty) }
+        val found = art(anilistId, query, language)
+        val tmdbId = found.tmdbId ?: return null
+        val id = withContext(Dispatchers.IO) { TmdbClient.trailer(found.tmdbKind ?: "tv", tmdbId) } ?: return null
+        withContext(Dispatchers.IO) { AppStore.put(TrailerSpace, key, id) }
+        return id.takeIf(String::isNotEmpty)
+    }
+
     // The ratings of the countries of a title and nothing else, for the cards that only need them: the ids and one question to TMDB,
     // with no pictures. Null when they could not be found, which is not kept, so it is asked again
     suspend fun certifications(anilistId: Int, query: ArtQuery): Map<String, String>? {
@@ -119,7 +132,9 @@ class ArtworkRepository {
                 backdropUrl = BackdropPicker.pick(backdrops, language)?.url,
                 logos = LogoPicker.pick(logos, language),
                 certifications = ratings?.byCountry.orEmpty(),
-                seasonStarts = starts?.byNumber.orEmpty()
+                seasonStarts = starts?.byNumber.orEmpty(),
+                tmdbKind = resolved.kind,
+                tmdbId = resolved.tmdbId
             ),
             failed = (first.failed && (second?.failed ?: true)) || ratings == null || ratings.failed || starts == null || starts.failed
         )
@@ -135,7 +150,10 @@ class ArtworkRepository {
         private const val MaxEntries = 200
 
         // What is kept on the disk and for how long: a day, since a title does not change its pictures or its ratings that fast
-        private const val StoreSpace = "art2"
+        private const val StoreSpace = "art4"
+        // Where the trailers are kept, and for how long: a week, a title seldom gets one
+        private const val TrailerSpace = "trailer1"
+        private const val TrailerStoreMillis = 7L * 24L * 60L * 60L * 1000L
         private const val StoreMillis = 24L * 60L * 60L * 1000L
 
         // The ratings alone for the cards: how many titles stay in memory, and a week on the disk, they almost never change
