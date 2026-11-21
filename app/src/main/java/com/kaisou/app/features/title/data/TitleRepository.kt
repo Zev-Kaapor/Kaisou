@@ -374,6 +374,8 @@ class TitleRepository(context: Context) {
             // In the order of the page of AniList: what it is, how long, when, how it is rated and liked, who made it, where it came from and
             // its names
             add(R.string.title_data_format, text(media, "format")?.let { formatNames[it] })
+            // The country it comes from, right under the format, since a manga from Korea or from China is told by it
+            add(R.string.title_data_origin, text(media, "countryOfOrigin")?.let { Locale.Builder().setRegion(it).build().getDisplayCountry(Locale.getDefault()).takeIf { name -> name.isNotBlank() } })
             if (manga) {
                 add(R.string.title_data_chapters, number(media, "chapters")?.let(numbers::format))
                 add(R.string.title_data_volumes, number(media, "volumes")?.let(numbers::format))
@@ -407,7 +409,6 @@ class TitleRepository(context: Context) {
             addAll(R.string.title_data_studios, animation.map { it.name }, animation.map(::studioRef))
             addAll(R.string.title_data_producers, others.map { it.name }, others.map(::studioRef))
             add(R.string.title_data_source, text(media, "source")?.let { sourceNames[it] })
-            add(R.string.title_data_origin, text(media, "countryOfOrigin")?.let { Locale.Builder().setRegion(it).build().getDisplayCountry(Locale.getDefault()).takeIf { name -> name.isNotBlank() } })
             // The hashtags search for them on X, and each genre searches for the titles of it on AniList, as the pages of AniList do
             val hashtag = text(media, "hashtag")
             val hashtagUrl = hashtag?.split(Regex("\\s+"))?.filter { it.startsWith("#") }?.takeIf { it.isNotEmpty() }
