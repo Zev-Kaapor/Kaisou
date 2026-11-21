@@ -25,6 +25,11 @@ class TimedCache<V>(private val lifeMillis: Long, private val maxEntries: Int) {
         synchronized(entries) { entries[id] = Entry(value, System.currentTimeMillis() + lifeMillis) }
     }
 
+    // Forgets what was kept for an id, when it is no longer the same
+    fun remove(id: Int) {
+        synchronized(entries) { entries.remove(id) }
+    }
+
     private companion object {
         const val LoadFactor = 0.75f
     }

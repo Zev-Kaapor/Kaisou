@@ -23,6 +23,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 // Project resources
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
+import androidx.compose.ui.text.style.TextOverflow
 
 // A text of AniList in which what gives away the story, between ~! and !~, is covered: it shows as a block of its own color and shows its
 // words when it is touched, and covers again when it is touched again. The rest of the text has its markers resolved as everywhere else
@@ -34,7 +35,8 @@ fun SpoilerText(
     linkColor: Color,
     headingSize: TextUnit,
     modifier: Modifier = Modifier,
-    textAlign: TextAlign? = null
+    textAlign: TextAlign? = null,
+    maxLines: Int = Int.MAX_VALUE
 ) {
     val cover = KaisouTheme.colors.skeleton
     val parts = remember(text) { split(text) }
@@ -51,18 +53,19 @@ fun SpoilerText(
                     val link = LinkAnnotation.Clickable(tag = "spoiler-$index") { opened = if (shown) opened - index else opened + index }
                     withLink(link) {
                         // Covered, the words have the color of the block, so only the block shows
-                        withStyle(if (shown) SpanStyle(background = cover) else SpanStyle(color = cover, background = cover)) { append(part.text) }
+                        withStyle(if (shown) SpanStyle(background = cover) else SpanStyle(color = cover, background = cover)) { append(part.text.replace(MarkdownLink, "$1")) }
                     }
                 }
             }
         }
     }
-    Text(text = rendered, style = style, color = color, textAlign = textAlign, modifier = modifier.fillMaxWidth())
+    Text(text = rendered, style = style, color = color, textAlign = textAlign, maxLines = maxLines, overflow = TextOverflow.Ellipsis, modifier = modifier.fillMaxWidth())
 }
 
 private class Part(val text: String, val spoiler: Boolean)
 
 private val Spoiler = Regex("~!(.+?)!~", RegexOption.DOT_MATCHES_ALL)
+private val MarkdownLink = Regex("\\[([^\\]]+)]\\([^)]*\\)")
 
 // The text cut in the pieces that are open and the ones that are covered, in order
 private fun split(text: String): List<Part> {

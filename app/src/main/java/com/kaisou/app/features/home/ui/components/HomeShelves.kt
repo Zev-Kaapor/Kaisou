@@ -365,6 +365,8 @@ internal fun rememberCardRating(query: RatingQuery): CardRatingState {
     val region = AppLanguage.region
     val kept = RatingRepository.known(region, query)
     val state by produceState(CardRatingState(kept.first, kept.second), query.anilistId, region) {
+        // A card that passes by while the list goes fast leaves before it is asked, so a long row does not ask for each one that went by
+        if (!kept.first) delay(HomeDimens.CardRatingDelayMillis)
         value = CardRatingState(loaded = true, rating = RatingRepository.forCard(region, query))
     }
     return state

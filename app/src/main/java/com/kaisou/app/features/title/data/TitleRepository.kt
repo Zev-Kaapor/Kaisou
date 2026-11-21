@@ -38,12 +38,14 @@ import com.kaisou.app.core.cache.AppStore
 import com.kaisou.app.core.designsystem.theme.Background
 import com.kaisou.app.core.designsystem.theme.ContainerHigh
 import com.kaisou.app.core.language.AppLanguage
-import com.kaisou.app.core.language.DubPreference
+import com.kaisou.app.core.language.DubLanguage
 import com.kaisou.app.core.translation.GoogleTranslator
 import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.home.data.HomeMapper
 import com.kaisou.app.features.profile.data.ProfileKind
 import com.kaisou.app.features.profile.data.ProfileRef
+import com.kaisou.app.core.anilist.AboutSnippet
+import com.kaisou.app.core.net.HttpText
 
 // Asks AniList for the title of a page and turns the answer into what the screen shows. Prototype: the top of the page and the details
 class TitleRepository(context: Context) {
@@ -59,16 +61,19 @@ class TitleRepository(context: Context) {
     private val mapper = HomeMapper(resources)
 
     // The title of the page, null when AniList could not be reached or does not know it
-    suspend fun header(id: Int): TitleUi? = ask(HeaderQuery, id)?.let(::parse)
+    suspend fun header(id: Int): TitleUi? {
+        val data = askAll(HeaderQuery, id) ?: return null
+        val title = data.optJSONObject("Media")?.let(::parse) ?: return null
+        return title.copy(friends = friends(data.optJSONObject("friends")?.optJSONArray("mediaList"), title.manga))
+    }
 
     // Everything that comes after the top, in one question to AniList and not three: the details, what other people recommend and the
     // characters and the staff. Each page asking for a handful of questions was what made AniList ask the app to rest, so what it says is
     // kept on the phone for a while. It is the same for everyone, the heart and the list are in the top, which is never kept. Null when
     // AniList could not be reached
     suspend fun extras(id: Int): TitleExtras? {
-        val dub = DubPreference.language.value
-        val variables = JSONObject().put("id", id).put("dub", dub.apiName)
-        val raw = kept(ExtrasSpace, "$id ${dub.apiName}") { client.query(ExtrasQuery, variables, AniListSession.token)?.toString() } ?: return null
+        val variables = JSONObject().put("id", id)
+        val raw = kept(ExtrasSpace, id.toString()) { client.query(ExtrasQuery, variables, AniListSession.token)?.toString() } ?: return null
         val data = JSONObject(raw)
         val details = data.optJSONObject("details") ?: return null
         val parsed = parseDetails(details)
@@ -81,6 +86,21 @@ class TitleRepository(context: Context) {
             people = people
         )
     }
+
+    // The friends that have the title on a list, with where it is, how far they are and the score they gave, the user left out
+    private fun friends(list: JSONArray?, manga: Boolean): List<TitleFriend> =
+        objects(list).mapNotNull { entry ->
+            val user = entry.optJSONObject("user") ?: return@mapNotNull null
+            val name = text(user, "name") ?: return@mapNotNull null
+            TitleFriend(
+                name = name,
+                avatar = user.optJSONObject("avatar")?.let { text(it, "large") },
+                status = listNames(manga)[text(entry, "status")].orEmpty(),
+                progress = number(entry, "progress"),
+                score = entry.optDouble("score", 0.0).takeIf { it > 0 }?.toFloat(),
+                url = "https://anilist.co/user/$name"
+            )
+        }.filterNot { it.name.equals(AniListSession.viewer?.name, ignoreCase = true) }
 
     // The names of the tags in the language of the app, in the alphabetical order of that language. A name that is not translated stays as
     // AniList has it
@@ -117,11 +137,11 @@ class TitleRepository(context: Context) {
     // The characters with the person that voices them and the staff
     private fun cast(media: JSONObject?): TitlePeople =
         TitlePeople(
-            characters = people(media?.optJSONObject("characters"), CharacterPage) { edge ->
-                edge.optJSONArray("voiceActors")?.optJSONObject(0)?.optJSONObject("name")?.let { text(it, "userPreferred") }
-            },
-            staff = people(media?.optJSONObject("staff"), StaffPage) { null },
-            creators = creators(media?.optJSONObject("staff"))
+            characters = people(media?.optJSONObject("characters"), CharacterPage, DubLanguage.ofCountry(media?.let { text(it, "countryOfOrigin") }), ::voicesOf),
+            staff = people(media?.optJSONObject("staff"), StaffPage) { emptyList() },
+            creators = creators(media?.optJSONObject("staff")),
+            moreCharacters = media?.optJSONObject("characters")?.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true,
+            moreStaff = media?.optJSONObject("staff")?.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true
         )
 
     // The people of the staff with a part that makes the title: who wrote it and drew it, who directed it, who made its music. Each once, with
@@ -136,7 +156,19 @@ class TitleRepository(context: Context) {
             TitlePerson(name, node.optJSONObject("image")?.let { text(it, "large") }, roleNames[raw] ?: staffRoles.translate(raw), null, "https://anilist.co/staff/$id", ProfileRef(ProfileKind.Staff, id))
         }.distinctBy { it.url }.take(MaxCreators)
 
-    private fun people(block: JSONObject?, kind: String, voice: (JSONObject) -> String?): List<TitlePerson> {
+    // The voices of a character in all the languages AniList has, who voices it in each, as AniList lists them
+    private fun voicesOf(edge: JSONObject): List<TitleVoice> =
+        objects(edge.optJSONArray("voiceActors")).mapNotNull { actor ->
+            val name = actor.optJSONObject("name")?.let { text(it, "userPreferred") } ?: return@mapNotNull null
+            TitleVoice(name, text(actor, "languageV2") ?: return@mapNotNull null)
+        }.distinct()
+
+    // The voice that shows under a character on the page of the title: the one in the original language of the title, and when there is none
+    // the first that came
+    private fun shownVoice(voices: List<TitleVoice>, original: DubLanguage): TitleVoice? =
+        voices.firstOrNull { it.language.equals(original.englishName, ignoreCase = true) } ?: voices.firstOrNull()
+
+    private fun people(block: JSONObject?, kind: String, original: DubLanguage = DubLanguage.Japanese, voicesOf: (JSONObject) -> List<TitleVoice>): List<TitlePerson> {
         val edges = block?.optJSONArray("edges") ?: return emptyList()
         return (0 until edges.length()).mapNotNull { index ->
             val edge = edges.getJSONObject(index)
@@ -147,50 +179,46 @@ class TitleRepository(context: Context) {
                 image = node.optJSONObject("image")?.let { text(it, "large") },
                 // A character has a role in the title, a person of the staff has what they did
                 role = text(edge, "role")?.let { roleNames[it] ?: staffRoles.translate(it) },
-                voice = voice(edge),
+                voice = shownVoice(voicesOf(edge), original)?.name,
+                about = AboutSnippet.of(text(node, "description")),
                 url = "https://anilist.co/$kind/${node.getInt("id")}",
                 ref = ProfileRef(ProfileKind.of(kind), node.getInt("id"))
             )
         }.distinctBy { it.url }
     }
 
+    // The beginnings of the people of a page in the language of the app, all in one go
+    private suspend fun withAboutTranslated(people: List<TitlePerson>): List<TitlePerson> {
+        val withAbout = people.filter { it.about != null }
+        if (withAbout.isEmpty()) return people
+        val translated = AboutSnippet.translated(withAbout.map { it.about.orEmpty() })
+        val byUrl = withAbout.map { it.url }.zip(translated).toMap()
+        return people.map { person -> byUrl[person.url]?.let { person.copy(about = it) } ?: person }
+    }
+
     // A page of all the characters or all the staff of a title, 25 at a time, null when AniList could not be reached
     suspend fun castPage(id: Int, staff: Boolean, page: Int): CastPage? {
         val variables = JSONObject().put("id", id).put("page", page)
-        if (!staff) variables.put("dub", DubPreference.language.value.apiName)
         val media = client.query(if (staff) CastStaffQuery else CastCharactersQuery, variables, AniListSession.token)?.optJSONObject("Media") ?: return null
         val block = media.optJSONObject(if (staff) "staff" else "characters")
         val people = if (staff) {
-            people(block, StaffPage) { null }
+            people(block, StaffPage) { emptyList() }
         } else {
-            people(block, CharacterPage) { edge -> edge.optJSONArray("voiceActors")?.optJSONObject(0)?.optJSONObject("name")?.let { text(it, "userPreferred") } }
+            people(block, CharacterPage, DubLanguage.ofCountry(text(media, "countryOfOrigin")), ::voicesOf)
         }
-        return CastPage(people, block?.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true)
+        return CastPage(withAboutTranslated(people), block?.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true)
     }
 
-    // The friends that have the title, the reviews, how the scores and the lists are spread and the threads of the forum. Null when
+    // The reviews, how the scores and the lists are spread and the threads of the forum. Null when
     // AniList could not be reached
     suspend fun community(id: Int, manga: Boolean): TitleCommunity? {
         val variables = JSONObject().put("id", id).put("fresh", -Random.nextInt(1, Int.MAX_VALUE))
         val data = client.query(CommunityQuery, variables, AniListSession.token) ?: return null
         val media = data.optJSONObject("Media")
-        val friends = data.optJSONObject("friends")?.optJSONArray("mediaList")
         val threads = data.optJSONObject("threads")?.optJSONArray("threads")
         val reviews = media?.optJSONObject("reviews")?.optJSONArray("nodes")
         val stats = media?.optJSONObject("stats")
         return TitleCommunity(
-            friends = objects(friends).mapNotNull { entry ->
-                val user = entry.optJSONObject("user") ?: return@mapNotNull null
-                val name = text(user, "name") ?: return@mapNotNull null
-                TitleFriend(
-                    name = name,
-                    avatar = user.optJSONObject("avatar")?.let { text(it, "large") },
-                    status = listNames(manga)[text(entry, "status")].orEmpty(),
-                    progress = number(entry, "progress"),
-                    score = entry.optDouble("score", 0.0).takeIf { it > 0 }?.toFloat(),
-                    url = "https://anilist.co/user/$name"
-                )
-            }.filterNot { it.name.equals(AniListSession.viewer?.name, ignoreCase = true) },
             reviews = objects(reviews).take(MaxReviews).mapNotNull { review ->
                 val user = review.optJSONObject("user") ?: return@mapNotNull null
                 TitleReview(
@@ -225,26 +253,83 @@ class TitleRepository(context: Context) {
 
     private fun objects(list: JSONArray?): List<JSONObject> = if (list == null) emptyList() else (0 until list.length()).map { list.getJSONObject(it) }
 
-    // The whole series of an anime or of a manga in the order it came out, with a card for each title. What is tied to this title is known from
-    // its details, so the first question already goes two steps from it. What was found is kept on the phone, a series does not change.
+    // The whole series of an anime or of a manga in the order to take it, with a card for each title. What is tied to this title is known
+    // from its details, so the first question already goes two steps from it. What was found is kept on the phone, a series does not change.
     // Null when AniList could not be reached
-    suspend fun watchOrder(title: TitleUi, relations: List<TitleRelation>): TitleWatchOrder? {
-        val seeds = relations.filter { it.type in SeriesTies }.map { it.card.anilistId }
-        // The series is the same from each of its titles, so what was found is kept for all of them and going from one to the next asks nothing
-        val raw = kept(SeriesSpace, title.anilistId.toString()) {
-            series(title.anilistId, seeds, title.manga)?.also { found ->
-                val text = found.toString()
-                withContext(Dispatchers.IO) { objects(found).forEach { AppStore.put(SeriesSpace, it.getInt("id").toString(), text) } }
-            }?.toString()
-        } ?: return null
-        val ordered = inOrder(objects(JSONArray(raw)))
+    suspend fun watchOrder(id: Int, manga: Boolean, relations: List<TitleRelation>, malId: Int?): TitleWatchOrder? {
+        val ordered = (if (!manga && malId != null) chiakiOrder(malId) else null) ?: run {
+            val seeds = relations.filter { it.type in SeriesTies }.map { it.card.anilistId }
+            val raw = keptSeries(id, seeds, manga) ?: return null
+            inOrder(objects(JSONArray(raw)))
+        }
         val separator = resources.getString(R.string.home_card_separator)
         val cards = ordered.mapNotNull { item ->
             val card = AniShelvesParser.card(item) ?: return@mapNotNull null
             val meta = listOfNotNull(card.format?.let { formatNames[it] }, card.year?.toString()).joinToString(separator)
-            mapper.card(card, details = if (card.id == title.anilistId) resources.getString(R.string.title_watch_current) else meta)
+            mapper.card(card, details = if (card.id == id) resources.getString(R.string.title_watch_current) else meta)
         }
-        return TitleWatchOrder(cards, cards.indexOfFirst { it.anilistId == title.anilistId }.coerceAtLeast(0))
+        return TitleWatchOrder(cards, cards.indexOfFirst { it.anilistId == id }.coerceAtLeast(0))
+    }
+
+    // The titles of an anime in the order chiaki.site gives, as AniList has them. The site is asked by the id on MyAnimeList and answers with a
+    // page that has a row for each title, and the titles come from AniList by those ids, so each has its card. What was found is kept on the
+    // phone, for each title of the order, and the ones AniList does not know are left out. Null when the site has nothing for the title or
+    // could not be reached, and then the ties on AniList are followed
+    private suspend fun chiakiOrder(malId: Int): List<JSONObject>? {
+        withContext(Dispatchers.IO) { AppStore.get(OrderSpace, malId.toString(), OrderMillis) }?.let { own ->
+            val text = if (own.startsWith(SeriesPointer)) withContext(Dispatchers.IO) { AppStore.get(OrderSpace, own.removePrefix(SeriesPointer), OrderMillis) } else own
+            if (text != null && !text.startsWith(SeriesPointer)) return objects(JSONArray(text))
+        }
+        val page = withContext(Dispatchers.IO) {
+            try {
+                HttpText.get(ChiakiOrderUrl + malId, headers = ChiakiHeaders)
+            } catch (_: Exception) {
+                null
+            }
+        } ?: return null
+        val ids = ChiakiRow.findAll(page).map { it.groupValues[1].toInt() }.distinct().toList()
+        if (ids.isEmpty()) return null
+        val found = HashMap<Int, JSONObject>()
+        for (batch in ids.chunked(SeriesBatch)) {
+            val variables = JSONObject().put("ids", JSONArray(batch))
+            val media = client.query(MalCardsQuery, variables, AniListSession.token)?.optJSONObject("Page")?.optJSONArray("media")
+            if (media == null) {
+                if (found.isEmpty()) return null
+                break
+            }
+            objects(media).forEach { found[it.optInt("idMal")] = it }
+        }
+        val ordered = ids.mapNotNull { found[it] }
+        if (ordered.isEmpty()) return null
+        withContext(Dispatchers.IO) {
+            AppStore.put(OrderSpace, malId.toString(), JSONArray(ordered).toString())
+            ordered.forEach { item ->
+                val member = item.optInt("idMal")
+                if (member > 0 && member != malId) AppStore.put(OrderSpace, member.toString(), "$SeriesPointer$malId")
+            }
+        }
+        return ordered
+    }
+
+    // The series as it was kept, or asked for. It is the same from each of its titles, so the one that was asked keeps all of it and the
+    // others keep only the id of that one, and going from one title to the next asks nothing, nor fills the phone with the same list
+    private suspend fun keptSeries(id: Int, seeds: List<Int>, manga: Boolean): String? {
+        val own = withContext(Dispatchers.IO) { AppStore.get(SeriesSpace, id.toString(), KeptMillis) }
+        if (own != null && !own.startsWith(SeriesPointer)) return own
+        if (own != null) {
+            val target = withContext(Dispatchers.IO) { AppStore.get(SeriesSpace, own.removePrefix(SeriesPointer), KeptMillis) }
+            if (target != null && !target.startsWith(SeriesPointer)) return target
+        }
+        val found = series(id, seeds, manga) ?: return null
+        val text = found.toString()
+        withContext(Dispatchers.IO) {
+            AppStore.put(SeriesSpace, id.toString(), text)
+            objects(found).forEach { item ->
+                val member = item.getInt("id")
+                if (member != id) AppStore.put(SeriesSpace, member.toString(), "$SeriesPointer$id")
+            }
+        }
+        return text
     }
 
     // The day a title started as a number that can be sorted, the ones with no day last
@@ -323,9 +408,9 @@ class TitleRepository(context: Context) {
     // and the list would show what they were a moment ago. A comment or a name does not make the question another, a value does: every
     // title passes a filter below any number, and the number is different each time, so each question is one that AniList has not seen
     // and the answer is always a new one
-    private suspend fun ask(query: String, id: Int): JSONObject? {
+    private suspend fun askAll(query: String, id: Int): JSONObject? {
         val variables = JSONObject().put("id", id).put("fresh", -Random.nextInt(1, Int.MAX_VALUE))
-        return client.query(query, variables, AniListSession.token)?.optJSONObject("Media")
+        return client.query(query, variables, AniListSession.token)
     }
 
     private fun parse(media: JSONObject): TitleUi {
@@ -468,11 +553,13 @@ class TitleRepository(context: Context) {
             tags = tags(media.optJSONArray("tags")),
             trailer = media.optJSONObject("trailer")?.let(::trailer),
             links = links(media.optJSONArray("externalLinks")),
-            relations = relations(media.optJSONObject("relations")?.optJSONArray("edges"))
+            relations = relations(media.optJSONObject("relations")?.optJSONArray("edges")),
+            malId = media.optInt("idMal").takeIf { it > 0 }
         )
     }
 
-    // The titles tied to this one as cards with the name of the tie under them, the prequel and the sequel first, the same title once
+    // The titles tied to this one as cards with the name of the tie under them, the prequel and the sequel first and each kind in the order
+    // AniList gives it, the same title once
     private fun relations(edges: JSONArray?): List<TitleRelation> {
         val order = resources.getStringArray(R.array.title_relation_keys).toList()
         return objects(edges)
@@ -665,22 +752,36 @@ class TitleRepository(context: Context) {
         const val MaxRankings = 8
         const val MaxSeries = 40
         const val SeriesBatch = 50
+        // The site of the order of an anime, asked by the id on MyAnimeList, what it wants to see in the request and what a row of its page
+        // begins with. What it gave is kept for six hours
+        const val ChiakiOrderUrl = "https://chiaki.site/?/tools/watch_order/id/"
+        val ChiakiHeaders = mapOf(
+            "Referer" to "https://chiaki.site/?/tools/watch_order",
+            "X-Requested-With" to "XMLHttpRequest",
+            "Accept" to "text/html"
+        )
+        val ChiakiRow = Regex("<tr[^>]*\\sdata-id=\"(\\d+)\"")
+        const val OrderSpace = "title-order1"
+        const val OrderMillis = 6L * 60L * 60L * 1000L
+        const val MalCardsQuery = "query (\$ids: [Int]) { Page(perPage: 50) { media(idMal_in: \$ids, type: ANIME) { idMal ${AniShelvesParser.CardFields} } } }"
         const val MaxHops = 6
         const val AnimeType = "ANIME"
         // Where what AniList says of a title and of its series is kept on the phone, and for how long: half an hour, since it changes slowly
-        const val ExtrasSpace = "title-extras7"
-        const val SeriesSpace = "title-series2"
+        const val ExtrasSpace = "title-extras12"
+        const val SeriesSpace = "title-series3"
+        // What a title of a series keeps in place of the series, the id of the title that has it
+        const val SeriesPointer = "@"
         const val KeptMillis = 30L * 60L * 1000L
         // The ties that make the order of a series: before, after, apart from the story and from it
         val SeriesTies = setOf("PREQUEL", "SEQUEL", "SIDE_STORY", "SPIN_OFF", "PARENT")
         const val StreamingLink = "STREAMING"
         const val MonthYearPattern = "MMMM yyyy"
         // The place of a character and of a person of the staff on the site of AniList, and the most episodes a list shows
-        const val CastCharactersQuery = "query (\$id: Int, \$page: Int, \$dub: StaffLanguage) { Media(id: \$id) { characters(sort: [ROLE, RELEVANCE, FAVOURITES_DESC], page: \$page, perPage: 25) { " +
-            "pageInfo { hasNextPage } edges { role node { id name { userPreferred } image { large } } " +
-            "voiceActors(language: \$dub, sort: [RELEVANCE, ID]) { name { userPreferred } } } } } }"
+        const val CastCharactersQuery = "query (\$id: Int, \$page: Int) { Media(id: \$id) { countryOfOrigin characters(sort: [ROLE, RELEVANCE, FAVOURITES_DESC], page: \$page, perPage: 25) { " +
+            "pageInfo { hasNextPage } edges { role node { id name { userPreferred } image { large } description(asHtml: false) } " +
+            "voiceActors(sort: [RELEVANCE, ID]) { name { userPreferred } languageV2 } } } } }"
         const val CastStaffQuery = "query (\$id: Int, \$page: Int) { Media(id: \$id) { staff(sort: RELEVANCE, page: \$page, perPage: 25) { " +
-            "pageInfo { hasNextPage } edges { role node { id name { userPreferred } image { large } } } } } }"
+            "pageInfo { hasNextPage } edges { role node { id name { userPreferred } image { large } description(asHtml: false) } } } } }"
         // The parts of the staff that are shown in the data, and how many of the people
         val CreatorRole = Regex("(?i)original creator|^story|^art|story & art|^director|chief director|series composition|character design|^music|original character")
         const val MaxCreators = 8
@@ -704,35 +805,35 @@ class TitleRepository(context: Context) {
             "title { romaji english } description(asHtml: false) startDate { year month day } genres averageScore meanScore " +
             "episodes chapters volumes duration season seasonYear studios { edges { isMain node { name isAnimationStudio } } } " +
             "coverImage { extraLarge color } bannerImage siteUrl " +
-            "nextAiringEpisode { airingAt episode } mediaListEntry { $EntryFields } relations { edges { relationType } } } }"
+            "nextAiringEpisode { airingAt episode } mediaListEntry { $EntryFields } relations { edges { relationType } } } " +
+            "friends: Page(perPage: 15) { mediaList(mediaId: \$id, isFollowing: true, sort: UPDATED_TIME_DESC) { " +
+            "status progress score(format: POINT_10_DECIMAL) user { name avatar { large } } } } }"
 
         // Everything after the top in one question, as three names for the same title: the details (the data, the tags, the trailer, the links
         // and what is tied to it), what other people recommend, the ones with a score above zero being the ones that people agreed on, and the
         // characters, the best known first, with who voices them in Japanese, and the staff
-        const val ExtrasQuery = "query (\$id: Int, \$dub: StaffLanguage) { " +
-            "details: Media(id: \$id) { type format status title { romaji english native } synonyms episodes chapters volumes duration " +
+        const val ExtrasQuery = "query (\$id: Int) { " +
+            "details: Media(id: \$id) { idMal type format status title { romaji english native } synonyms episodes chapters volumes duration " +
             "season seasonYear startDate { year month day } endDate { year month day } source countryOfOrigin " +
             "studios { edges { isMain node { id name isAnimationStudio } } } popularity favourites " +
             "averageScore meanScore hashtag genres airingSchedule(notYetAired: true, perPage: 12) { nodes { episode airingAt } } rankings { rank type allTime year season } tags { name description rank isMediaSpoiler isGeneralSpoiler isAdult } " +
             "trailer { id site thumbnail } externalLinks { site url type language isDisabled } " +
             "relations { edges { relationType(version: 2) node { ${AniShelvesParser.CardFields} } } } } " +
             "recommended: Media(id: \$id) { recommendations(sort: RATING_DESC, perPage: 20) { nodes { rating mediaRecommendation { ${AniShelvesParser.CardFields} } } } } " +
-            "cast: Media(id: \$id) { " +
-            "characters(sort: [ROLE, RELEVANCE, FAVOURITES_DESC], perPage: 20) { edges { role node { id name { userPreferred } image { large } } " +
-            "voiceActors(language: \$dub, sort: [RELEVANCE, ID]) { name { userPreferred } } } } " +
-            "staff(sort: RELEVANCE, perPage: 20) { edges { role node { id name { userPreferred } image { large } } } } } }"
+            "cast: Media(id: \$id) { countryOfOrigin " +
+            "characters(sort: [ROLE, RELEVANCE, FAVOURITES_DESC], perPage: 20) { pageInfo { hasNextPage } edges { role node { id name { userPreferred } image { large } } " +
+            "voiceActors(sort: [RELEVANCE, ID]) { name { userPreferred } languageV2 } } } " +
+            "staff(sort: RELEVANCE, perPage: 20) { pageInfo { hasNextPage } edges { role node { id name { userPreferred } image { large } } } } } }"
 
         // The titles of a series, each with when it started and what it is tied to, asked many at once
         const val WatchOrderQuery = "query (\$ids: [Int], \$type: MediaType) { Page(perPage: 50) { " +
             "media(id_in: \$ids, type: \$type) { ${AniShelvesParser.CardFields} startDate { year month day } " +
             "relations { edges { relationType(version: 2) node { id type } } } } } }"
 
-        // The community: how the scores and the lists are spread, the reviews, the friends that have the title and the threads about it
+        // The community: how the scores and the lists are spread, the reviews and the threads about it
         const val CommunityQuery = "query (\$id: Int, \$fresh: Int) { " +
             "Media(id: \$id, popularity_greater: \$fresh) { stats { scoreDistribution { score amount } statusDistribution { status amount } } " +
             "reviews(perPage: 5, sort: RATING_DESC) { nodes { id summary score rating user { name avatar { large } } } } } " +
-            "friends: Page(perPage: 15) { mediaList(mediaId: \$id, isFollowing: true, sort: UPDATED_TIME_DESC) { " +
-            "status progress score(format: POINT_10_DECIMAL) user { name avatar { large } } } } " +
             "threads: Page(perPage: 5) { threads(mediaCategoryId: \$id, sort: REPLIED_AT_DESC) { id title replyCount user { name } } } }"
 
         // Puts a title on the list of the user or changes its entry, and takes it off

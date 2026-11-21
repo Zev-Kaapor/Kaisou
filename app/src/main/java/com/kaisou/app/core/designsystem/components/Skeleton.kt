@@ -45,19 +45,46 @@ fun Modifier.skeleton(shape: Shape = MaterialTheme.shapes.extraSmall): Modifier 
 
 // How far the light is in its way across, from 0 to 1, and 0 while it waits for the next one
 @Composable
-private fun rememberSweepProgress(): State<Float> {
+private fun rememberSweepProgress(
+    sweepMillis: Int = KaisouMotion.SkeletonSweepMillis,
+    pauseMillis: Int = KaisouMotion.SkeletonPauseMillis
+): State<Float> {
     val progress = remember { mutableFloatStateOf(0f) }
 
-    LaunchedEffect(Unit) {
-        val period = (KaisouMotion.SkeletonSweepMillis + KaisouMotion.SkeletonPauseMillis).toLong()
+    LaunchedEffect(sweepMillis, pauseMillis) {
+        val period = (sweepMillis + pauseMillis).toLong()
         while (true) {
             withFrameNanos { nanos ->
                 val time = (nanos / NanosPerMilli) % period
-                progress.floatValue = (time - KaisouMotion.SkeletonPauseMillis).coerceAtLeast(0L).toFloat() / KaisouMotion.SkeletonSweepMillis
+                progress.floatValue = (time - pauseMillis).coerceAtLeast(0L).toFloat() / sweepMillis
             }
         }
     }
     return progress
+}
+
+// A light that passes over the content now and then, as the one of the placeholders does, to call the eye to what is on it. It only lights
+// what is drawn, so over a text it lights the letters
+@Composable
+fun Modifier.shine(enabled: Boolean = true): Modifier {
+    if (!enabled) return this
+    val highlight = MaterialTheme.colorScheme.onBackground
+    val clear = highlight.copy(alpha = 0f)
+    val progress by rememberSweepProgress(KaisouMotion.ShineSweepMillis, KaisouMotion.ShinePauseMillis)
+
+    return graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen).drawWithContent {
+        drawContent()
+        val band = size.width * BandWidthFraction
+        val start = -band + (size.width + band) * progress
+        drawRect(
+            brush = Brush.linearGradient(
+                colors = listOf(clear, highlight, clear),
+                start = Offset(start, 0f),
+                end = Offset(start + band, band * BandTilt)
+            ),
+            blendMode = BlendMode.SrcAtop
+        )
+    }
 }
 
 // Holds the placeholders of a part of a screen, one light sweeps over all of them, every block whole

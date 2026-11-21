@@ -124,6 +124,8 @@ object HomeDimens {
     val CardDetailsTop = 2.dp
     val CardDetailsGap = 6.dp
     const val CardRatingFadeMillis = 300
+    // How long a card is on the screen before its rating is asked for
+    const val CardRatingDelayMillis = 400L
     // The line between the episode and the score in the tab
     // Row of the friends, as on Dantotsu: the picture, the ring around it split in one piece for each activity, how thick the ring
     // is, the most room between two pieces and the most all the gaps take together, in degrees, and the gap above the name

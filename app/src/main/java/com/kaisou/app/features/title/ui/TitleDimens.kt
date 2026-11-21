@@ -5,6 +5,8 @@ import androidx.compose.ui.unit.dp
 
 // Sizes that only the page of a title uses
 object TitleDimens {
+    // How long the page waits to ask AniList again while it is open, for the friends and for what the user changes somewhere else
+    const val AutoRefreshMillis = 3L * 60_000L
     // The star of the score under the name of the title, and the lines of the synopsis before it is opened
     val ScoreStar = 20.dp
     const val SynopsisLines = 4
@@ -29,6 +31,11 @@ object TitleDimens {
     val ListScoreIcon = 32.dp
     val HintIcon = 12.dp
     val SkeletonSortWidth = 96.dp
+    // How many posters the placeholder of a page of titles has, and how many rows the one of a page of people
+    const val CardsSkeletonCount = 18
+    // How many people a row shows before its last card sends to the page with all of them
+    const val PeopleShown = 12
+    const val CastSkeletonRows = 8
     val SkeletonSortHeight = 28.dp
     val SkeletonPillHeight = 32.dp
     val SkeletonPills = listOf(72.dp, 104.dp, 88.dp, 120.dp)
@@ -39,8 +46,9 @@ object TitleDimens {
     val ProfileImageWidth = 112.dp
     val ProfileImageHeight = 160.dp
     val ProfileMark = 40.dp
-    val CastImageWidth = 56.dp
-    val CastImageHeight = 80.dp
+    // The picture of a card of the page of all the people, which runs the whole height of the card
+    val CastCardImageWidth = 88.dp
+    val CastCardHeight = 124.dp
     val ListNumberBig = 72.dp
     const val CoverRatio = 2f / 3f
     const val NewsLines = 3
@@ -48,6 +56,10 @@ object TitleDimens {
     val BlockTop = 24.dp
     val ChipHorizontal = 12.dp
     val ChipVertical = 6.dp
+    // The rows of titles show this many at most, and when there are more a button opens all of them on a page of their own
+    const val CardsShown = 10
+    val SeeAllTouch = 36.dp
+    val SeeAllIcon = 24.dp
     // The tabs: how tall each is and how thick the line under the one that is on
     val TabHeight = 44.dp
     val TabIndicator = 2.dp

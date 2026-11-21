@@ -25,6 +25,11 @@ const val ProfileMediaRoute = "profile/{$ProfileKindArg}/{$TitleIdArg}/media?$Pr
 
 fun profileMediaRoute(kind: String, id: Int, tab: String): String = "profile/$kind/$id/media?$ProfileTabArg=$tab"
 
+// All the voices of a character
+const val ProfileVoicesRoute = "profile/{$ProfileKindArg}/{$TitleIdArg}/voices"
+
+fun profileVoicesRoute(kind: String, id: Int): String = "profile/$kind/$id/voices"
+
 // All the characters or all the staff of a title
 const val CastKindArg = "kind"
 const val CastCharacters = "characters"
@@ -32,6 +37,15 @@ const val CastStaff = "staff"
 const val CastRoute = "title/{$TitleIdArg}/cast/{$CastKindArg}"
 
 fun castRoute(id: Int, staff: Boolean): String = "title/$id/cast/${if (staff) CastStaff else CastCharacters}"
+
+// All the titles tied to a title, or the whole series in the order to take it, and whether it is a manga, which says what the order is called
+const val CardsKindArg = "kind"
+const val CardsRelated = "related"
+const val CardsOrder = "order"
+const val CardsMangaArg = "manga"
+const val CardsRoute = "title/{$TitleIdArg}/cards/{$CardsKindArg}?$CardsMangaArg={$CardsMangaArg}"
+
+fun cardsRoute(id: Int, order: Boolean, manga: Boolean): String = "title/$id/cards/${if (order) CardsOrder else CardsRelated}?$CardsMangaArg=$manga"
 
 // All the news of a title: its id on AniList, the one on MyAnimeList (none is -1) and whether it is a manga, which say where they are asked
 const val NewsMalArg = "mal"

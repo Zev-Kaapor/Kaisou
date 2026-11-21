@@ -403,6 +403,7 @@
     <string name="profile_works">Works</string>
     <string name="profile_productions">Productions</string>
     <string name="cast_see_all">See all</string>
+    <string name="cast_details">More details</string>
     <string name="profile_nicknames_spoiler">Names that give away the story</string>
     <string name="profile_type_anime">Anime</string>
     <string name="profile_type_manga">Manga</string>
@@ -431,7 +432,6 @@
         <item quantity="one">%s favourite</item>
         <item quantity="other">%s favourites</item>
     </plurals>
-    <string name="dub_language">Voices: %1$s</string>
     <string name="profile_voices_none">No voices in this language</string>
     <string-array name="title_staff_keys" translatable="false">
         <item>Director</item>
@@ -564,6 +564,8 @@
     <string name="title_cta_add_to_list">Add to my list</string>
     <string name="cd_your_score">Your score</string>
     <string name="title_friend_you">You</string>
+    <string name="title_cards_all">All</string>
+    <string name="title_cards_filter">Filter by</string>
     <string name="title_error">Could not load the title</string>
     <string name="cd_share">Share</string>
     <string name="home_hero_meta">%1$d • %2$s</string>
@@ -751,6 +753,9 @@
     <string name="thanks_anilist" translatable="false">AniList &amp; ani.zip</string>
     <string name="thanks_anilist_subtitle">The catalog, the lists and the account of the user, and the link between their ids and the ones of the other sites</string>
     <string name="thanks_anilist_address" translatable="false">https://anilist.co</string>
+    <string name="thanks_chiaki">Chiaki</string>
+    <string name="thanks_chiaki_subtitle">The order to watch the anime, made by hand</string>
+    <string name="thanks_chiaki_address" translatable="false">https://chiaki.site</string>
     <string name="thanks_crunchyroll">Crunchyroll</string>
     <string name="thanks_crunchyroll_subtitle">Inspiration for the look of the Home and of the title</string>
     <string name="thanks_crunchyroll_address" translatable="false">https://www.crunchyroll.com</string>

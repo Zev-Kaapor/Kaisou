@@ -65,9 +65,7 @@ import com.kaisou.app.core.designsystem.components.scrollIndicator
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.ui.components.HeaderAction
-import com.kaisou.app.core.language.DubPreference
 import com.kaisou.app.features.profile.data.MediaTab
-import com.kaisou.app.features.title.ui.components.DubLanguageMenu
 import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.profile.data.ProfileUi
 import com.kaisou.app.features.title.data.Load
@@ -75,7 +73,7 @@ import com.kaisou.app.features.title.ui.TitleDimens
 import com.kaisou.app.features.title.ui.components.CardsBlock
 import com.kaisou.app.features.title.ui.components.DataBlock
 import com.kaisou.app.features.title.ui.components.DetailsError
-import com.kaisou.app.features.title.ui.components.DetailsSkeleton
+import com.kaisou.app.features.title.ui.components.ProfileSkeleton
 import com.kaisou.app.features.title.ui.components.PeopleBlock
 import com.kaisou.app.features.title.ui.components.TitleSynopsis
 
@@ -87,6 +85,7 @@ fun ProfileScreen(
     onOpenTitle: (Int) -> Unit,
     onOpenProfile: (ProfileRef) -> Unit,
     onOpenMedia: (ProfileRef, MediaTab) -> Unit,
+    onOpenVoices: (ProfileRef) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = viewModel()
 ) {
@@ -133,14 +132,26 @@ fun ProfileScreen(
                     if (profile.facts.isNotEmpty()) item(key = "facts") { DataBlock(profile.facts) }
                     if (profile.description.isNotBlank()) item(key = "about") { TitleSynopsis(text = profile.description, heading = R.string.profile_about, hideSpoilers = true) }
                     profile.sections.forEach { section ->
-                        if (section.cards.isNotEmpty()) item(key = "cards-${section.title}") { CardsBlock(section.title, section.cards, onOpenTitle, onSeeAll = section.tab?.let { tab -> { onOpenMedia(profile.ref, tab) } }) }
+                        if (section.cards.isNotEmpty()) {
+                            item(key = "cards-${section.title}") {
+                                CardsBlock(
+                                    section.title,
+                                    section.cards,
+                                    onOpenTitle,
+                                    onSeeAll = section.tab?.takeIf { section.more || section.cards.size > TitleDimens.CardsShown }?.let { tab -> { onOpenMedia(profile.ref, tab) } }
+                                )
+                            }
+                        }
                         if (section.title == R.string.profile_voices) {
-                            // The voices of a character come in all the languages and are shown in the one the user chose
+                            // The voices of a character come in all the languages, the original first, each with the mark of its language
                             item(key = "people-${section.title}") {
-                                val language by DubPreference.language.collectAsState()
-                                val shown = section.people.filter { it.language == null || it.language.equals(language.englishName, ignoreCase = true) }
-                                PeopleBlock(R.string.profile_voices, shown, onOpen = { person -> person.ref?.let(onOpenProfile) }, trailing = { DubLanguageMenu() })
-                                if (shown.isEmpty()) {
+                                PeopleBlock(
+                                    R.string.profile_voices,
+                                    section.people.take(TitleDimens.PeopleShown),
+                                    onOpen = { person -> person.ref?.let(onOpenProfile) },
+                                    onSeeAll = { onOpenVoices(profile.ref) }.takeIf { section.people.size > TitleDimens.PeopleShown }
+                                )
+                                if (section.people.isEmpty()) {
                                     Text(
                                         text = stringResource(R.string.profile_voices_none),
                                         style = MaterialTheme.typography.bodySmall,
@@ -155,7 +166,7 @@ fun ProfileScreen(
                                     section.title,
                                     section.people,
                                     onOpen = { person -> person.ref?.let(onOpenProfile) },
-                                    onSeeAll = section.tab?.let { tab -> { onOpenMedia(profile.ref, tab) } }
+                                    onSeeAll = section.tab?.takeIf { section.more || section.people.size > TitleDimens.PeopleShown }?.let { tab -> { onOpenMedia(profile.ref, tab) } }
                                 )
                             }
                         }
@@ -163,7 +174,7 @@ fun ProfileScreen(
                     item(key = "end") { Spacer(modifier = Modifier.height(dimens.spaceLarge)) }
                 }
                 state is Load.Failed -> item(key = "error") { DetailsError(onRetry = viewModel::load) }
-                else -> item(key = "loading") { DetailsSkeleton() }
+                else -> item(key = "loading") { ProfileSkeleton() }
             }
         }
     }

@@ -30,6 +30,11 @@ class ProfileViewModel(application: Application, savedStateHandle: SavedStateHan
     private val mutableState = MutableStateFlow<Load<ProfileUi>>(Load.Loading)
     val state: StateFlow<Load<ProfileUi>> = mutableState.asStateFlow()
 
+    // What the voices say of themselves, by their ids, asked when the page of all the voices opens
+    private val mutableAbouts = MutableStateFlow<Map<Int, String>>(emptyMap())
+    val abouts: StateFlow<Map<Int, String>> = mutableAbouts.asStateFlow()
+    private var askedAbouts = false
+
     // Where the page was left, which stays when the phone is turned
     val scroll = ScrollPosition()
     private var turningFavourite = false
@@ -44,6 +49,13 @@ class ProfileViewModel(application: Application, savedStateHandle: SavedStateHan
             val profile = repository.profile(ref)
             mutableState.value = if (profile == null) Load.Failed else Load.Done(profile)
         }
+    }
+
+    // Asks, once, what the voices of the page say of themselves
+    fun loadAbouts(ids: List<Int>) {
+        if (askedAbouts || ids.isEmpty()) return
+        askedAbouts = true
+        viewModelScope.launch { mutableAbouts.value = repository.aboutOf(ids) }
     }
 
     // The heart changes at once and goes back if AniList does not take it. The island says what happened

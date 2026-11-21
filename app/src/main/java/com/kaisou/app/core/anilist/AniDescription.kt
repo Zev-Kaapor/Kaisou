@@ -42,9 +42,13 @@ object AniDescription {
 
     private const val HexRadix = 16
 
-    // A translation puts spaces inside the marks, as _ attack on titan _, and then they are not marks any more. The spaces are taken out
+    // A translation puts spaces inside the marks, as _ attack on titan _, and in a link, as [Name] (https://...), and then they are not marks any
+    // more. The spaces are taken out
     private val SpacedPair = Regex("(\\*\\*|__|~~)[ \\t]+([^*_~\\n]+?)[ \\t]+\\1")
     private val SpacedSingle = Regex("(?<![*\\w])([*_])[ \\t]+([^*_\\n]+?)[ \\t]+\\1(?![*\\w])")
 
-    fun tidy(text: String): String = SpacedSingle.replace(SpacedPair.replace(text, "$1$2$1"), "$1$2$1")
+    private val SpacedLink = Regex("(\\[[^\\]\\n]+])[ \\t]*\\([ \\t]*(https?)[ \\t]*:[ \\t]*/[ \\t]*/[ \\t]*([^)\\s]*)[ \\t]*\\)")
+
+    fun tidy(text: String): String =
+        SpacedLink.replace(SpacedSingle.replace(SpacedPair.replace(text, "$1$2$1"), "$1$2$1"), "$1($2://$3)")
 }

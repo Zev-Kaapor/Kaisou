@@ -331,6 +331,7 @@
     <string name="profile_works">Trabalhos</string>
     <string name="profile_productions">Produções</string>
     <string name="cast_see_all">Ver todos</string>
+    <string name="cast_details">Mais detalhes</string>
     <string name="profile_nicknames_spoiler">Nomes que entregam a história</string>
     <string name="profile_type_anime">Anime</string>
     <string name="profile_type_manga">Mangá</string>
@@ -361,7 +362,6 @@
         <item quantity="many">%s favoritos</item>
         <item quantity="other">%s favoritos</item>
     </plurals>
-    <string name="dub_language">Vozes: %1$s</string>
     <string name="profile_voices_none">Sem dubladores neste idioma</string>
     <string-array name="title_staff_names">
         <item>Direção</item>
@@ -433,6 +433,8 @@
     <string name="title_cta_add_to_list">Adicionar à lista</string>
     <string name="cd_your_score">Sua nota</string>
     <string name="title_friend_you">Você</string>
+    <string name="title_cards_all">Todos</string>
+    <string name="title_cards_filter">Filtrar por</string>
     <string name="title_error">Não foi possível carregar o título</string>
     <string name="cd_share">Compartilhar</string>
     <string name="home_hero_meta">%1$d • %2$s</string>
@@ -577,6 +579,8 @@
     <string name="thanks_projects_group">Projetos e inspirações</string>
     <string name="thanks_ai_group">Ferramentas auxiliares</string>
     <string name="thanks_anilist_subtitle">O catálogo, as listas e a conta do usuário, e a ligação entre os ids deles e os dos outros sites</string>
+    <string name="thanks_chiaki">Chiaki</string>
+    <string name="thanks_chiaki_subtitle">A ordem para assistir os animes, feita à mão</string>
     <string name="thanks_crunchyroll">Crunchyroll</string>
     <string name="thanks_crunchyroll_subtitle">Inspiração para o visual da Home e do título</string>
     <string name="thanks_jikan">Jikan</string>

@@ -47,8 +47,18 @@ import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.ui.components.HeaderAction
 import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.title.ui.components.DetailsError
-import com.kaisou.app.features.title.ui.components.DubLanguageMenu
-import com.kaisou.app.features.title.ui.components.DetailsSkeleton
+import com.kaisou.app.features.title.ui.components.CastRowsSkeleton
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.font.FontWeight
+import com.kaisou.app.features.title.data.TitlePerson
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import com.kaisou.app.features.home.ui.components.SpoilerText
 
 // All the characters or all the staff of a title, a page at a time: the next one is asked for when the list gets near its end. Each one
 // opens its page
@@ -82,10 +92,6 @@ fun CastScreen(onBack: () -> Unit, onOpenProfile: (ProfileRef) -> Unit, modifier
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(horizontal = dimens.spaceSmall)
             )
-            if (!viewModel.staff) {
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
-                DubLanguageMenu(modifier = Modifier.padding(end = dimens.spaceSmall))
-            }
         }
         LazyColumn(
             state = listState,
@@ -93,50 +99,10 @@ fun CastScreen(onBack: () -> Unit, onOpenProfile: (ProfileRef) -> Unit, modifier
             contentPadding = PaddingValues(horizontal = dimens.screenPadding, vertical = dimens.spaceSmall),
             verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
         ) {
-            items(state.people, key = { it.url }) { person ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.large)
-                        .background(KaisouTheme.colors.elevated)
-                        .clickable(enabled = person.ref != null, role = Role.Button) { person.ref?.let(onOpenProfile) }
-                        .padding(dimens.spaceSmall),
-                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    androidx.compose.foundation.layout.Box(
-                        modifier = Modifier
-                            .size(TitleDimens.CastImageWidth, TitleDimens.CastImageHeight)
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(KaisouTheme.colors.skeleton)
-                    ) {
-                        person.image?.let {
-                            AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                        }
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = person.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        listOfNotNull(person.role, person.voice).forEach { line ->
-                            Text(
-                                text = line,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                }
-            }
+            items(state.people, key = { it.url }) { person -> CastCard(person, onOpenProfile) }
             when {
                 state.failed -> item(key = "error") { DetailsError(onRetry = viewModel::loadMore) }
-                state.loading || state.hasMore -> item(key = "loading") { DetailsSkeleton() }
+                state.loading || state.hasMore -> item(key = if (state.people.isEmpty()) "loading-first" else "loading-more") { CastRowsSkeleton(if (state.people.isEmpty()) TitleDimens.CastSkeletonRows else 2) }
             }
         }
     }
@@ -144,3 +110,70 @@ fun CastScreen(onBack: () -> Unit, onOpenProfile: (ProfileRef) -> Unit, modifier
 
 // How many rows before the end of the list the next page is asked for
 private const val LoadAhead = 4
+
+// A person of the title in a card: the picture runs the whole height on the start, and beside it the name, what it is in the title and the
+// beginning of what it says of itself, with its covers kept. The button at the end opens its page, where all the rest is
+@Composable
+internal fun CastCard(person: TitlePerson, onOpenProfile: (ProfileRef) -> Unit) {
+    val dimens = KaisouTheme.dimens
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(KaisouTheme.colors.elevated)
+            .clickable(enabled = person.ref != null, role = Role.Button) { person.ref?.let(onOpenProfile) }
+            .height(TitleDimens.CastCardHeight)
+    ) {
+        Box(modifier = Modifier.width(TitleDimens.CastCardImageWidth).fillMaxHeight().background(KaisouTheme.colors.skeleton)) {
+            person.image?.let { AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize()) }
+        }
+        Column(modifier = Modifier.weight(1f).fillMaxHeight().padding(dimens.spaceMedium)) {
+            Text(
+                text = person.name,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            person.role?.let { role ->
+                Text(
+                    text = role,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            person.about?.let { about ->
+                SpoilerText(
+                    text = about,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    linkColor = MaterialTheme.colorScheme.primary,
+                    headingSize = MaterialTheme.typography.bodySmall.fontSize,
+                    maxLines = CastAboutLines,
+                    modifier = Modifier.padding(top = dimens.spaceExtraSmall)
+                )
+            }
+            if (person.ref != null) {
+                Spacer(modifier = Modifier.weight(1f))
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .clip(CircleShape)
+                        .clickable(role = Role.Button) { onOpenProfile(person.ref) }
+                        .padding(vertical = dimens.spaceExtraSmall),
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = stringResource(R.string.cast_details), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                    Icon(imageVector = KaisouIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(TitleDimens.SortIcon))
+                }
+            }
+        }
+    }
+}
+
+// How many lines of what a person says of itself a card shows
+private const val CastAboutLines = 2

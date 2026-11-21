@@ -26,6 +26,12 @@ import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.home.data.HomeMapper
 import com.kaisou.app.features.title.data.TitleDatum
 import com.kaisou.app.features.title.data.TitlePerson
+import com.kaisou.app.core.language.DubLanguage
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import com.kaisou.app.core.anilist.AboutSnippet
+import com.kaisou.app.core.cache.TimedCache
 
 // Asks AniList for the page of a character, of a person of the staff or of a studio and turns the answer into what the screen shows
 class ProfileRepository(context: Context) {
@@ -38,6 +44,9 @@ class ProfileRepository(context: Context) {
         resources.getStringArray(R.array.title_role_keys).zip(resources.getStringArray(R.array.title_role_names)).toMap()
     }
 
+    // Whether a page of AniList has one more after it
+    private fun hasMore(block: JSONObject?): Boolean = block?.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true
+
     // The page, null when AniList could not be reached or does not know it
     suspend fun profile(ref: ProfileRef): ProfileUi? {
         val query = when (ref.kind) {
@@ -45,13 +54,16 @@ class ProfileRepository(context: Context) {
             ProfileKind.Staff -> StaffQuery
             ProfileKind.Studio -> StudioQuery
         }
+        pages.get(ref.hashCode())?.let { return it.value }
         val root = client.query(query, JSONObject().put("id", ref.id), AniListSession.token) ?: return null
         val json = root.optJSONObject(ref.kind.path.replaceFirstChar { it.uppercase() }) ?: return null
-        return when (ref.kind) {
+        val found = when (ref.kind) {
             ProfileKind.Character -> character(ref, json)
             ProfileKind.Staff -> staff(ref, json)
             ProfileKind.Studio -> studio(ref, json)
         }
+        pages.put(ref.hashCode(), found)
+        return found
     }
 
     // A page of all the titles of a character, of a person of the staff or of a studio, 25 at a time, with the tab, the filter of what is on
@@ -105,26 +117,54 @@ class ProfileRepository(context: Context) {
         return roleNames[raw] ?: staffRoles.translate(raw)
     }
 
+    // The beginning of what each person of the staff says of itself, by their ids, in the language of the app: asked 50 at a time, only for
+    // the page of all the voices. What could not be asked is left out
+    suspend fun aboutOf(ids: List<Int>): Map<Int, String> {
+        val found = LinkedHashMap<Int, String>()
+        ids.distinct().chunked(AboutBatch).forEach { batch ->
+            val root = client.query(AboutQuery, JSONObject().put("ids", JSONArray(batch)), AniListSession.token) ?: return@forEach
+            objects(root.optJSONObject("Page")?.optJSONArray("staff")).forEach { person ->
+                AboutSnippet.of(text(person, "description"))?.let { found[person.optInt("id")] = it }
+            }
+        }
+        return found.keys.zip(AboutSnippet.translated(found.values.toList())).toMap()
+    }
+
     // The favourite of the page, which AniList turns on or off. True when it did
     suspend fun toggleFavourite(ref: ProfileRef): Boolean =
-        client.query(ToggleQuery, JSONObject().put(ref.kind.path + "Id", ref.id), AniListSession.token) != null
+        (client.query(ToggleQuery, JSONObject().put(ref.kind.path + "Id", ref.id), AniListSession.token) != null).also { if (it) pages.remove(ref.hashCode()) }
 
-    private suspend fun character(ref: ProfileRef, json: JSONObject): ProfileUi {
+    private suspend fun character(ref: ProfileRef, json: JSONObject): ProfileUi = coroutineScope {
         val edges = objects(json.optJSONObject("media")?.optJSONArray("edges"))
+        val collator = Collator.getInstance(Locale.getDefault())
         // Each voice once, with the language and, when AniList says, the note of what part of the story it is
-        val voices = edges.flatMap { objects(it.optJSONArray("voiceActorRoles")) }.distinctBy { it.optJSONObject("voiceActor")?.optInt("id") }.mapNotNull { role ->
+        val heard = edges.flatMap { objects(it.optJSONArray("voiceActorRoles")) }.distinctBy { it.optJSONObject("voiceActor")?.optInt("id") }.mapNotNull { role ->
             val voice = role.optJSONObject("voiceActor") ?: return@mapNotNull null
             val id = voice.optInt("id").takeIf { it > 0 } ?: return@mapNotNull null
             val name = voice.optJSONObject("name")?.let { text(it, "userPreferred") } ?: return@mapNotNull null
             val line = text(role, "roleNotes")
             TitlePerson(name, voice.optJSONObject("image")?.let { text(it, "large") }, line, null, "https://anilist.co/staff/$id", ProfileRef(ProfileKind.Staff, id), text(voice, "languageV2"))
-        }.sortedWith(compareBy(Collator.getInstance(Locale.getDefault())) { it.name })
+        }.sortedWith { a, b -> DubLanguage.compare(a.language.orEmpty(), b.language.orEmpty()).takeIf { it != 0 } ?: collator.compare(a.name, b.name) }
+        // The age, the notes of the voices and the text are translated at the same time
+        val ageJob = async {
+            text(json, "age")?.let { raw ->
+                if (AppLanguage.needsTranslation && raw.any(Char::isLetter)) GoogleTranslator.translate(raw, AppLanguage.translationCode) ?: raw else raw
+            }
+        }
+        // The note of what part of the story it is comes in English, as Child or Young, so the ones that came are translated together
+        val notesJob = async {
+            val notes = heard.mapNotNull { it.role }.distinct()
+            if (AppLanguage.needsTranslation && notes.isNotEmpty()) notes.zip(GoogleTranslator.translateLines(notes, AppLanguage.translationCode)).toMap() else emptyMap()
+        }
         val about = about(
             text(json, "description"),
             json.optJSONObject("name")?.optJSONArray("alternativeSpoiler")?.let(::strings).orEmpty(),
             known = listOf(R.string.profile_gender, R.string.profile_age, R.string.profile_birthday, R.string.profile_blood, R.string.profile_nicknames).map(resources::getString)
         )
-        return ProfileUi(
+        val age = ageJob.await()
+        val translatedNotes = notesJob.await()
+        val voices = heard.map { person -> person.copy(role = person.role?.let { translatedNotes[it] ?: it }) }
+        ProfileUi(
             ref = ref,
             name = json.optJSONObject("name")?.let { text(it, "userPreferred") }.orEmpty(),
             nativeName = json.optJSONObject("name")?.let { text(it, "native") },
@@ -132,7 +172,7 @@ class ProfileRepository(context: Context) {
             favourites = json.optInt("favourites"),
             facts = facts(
                 R.string.profile_gender to listOfNotNull(gender(text(json, "gender"))),
-                R.string.profile_age to listOfNotNull(text(json, "age")),
+                R.string.profile_age to listOfNotNull(age),
                 R.string.profile_birthday to listOfNotNull(json.optJSONObject("dateOfBirth")?.let(::dateText)),
                 R.string.profile_blood to listOfNotNull(text(json, "bloodType")),
                 R.string.profile_nicknames to strings(json.optJSONObject("name")?.optJSONArray("alternative"))
@@ -142,7 +182,7 @@ class ProfileRepository(context: Context) {
             siteUrl = text(json, "siteUrl"),
             sections = listOf(
                 ProfileSection(R.string.profile_voices, people = voices),
-                ProfileSection(R.string.profile_appears, cards = roleCards(edges), tab = MediaTab.Anime)
+                ProfileSection(R.string.profile_appears, cards = roleCards(edges), tab = MediaTab.Anime, more = hasMore(json.optJSONObject("media")))
             )
         )
     }
@@ -179,8 +219,8 @@ class ProfileRepository(context: Context) {
             isFavourite = json.optBoolean("isFavourite"),
             siteUrl = text(json, "siteUrl"),
             sections = listOf(
-                ProfileSection(R.string.profile_voiced, people = voiced, tab = MediaTab.Voices),
-                ProfileSection(R.string.profile_works, cards = roleCards(works), tab = MediaTab.Anime)
+                ProfileSection(R.string.profile_voiced, people = voiced, tab = MediaTab.Voices, more = hasMore(json.optJSONObject("characters"))),
+                ProfileSection(R.string.profile_works, cards = roleCards(works), tab = MediaTab.Anime, more = hasMore(json.optJSONObject("staffMedia")))
             )
         )
     }
@@ -212,15 +252,25 @@ class ProfileRepository(context: Context) {
         val lines = text.lines()
         val facts = mutableListOf<TitleDatum>()
         var used = 0
+        // A cover can open on a line of data and close some lines under it, and all of them in between are covered
+        var covered = false
         while (used < lines.size) {
             val line = lines[used]
             if (line.isBlank()) {
                 used++
                 continue
             }
-            val match = FactLine.matchEntire(line) ?: break
+            var body = line.trim()
+            if (body.startsWith("~!")) {
+                covered = true
+                body = body.removePrefix("~!")
+            }
+            val closes = body.endsWith("!~") && !body.contains("~!")
+            if (closes) body = body.removeSuffix("!~")
+            val match = FactLine.matchEntire(body) ?: break
             val label = match.groupValues[1].trim().trimEnd(':').trim()
-            val value = plain(match.groupValues[2])
+            val value = plain(match.groupValues[2]).let { if (covered && it.isNotBlank()) "~!$it!~" else it }
+            if (closes) covered = false
             // The ones that AniList already gave in its own fields are not said twice
             if (known.none { it.equals(label, ignoreCase = true) } && value.isNotBlank()) facts += TitleDatum(label, listOf(value))
             used++
@@ -247,8 +297,10 @@ class ProfileRepository(context: Context) {
             current.append(paragraph)
         }
         if (current.isNotEmpty()) pieces += current.toString()
-        return pieces.mapIndexed { index, piece ->
-            if (index >= MaxPieces) piece else GoogleTranslator.translate(piece, AppLanguage.translationCode) ?: piece
+        return coroutineScope {
+            pieces.mapIndexed { index, piece ->
+                async { if (index >= MaxPieces) piece else GoogleTranslator.translate(piece, AppLanguage.translationCode) ?: piece }
+            }.awaitAll()
         }.joinToString("\n\n")
     }
 
@@ -319,14 +371,20 @@ class ProfileRepository(context: Context) {
         const val DAY_PATTERN = "d MMMM"
         const val MONTH_PATTERN = "MMMM yyyy"
 
+        const val AboutBatch = 50
+        // The pages that were opened, kept for two minutes, so going to the page of all the voices or back to the page does not ask again
+        private const val PagesMillis = 2L * 60L * 1000L
+        private const val MaxPages = 20
+        private val pages = TimedCache<ProfileUi>(PagesMillis, MaxPages)
+        const val AboutQuery = "query (\$ids: [Int]) { Page(perPage: 50) { staff(id_in: \$ids) { id description(asHtml: false) } } }"
         const val CharacterQuery = "query (\$id: Int) { Character(id: \$id) { id name { userPreferred native alternative alternativeSpoiler } image { large } description(asHtml: false) " +
             "gender age dateOfBirth { year month day } bloodType favourites isFavourite siteUrl " +
-            "media(sort: POPULARITY_DESC, perPage: 25) { edges { characterRole voiceActorRoles(sort: [RELEVANCE, ID]) { roleNotes voiceActor { id name { userPreferred } image { large } languageV2 } } " +
+            "media(sort: POPULARITY_DESC, perPage: 25) { pageInfo { hasNextPage } edges { characterRole voiceActorRoles(sort: [RELEVANCE, ID]) { roleNotes voiceActor { id name { userPreferred } image { large } languageV2 } } " +
             "node { ${AniShelvesParser.CardFields} } } } } }"
         const val StaffQuery = "query (\$id: Int) { Staff(id: \$id) { id name { userPreferred native } image { large } description(asHtml: false) " +
             "gender age dateOfBirth { year month day } dateOfDeath { year month day } yearsActive homeTown primaryOccupations languageV2 favourites isFavourite siteUrl " +
-            "characters(sort: RELEVANCE, perPage: 25) { nodes { id name { userPreferred } image { large } } } " +
-            "staffMedia(sort: POPULARITY_DESC, perPage: 25) { edges { staffRole node { ${AniShelvesParser.CardFields} } } } } }"
+            "characters(sort: RELEVANCE, perPage: 25) { pageInfo { hasNextPage } nodes { id name { userPreferred } image { large } } } " +
+            "staffMedia(sort: POPULARITY_DESC, perPage: 25) { pageInfo { hasNextPage } edges { staffRole node { ${AniShelvesParser.CardFields} } } } } }"
         const val StudioQuery = "query (\$id: Int) { Studio(id: \$id) { id name favourites isFavourite siteUrl " +
             "media(sort: POPULARITY_DESC, perPage: 25) { nodes { ${AniShelvesParser.CardFields} } } } }"
         const val CharacterMediaQuery = "query (\$id: Int, \$page: Int, \$sort: [MediaSort], \$type: MediaType, \$onList: Boolean) { Character(id: \$id) { " +

@@ -14,17 +14,19 @@ object HttpText {
 
     // The text of the answer, null when the service does not know what was asked. A service that asks for a rest throws TooManyRequests for
     // its gate, and any other failure is an IOException
-    fun get(address: String, timeoutMillis: Int = TimeoutMillis): String? = read(address, timeoutMillis) { it.readText() }
+    fun get(address: String, timeoutMillis: Int = TimeoutMillis, headers: Map<String, String> = emptyMap()): String? =
+        read(address, timeoutMillis, headers) { it.readText() }
 
     // The answer given to a reader while it is still coming, for the ones too big to keep whole, and the reader may stop before the end.
     // Null when the service does not know what was asked. Errors are the ones of get
-    fun <T> read(address: String, timeoutMillis: Int = TimeoutMillis, block: (Reader) -> T): T? {
+    fun <T> read(address: String, timeoutMillis: Int = TimeoutMillis, headers: Map<String, String> = emptyMap(), block: (Reader) -> T): T? {
         val connection = URL(address).openConnection() as HttpURLConnection
         try {
             connection.connectTimeout = timeoutMillis
             connection.readTimeout = timeoutMillis
             connection.setRequestProperty("Accept", "application/json")
             connection.setRequestProperty("User-Agent", UserAgent)
+            headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
             return when (connection.responseCode) {
                 HttpURLConnection.HTTP_OK -> InputStreamReader(connection.inputStream, Charsets.UTF_8).use(block)
                 HttpURLConnection.HTTP_NOT_FOUND -> null

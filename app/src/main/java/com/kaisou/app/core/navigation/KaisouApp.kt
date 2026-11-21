@@ -80,6 +80,8 @@ import com.kaisou.app.features.title.ui.TitleScreen
 import com.kaisou.app.features.updates.data.UpdateState
 import com.kaisou.app.features.updates.data.UpdateWork
 import com.kaisou.app.features.updates.data.Updates
+import com.kaisou.app.features.title.ui.TitleCardsScreen
+import com.kaisou.app.features.profile.ui.ProfileVoicesScreen
 
 // The app only opens for a user that is signed in to AniList, the login comes first
 @Composable
@@ -127,7 +129,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     // The bar shows the tab of the screen that is on, the start tab while there is none yet
     val selected = MainTab.entries.firstOrNull { it.route == backStackEntry?.destination?.route } ?: startTab
     // The page of a title has the whole screen, with no bar and no rail
-    val onTitle = backStackEntry?.destination?.route.let { it == TitleRoute || it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == CastRoute }
+    val onTitle = backStackEntry?.destination?.route.let { it == TitleRoute || it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute }
 
     val onSelect: (MainTab) -> Unit = { tab ->
         navController.navigate(tab.route) {
@@ -275,6 +277,7 @@ private fun MainNavHost(
                 onOpenNews = { id, malId, manga -> navController.navigate(newsRoute(id, malId, manga)) },
                 onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
                 onOpenCast = { id, staff -> navController.navigate(castRoute(id, staff)) },
+                onOpenCards = { id, order, manga -> navController.navigate(cardsRoute(id, order, manga)) },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -298,6 +301,18 @@ private fun MainNavHost(
                 onOpenTitle = { navController.navigate(titleRoute(it)) },
                 onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
                 onOpenMedia = { ref, tab -> navController.navigate(profileMediaRoute(ref.kind.path, ref.id, tab.path)) },
+                onOpenVoices = { ref -> navController.navigate(profileVoicesRoute(ref.kind.path, ref.id)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        // All the voices of a character, in every language
+        composable(
+            route = ProfileVoicesRoute,
+            arguments = listOf(navArgument(ProfileKindArg) { type = NavType.StringType }, navArgument(TitleIdArg) { type = NavType.IntType })
+        ) {
+            ProfileVoicesScreen(
+                onBack = { navController.popBackStack() },
+                onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -325,6 +340,21 @@ private fun MainNavHost(
             CastScreen(
                 onBack = { navController.popBackStack() },
                 onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        // All the titles tied to a title, or its whole series in order, open over it with no bar
+        composable(
+            route = CardsRoute,
+            arguments = listOf(
+                navArgument(TitleIdArg) { type = NavType.IntType },
+                navArgument(CardsKindArg) { type = NavType.StringType },
+                navArgument(CardsMangaArg) { type = NavType.BoolType; defaultValue = false }
+            )
+        ) {
+            TitleCardsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenTitle = { navController.navigate(titleRoute(it)) },
                 modifier = Modifier.fillMaxSize()
             )
         }

@@ -51,7 +51,14 @@ class ProfileMediaPage(val items: List<ProfileMediaItem>, val hasMore: Boolean)
 data class ProfileRef(val kind: ProfileKind, val id: Int)
 
 // A row of the page that slides: the titles they are in or did, or the people that go with them. Its name and what it has
-class ProfileSection(@StringRes val title: Int, val cards: List<CardUi> = emptyList(), val people: List<TitlePerson> = emptyList(), val tab: MediaTab? = null)
+class ProfileSection(
+    @StringRes val title: Int,
+    val cards: List<CardUi> = emptyList(),
+    val people: List<TitlePerson> = emptyList(),
+    val tab: MediaTab? = null,
+    // Whether AniList has more than came, which, with the page for all of them, is what the arrow is for
+    val more: Boolean = false
+)
 
 // The page of a character, a person of the staff or a studio: who it is, its picture, what is known of it, what it says of itself, whether
 // the user has it as a favourite, and the rows of titles and people

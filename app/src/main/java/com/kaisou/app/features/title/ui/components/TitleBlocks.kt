@@ -52,24 +52,53 @@ import com.kaisou.app.features.title.ui.TitleDimens
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.kaisou.app.features.home.ui.components.CornerTab
 import com.kaisou.app.features.home.ui.components.rememberScoreFormat
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import com.kaisou.app.core.auth.AniListSession
+import com.kaisou.app.features.title.data.TitleFriend
+import com.kaisou.app.features.title.data.TitleUi
+import com.kaisou.app.core.language.DubLanguage
+import com.kaisou.app.core.designsystem.components.shine
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.graphics.vector.ImageVector
 
 // A row of titles that slides, as the cards of the Home, each one opens the page of its title. It can start at a card that is not the
 // first, like the place of this title in its series
 @Composable
-fun CardsBlock(title: Int, cards: List<CardUi>, onOpenTitle: (Int) -> Unit, startIndex: Int = 0, onSeeAll: (() -> Unit)? = null, simple: Boolean = false) {
+fun CardsBlock(
+    title: Int,
+    cards: List<CardUi>,
+    onOpenTitle: (Int) -> Unit,
+    startIndex: Int = 0,
+    onSeeAll: (() -> Unit)? = null,
+    simple: Boolean = false,
+    shineCurrent: Boolean = false
+) {
     val dimens = KaisouTheme.dimens
+    // With a page for all of them only a few are shown, around the one of the page when it is in the series, and the last card says there are more
+    val from = if (onSeeAll != null) (startIndex - 2).coerceIn(0, (cards.size - TitleDimens.CardsShown).coerceAtLeast(0)) else 0
+    val shown = if (onSeeAll != null) cards.drop(from).take(TitleDimens.CardsShown) else cards
 
     Column(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
-        BlockTitle(text = stringResource(title), modifier = Modifier.padding(horizontal = dimens.screenPadding))
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding), verticalAlignment = Alignment.CenterVertically) {
+            BlockTitle(text = stringResource(title), modifier = Modifier.weight(1f))
+            if (onSeeAll != null) SeeAllArrow(onSeeAll)
+        }
         LazyRow(
-            state = rememberLazyListState(initialFirstVisibleItemIndex = startIndex),
+            state = rememberLazyListState(initialFirstVisibleItemIndex = (startIndex - from).coerceAtLeast(0)),
             contentPadding = PaddingValues(horizontal = dimens.screenPadding),
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
             modifier = Modifier.padding(top = dimens.spaceSmall)
         ) {
-            items(cards, key = { it.anilistId }) { card ->
+            items(shown, key = { it.anilistId }) { card ->
                 if (simple) {
-                    SimpleCard(card, onClick = { onOpenTitle(card.anilistId) })
+                    SimpleCard(card, onClick = { onOpenTitle(card.anilistId) }, shine = shineCurrent && card.anilistId == cards.getOrNull(startIndex)?.anilistId)
                 } else {
                     TitleCard(card, HomeDimens.PosterWidth, HomeDimens.PosterRatio, showWide = false, onClick = { onOpenTitle(card.anilistId) }, detailsLines = 2)
                 }
@@ -99,7 +128,7 @@ fun CardsBlock(title: Int, cards: List<CardUi>, onOpenTitle: (Int) -> Unit, star
 // The age rating is at the start of the line under the name, and there is no score over the picture, since what matters here is how it is
 // tied to the title that is open
 @Composable
-private fun SimpleCard(card: CardUi, onClick: () -> Unit) {
+internal fun SimpleCard(card: CardUi, onClick: () -> Unit, badge: String? = null, shine: Boolean = false) {
     val dimens = KaisouTheme.dimens
 
     Column(modifier = Modifier.width(HomeDimens.PosterWidth).clickable(role = Role.Button, onClick = onClick)) {
@@ -111,6 +140,12 @@ private fun SimpleCard(card: CardUi, onClick: () -> Unit) {
                 .background(KaisouTheme.colors.skeleton)
         ) {
             card.imageUrl?.let { AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize()) }
+            // The place of the title in the series, when the cards are the order to take it
+            badge?.let {
+                CornerTab(shape = RoundedCornerShape(bottomEnd = HomeDimens.TabCorner), modifier = Modifier.align(Alignment.TopStart)) {
+                    Text(text = it, style = MaterialTheme.typography.labelSmall, color = KaisouTheme.colors.onAccentFill)
+                }
+            }
             // Only what the user gave it is shown, with the person that says it is theirs
             card.userScore?.let { userScore ->
                 val format = rememberScoreFormat()
@@ -153,7 +188,7 @@ private fun SimpleCard(card: CardUi, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).shine(shine)
                 )
             }
         }
@@ -162,6 +197,45 @@ private fun SimpleCard(card: CardUi, onClick: () -> Unit) {
 
 // How many lines of what they do and of who voices them fit under the name of a person
 private const val PersonLines = 2
+
+// The button that opens a sheet to pick one of some: a capsule with its fill, the icon of what it picks when it has one, the one in use and the arrow
+@Composable
+fun PickerPill(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null) {
+    val dimens = KaisouTheme.dimens
+
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(KaisouTheme.colors.elevated)
+            .clickable(role = Role.DropdownList, onClick = onClick)
+            .padding(start = dimens.spaceMedium, end = dimens.spaceSmall, top = dimens.spaceExtraSmall, bottom = dimens.spaceExtraSmall),
+        horizontalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        icon?.let { Icon(imageVector = it, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(TitleDimens.SortIcon)) }
+        Text(text = text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+        Icon(imageVector = KaisouIcons.ChevronDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(TitleDimens.SortIcon))
+    }
+}
+
+// The arrow at the end of the title of a block, which opens the page with all of what the block has
+@Composable
+private fun SeeAllArrow(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(TitleDimens.SeeAllTouch)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = KaisouIcons.ChevronRight,
+            contentDescription = stringResource(R.string.cast_see_all),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(TitleDimens.SeeAllIcon)
+        )
+    }
+}
 
 // A row of people that slides, the characters with their voices or the staff with what they did, each one opens its page. When there is a way
 // to see all of them it is the last card of the row
@@ -172,7 +246,11 @@ fun PeopleBlock(title: Int, people: List<TitlePerson>, onOpen: (TitlePerson) -> 
     Column(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding), verticalAlignment = Alignment.CenterVertically) {
             BlockTitle(text = stringResource(title), modifier = Modifier.weight(1f))
-            trailing?.invoke()
+            trailing?.let {
+                it()
+                if (onSeeAll != null) Spacer(modifier = Modifier.width(dimens.spaceSmall))
+            }
+            if (onSeeAll != null) SeeAllArrow(onSeeAll)
         }
         LazyRow(
             contentPadding = PaddingValues(horizontal = dimens.screenPadding),
@@ -214,13 +292,14 @@ fun PeopleBlock(title: Int, people: List<TitlePerson>, onOpen: (TitlePerson) -> 
                                 text = role,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = if (person.voice != null) 1 else PersonLines,
+                                maxLines = if (person.voice != null || person.language != null) 1 else PersonLines,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        person.voice?.let { voice ->
+                        // The voice in the original language of the title, and for a person that voices a character the language of the voice
+                        (person.voice ?: person.language?.let { DubLanguage.nameOf(it) })?.let { line ->
                             Text(
-                                text = voice,
+                                text = line,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
@@ -311,5 +390,117 @@ fun CoversBlock(covers: List<MangaCover>) {
                 }
             }
         }
+    }
+}
+
+// The friends that have the title in a row that slides, the user first. Each has the picture with the score they gave on it, the name, where
+// the title is on their list and how far they are. A tap opens their page on AniList
+@Composable
+internal fun FriendsBlock(title: TitleUi) {
+    val dimens = KaisouTheme.dimens
+    val viewer = remember { AniListSession.viewer }
+    val keys = stringArrayResource(R.array.title_list_keys)
+    val names = stringArrayResource(if (title.manga) R.array.title_list_names_manga else R.array.title_list_names_anime)
+    val you = stringResource(R.string.title_friend_you)
+    val total = (if (title.manga) title.chapters else title.episodes)?.takeIf { it > 0 }
+    val entry = title.entry
+    // The user is the first of them when the title is on their list
+    val me = if (entry != null && viewer != null) {
+        TitleFriend(
+            name = you,
+            avatar = viewer.avatar,
+            status = names.getOrNull(keys.indexOf(entry.status.apiName)).orEmpty(),
+            progress = entry.progress,
+            score = entry.scoreOutOfTen.takeIf { it > 0f },
+            url = "https://anilist.co/user/${viewer.name}",
+            isMe = true
+        )
+    } else {
+        null
+    }
+    val everyone = listOfNotNull(me) + title.friends
+
+    Column(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
+        BlockTitle(text = stringResource(R.string.title_section_friends), modifier = Modifier.padding(horizontal = dimens.screenPadding))
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = dimens.screenPadding),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+            modifier = Modifier.padding(top = dimens.spaceSmall)
+        ) {
+            items(everyone, key = { it.url }) { friend -> FriendItem(friend = friend, total = total, manga = title.manga) }
+        }
+    }
+}
+
+// One friend: the picture with the score on its bottom, a ring in the accent when it is the user, the name, the state on the list and how far
+// they are, which says what it counts like the cards do
+@Composable
+private fun FriendItem(friend: TitleFriend, total: Int?, manga: Boolean) {
+    val dimens = KaisouTheme.dimens
+    val context = LocalContext.current
+    val format = rememberScoreFormat()
+    val accent = MaterialTheme.colorScheme.primary
+    val separator = stringResource(R.string.home_card_progress_separator)
+    val unknown = stringResource(R.string.home_card_progress_unknown)
+    val unit = stringResource(if (manga) R.string.home_card_unit_chapters else R.string.home_card_unit_episodes)
+    val progress = buildAnnotatedString {
+        friend.progress?.let { done ->
+            withStyle(SpanStyle(color = accent)) { append(done.toString()) }
+            append(separator)
+            append(total?.toString() ?: unknown)
+            append(" ")
+            append(unit)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .width(TitleDimens.FriendWidth)
+            .clickable(role = Role.Button) { InAppBrowser.open(context, friend.url) },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(contentAlignment = Alignment.BottomCenter) {
+            RoundImage(
+                url = friend.avatar,
+                size = TitleDimens.FriendAvatar,
+                modifier = if (friend.isMe) Modifier.border(TitleDimens.FriendRing, accent, CircleShape) else Modifier
+            )
+            friend.score?.let { score ->
+                CornerTab(shape = CircleShape, modifier = Modifier.offset(y = TitleDimens.FriendBadgeOffset)) {
+                    Text(text = format.format(score), style = MaterialTheme.typography.labelSmall, color = KaisouTheme.colors.onAccentFill)
+                    Icon(
+                        imageVector = KaisouIcons.Star,
+                        contentDescription = null,
+                        tint = KaisouTheme.colors.onAccentFill,
+                        modifier = Modifier.size(HomeDimens.TabStar)
+                    )
+                }
+            }
+        }
+        Text(
+            text = friend.name,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = TitleDimens.FriendBadgeOffset + dimens.spaceExtraSmall)
+        )
+        Text(
+            text = friend.status,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = progress,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

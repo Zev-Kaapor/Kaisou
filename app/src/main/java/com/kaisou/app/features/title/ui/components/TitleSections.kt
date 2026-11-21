@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -109,6 +110,15 @@ import com.kaisou.app.features.title.data.TitleTheme
 import com.kaisou.app.features.title.data.TitleTrailer
 import com.kaisou.app.features.title.data.TitleUi
 import com.kaisou.app.features.title.ui.TitleDimens
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.unit.Dp
 
 // The tabs of the page of a title
 enum class TitleTab { Details, Episodes, Community }
@@ -211,10 +221,10 @@ private const val MillisPerSecond = 1000L
 // The tabs under the facts, the one that is on has the name in white and a line in the accent under it, over a thin line that goes all the
 // way across
 @Composable
-fun TitleTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun TitleTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier, top: Dp = TitleDimens.BlockTop) {
     val dimens = KaisouTheme.dimens
 
-    Column(modifier = modifier.padding(top = TitleDimens.BlockTop).fillMaxWidth()) {
+    Column(modifier = modifier.padding(top = top).fillMaxWidth()) {
         // Each tab takes the same share of the width, so all of them are on the screen with their name in the middle
         Row(modifier = Modifier.padding(horizontal = dimens.screenPadding)) {
             labels.forEachIndexed { index, label ->
@@ -253,7 +263,7 @@ fun TitleTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, modi
 fun LazyListScope.titleDetailsItems(
     details: Load<TitleDetails>,
     watchOrder: Load<TitleWatchOrder>,
-    manga: Boolean,
+    title: TitleUi,
     people: Load<TitlePeople>,
     recommendations: Load<List<CardUi>>,
     themes: Load<List<TitleTheme>>,
@@ -265,6 +275,8 @@ fun LazyListScope.titleDetailsItems(
     onOpenNews: () -> Unit,
     onOpenProfile: (ProfileRef) -> Unit,
     onOpenCast: (staff: Boolean) -> Unit,
+    onOpenRelated: () -> Unit,
+    onOpenOrder: () -> Unit,
     onRetryWatchOrder: () -> Unit
 ) {
     when (details) {
@@ -275,6 +287,8 @@ fun LazyListScope.titleDetailsItems(
             if (value.schedule.size > 1) item(key = "details-schedule") { ScheduleBlock(value.schedule) }
             if (value.data.isNotEmpty()) item(key = "details-data") { DataBlock(value.data, onOpenProfile) }
             if (value.tags.isNotEmpty()) item(key = "details-tags") { TagsBlock(value.tags) }
+            // The friends that have it, the user first, where the facts end and what is around the title begins. With no friend there is no row
+            if (title.friends.isNotEmpty()) item(key = "details-friends") { FriendsBlock(title) }
             val prequel = value.relations.firstOrNull { it.type == PrequelType }
             val sequel = value.relations.firstOrNull { it.type == SequelType }
             if (prequel != null || sequel != null) item(key = "details-series") { SeriesBlock(prequel, sequel, onOpenTitle) }
@@ -287,7 +301,13 @@ fun LazyListScope.titleDetailsItems(
             }
             if (covers.isNotEmpty()) item(key = "details-covers") { CoversBlock(covers) }
             if (value.relations.isNotEmpty()) {
-                item(key = "details-relations") { CardsBlock(R.string.title_section_relations, value.relations.map { it.card }, onOpenTitle, simple = true) }
+                item(key = "details-relations") { CardsBlock(
+                        R.string.title_section_relations,
+                        value.relations.map { it.card },
+                        onOpenTitle,
+                        onSeeAll = onOpenRelated.takeIf { value.relations.size > TitleDimens.CardsShown },
+                        simple = true
+                    ) }
             }
         }
         is Load.Failed -> item(key = "details-error") { DetailsError(onRetry = onRetryExtras) }
@@ -296,7 +316,15 @@ fun LazyListScope.titleDetailsItems(
     when (watchOrder) {
         is Load.Done -> if (watchOrder.value.cards.size > 1) {
             item(key = "details-watch-order") {
-                CardsBlock(if (manga) R.string.title_section_read_order else R.string.title_section_watch_order, watchOrder.value.cards, onOpenTitle, startIndex = watchOrder.value.current, simple = true)
+                CardsBlock(
+                    if (title.manga) R.string.title_section_read_order else R.string.title_section_watch_order,
+                    watchOrder.value.cards,
+                    onOpenTitle,
+                    startIndex = watchOrder.value.current,
+                    onSeeAll = onOpenOrder.takeIf { watchOrder.value.cards.size > TitleDimens.CardsShown },
+                    simple = true,
+                    shineCurrent = true
+                )
             }
         }
         is Load.Failed -> item(key = "watch-order-error") { DetailsError(onRetry = onRetryWatchOrder) }
@@ -304,16 +332,16 @@ fun LazyListScope.titleDetailsItems(
     }
     when (people) {
         is Load.Done -> {
-            // The rows end with a link to all of them when what came is a full page, so there may be more
+            // The rows end with a link to all of them when AniList says there are more
             val open: (TitlePerson) -> Unit = { person -> person.ref?.let(onOpenProfile) }
             if (people.value.characters.isNotEmpty()) {
                 item(key = "details-characters") {
-                    PeopleBlock(R.string.title_section_characters, people.value.characters, open, onSeeAll = { onOpenCast(false) }.takeIf { people.value.characters.size >= PeoplePage }, trailing = { DubLanguageMenu() })
+                    PeopleBlock(R.string.title_section_characters, people.value.characters, open, onSeeAll = { onOpenCast(false) }.takeIf { people.value.moreCharacters })
                 }
             }
             if (people.value.staff.isNotEmpty()) {
                 item(key = "details-staff") {
-                    PeopleBlock(R.string.title_section_staff, people.value.staff, open, onSeeAll = { onOpenCast(true) }.takeIf { people.value.staff.size >= PeoplePage })
+                    PeopleBlock(R.string.title_section_staff, people.value.staff, open, onSeeAll = { onOpenCast(true) }.takeIf { people.value.moreStaff })
                 }
             }
         }
@@ -572,6 +600,9 @@ private fun TagOrderMenu(selected: TagOrder) {
     }
 }
 
+// What shows that a value of data is written in the markdown of AniList: a link, bold or italic
+private val MarkdownMark = Regex("\\[[^\\]]+]\\([^)]+\\)|\\*\\*|__")
+
 // A small question mark next to the name of a datum: a touch opens the page that explains it and pressing and holding says in a few words
 // what it is
 @OptIn(ExperimentalMaterial3Api::class)
@@ -626,7 +657,6 @@ private fun ScheduleBlock(schedule: List<NextAiring>) {
 private const val SchedulePattern = "EEE, d MMM · HH:mm"
 
 // How many people a page of the characters or of the staff has
-private const val PeoplePage = 20
 
 // The data of the title in lines: what it is on the left and what it says on the right, one under the other when it says several things
 @Composable
@@ -666,7 +696,8 @@ internal fun DataBlock(data: List<TitleDatum>, onOpen: (ProfileRef) -> Unit = {}
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.clickable(role = Role.Button) { onOpen(ref) }
                             )
-                        } else if ("~!" in value) {
+                        } else if ("~!" in value || MarkdownMark.containsMatchIn(value)) {
+                            // A cover, a link or a mark of the format, which the text of AniList has in its values of data
                             SpoilerText(
                                 text = value,
                                 style = MaterialTheme.typography.bodySmall,
@@ -868,6 +899,130 @@ internal fun DetailsSkeleton() {
 
 private const val DetailsSkeletonTitle = 0.3f
 
+// The placeholder of the page of a character, a person of the staff or a studio: the picture with three bars of its name beside it, some
+// lines of data and of what it says, and a row of people and a row of titles
+@Composable
+internal fun ProfileSkeleton() {
+    val dimens = KaisouTheme.dimens
+
+    SkeletonHost(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = dimens.spaceMedium),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceLarge),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.size(TitleDimens.ProfileImageWidth, TitleDimens.ProfileImageHeight).skeleton(MaterialTheme.shapes.medium))
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
+                Box(modifier = Modifier.fillMaxWidth(HomeDimens.SkeletonDetailsFraction).height(dimens.spaceLarge).skeleton())
+                Box(modifier = Modifier.fillMaxWidth(DetailsSkeletonTitle).height(ComponentDimens.SkeletonLineHeight).skeleton())
+                Box(modifier = Modifier.fillMaxWidth(DetailsSkeletonTitle).height(ComponentDimens.SkeletonLineHeight).skeleton())
+            }
+        }
+    }
+    DetailsInfoLinesSkeleton()
+    DetailsSkeleton()
+    PeopleRowSkeleton()
+    CardsRowSkeleton()
+}
+
+// The lines of data of a page, a name at the start and a value, with no title over them
+@Composable
+private fun DetailsInfoLinesSkeleton() {
+    val dimens = KaisouTheme.dimens
+    val values = listOf(0.5f, 0.3f, 0.6f, 0.4f)
+
+    SkeletonHost(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
+        Box(modifier = Modifier.fillMaxWidth(DetailsSkeletonTitle).height(dimens.spaceLarge).skeleton())
+        values.forEach { value ->
+            Row(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.DataLineTop), verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.fillMaxWidth(TitleDimens.DataLabelFraction)) {
+                    Box(modifier = Modifier.fillMaxWidth(DataNameFraction).height(ComponentDimens.SkeletonLineHeight).skeleton())
+                }
+                Box(modifier = Modifier.fillMaxWidth(value).height(ComponentDimens.SkeletonLineHeight).skeleton())
+            }
+        }
+    }
+}
+
+// The placeholder of the page of all the titles tied to a title, posters in the same grid as the page, with the bar of the kind of tie on
+// top when they come in groups
+@Composable
+internal fun CardsGridSkeleton(grouped: Boolean) {
+    val dimens = KaisouTheme.dimens
+
+    SkeletonHost(modifier = Modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(HomeDimens.PosterWidth + dimens.spaceSmall),
+            userScrollEnabled = false,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = dimens.screenPadding, vertical = dimens.spaceMedium),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+            verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
+        ) {
+            if (grouped) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Box(modifier = Modifier.fillMaxWidth(DetailsSkeletonTitle).height(dimens.spaceLarge).skeleton())
+                }
+            }
+            items(TitleDimens.CardsSkeletonCount) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+                    Column(modifier = Modifier.width(HomeDimens.PosterWidth)) {
+                        Box(modifier = Modifier.fillMaxWidth().aspectRatio(HomeDimens.PosterRatio).skeleton(MaterialTheme.shapes.medium))
+                        CardTextSkeleton()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// The placeholder of a few posters at the end of a grid that asks for more as it goes
+@Composable
+internal fun PostersRowSkeleton() {
+    val dimens = KaisouTheme.dimens
+
+    SkeletonHost(modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall), modifier = Modifier.fillMaxWidth()) {
+            repeat(HomeDimens.SkeletonCards) {
+                Column(modifier = Modifier.width(HomeDimens.PosterWidth)) {
+                    Box(modifier = Modifier.fillMaxWidth().aspectRatio(HomeDimens.PosterRatio).skeleton(MaterialTheme.shapes.medium))
+                    CardTextSkeleton()
+                }
+            }
+        }
+    }
+}
+
+// The placeholder of the page of all the people of a title: the cards of the list, each with the picture on the start and the bars of its
+// text beside it
+@Composable
+internal fun CastRowsSkeleton(rows: Int) {
+    val dimens = KaisouTheme.dimens
+
+    SkeletonHost(modifier = Modifier.fillMaxWidth()) {
+        repeat(rows) { index ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = if (index == 0) 0.dp else dimens.spaceSmall)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(KaisouTheme.colors.elevated)
+                    .height(TitleDimens.CastCardHeight)
+            ) {
+                Box(modifier = Modifier.width(TitleDimens.CastCardImageWidth).fillMaxHeight().skeleton(RectangleShape))
+                Column(modifier = Modifier.weight(1f).fillMaxHeight().padding(dimens.spaceMedium), verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)) {
+                    Box(modifier = Modifier.fillMaxWidth(HomeDimens.SkeletonTitleFraction).height(ComponentDimens.SkeletonLineHeight).skeleton())
+                    Box(modifier = Modifier.fillMaxWidth(DetailsSkeletonTitle).height(ComponentDimens.SkeletonLineHeight).skeleton())
+                    Box(modifier = Modifier.fillMaxWidth().height(ComponentDimens.SkeletonLineHeight).skeleton())
+                    Box(modifier = Modifier.fillMaxWidth(HomeDimens.SkeletonDetailsFraction).height(ComponentDimens.SkeletonLineHeight).skeleton())
+                    Spacer(modifier = Modifier.weight(1f))
+                    Box(modifier = Modifier.align(Alignment.End).fillMaxWidth(DetailsSkeletonTitle).height(ComponentDimens.SkeletonLineHeight).skeleton())
+                }
+            }
+        }
+    }
+}
+
 // The placeholder of the data and the tags: the lines of data with a name at the start and a value, then the name of the tags with the
 // button of the order at its end and some pills
 @Composable
@@ -942,42 +1097,6 @@ internal fun CardsRowSkeleton() {
                 Column(modifier = Modifier.width(HomeDimens.PosterWidth)) {
                     Box(modifier = Modifier.fillMaxWidth().aspectRatio(HomeDimens.PosterRatio).skeleton(MaterialTheme.shapes.medium))
                     CardTextSkeleton()
-                }
-            }
-        }
-    }
-}
-
-// The placeholder of the row of friends: the name of the block and round pictures with a bar for the name and one for the state under each
-@Composable
-internal fun FriendsRowSkeleton() {
-    val dimens = KaisouTheme.dimens
-
-    SkeletonHost(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
-        Box(modifier = Modifier.padding(horizontal = dimens.screenPadding).fillMaxWidth(DetailsSkeletonTitle).height(dimens.spaceLarge).skeleton())
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = dimens.screenPadding),
-            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
-            userScrollEnabled = false,
-            modifier = Modifier.padding(top = dimens.spaceSmall)
-        ) {
-            items(HomeDimens.SkeletonFriends) {
-                Column(modifier = Modifier.width(TitleDimens.FriendWidth), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(modifier = Modifier.size(TitleDimens.FriendAvatar).skeleton(CircleShape))
-                    Box(
-                        modifier = Modifier
-                            .padding(top = TitleDimens.FriendBadgeOffset + dimens.spaceExtraSmall)
-                            .fillMaxWidth(HomeDimens.SkeletonTitleFraction)
-                            .height(ComponentDimens.SkeletonLineHeight)
-                            .skeleton()
-                    )
-                    Box(
-                        modifier = Modifier
-                            .padding(top = dimens.spaceExtraSmall)
-                            .fillMaxWidth(HomeDimens.SkeletonDetailsFraction)
-                            .height(ComponentDimens.SkeletonLineHeight)
-                            .skeleton()
-                    )
                 }
             }
         }

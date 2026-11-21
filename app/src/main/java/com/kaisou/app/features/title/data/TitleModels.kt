@@ -159,7 +159,9 @@ data class TitleUi(
     val coverUrl: String?,
     val bannerUrl: String?,
     val artColors: List<Color>,
-    val siteUrl: String?
+    val siteUrl: String?,
+    // The friends that have the title on a list, asked with the top of the page so they are as new as the heart and the list
+    val friends: List<TitleFriend> = emptyList()
 )
 
 // One line of the data of a title, the name of what it is and what it says. A line that says several things, like the names it goes by,
@@ -213,11 +215,27 @@ data class TitleDetails(
     val tags: List<TitleTag>,
     val trailer: TitleTrailer?,
     val links: List<TitleLink>,
-    val relations: List<TitleRelation>
+    val relations: List<TitleRelation>,
+    // The id of the title on MyAnimeList, which the watch order of the anime is asked by
+    val malId: Int? = null
 )
 
-// Someone in the title, a character or a person of the staff: the name, the picture, what they do in it and, for a character, the voice
-data class TitlePerson(val name: String, val image: String?, val role: String?, val voice: String?, val url: String, val ref: ProfileRef? = null, val language: String? = null)
+// Who voices a character and the language of the voice, as AniList names it, like Japanese or Portuguese
+data class TitleVoice(val name: String, val language: String)
+
+// Someone in the title, a character or a person of the staff: the name, the picture, what they do in it and a second line, which for a
+// character is the voice in the original language of the title. When the person is the one that voices a character, the language of the voice
+data class TitlePerson(
+    val name: String,
+    val image: String?,
+    val role: String?,
+    val voice: String?,
+    val url: String,
+    val ref: ProfileRef? = null,
+    val language: String? = null,
+    // The beginning of what a character says of itself, in the markdown of AniList, for the page of all the characters
+    val about: String? = null
+)
 
 
 // A page of the characters or of the staff of a title, and whether there are more
@@ -225,7 +243,14 @@ class CastPage(val people: List<TitlePerson>, val hasMore: Boolean)
 
 // The characters and the staff of a title
 // The creators are the ones that made the title what it is, the author, the director, the music, to be opened from the data
-data class TitlePeople(val characters: List<TitlePerson>, val staff: List<TitlePerson>, val creators: List<TitlePerson> = emptyList())
+// Whether AniList has more characters and more staff than the ones that came, which is what sends to the page with all of them
+data class TitlePeople(
+    val characters: List<TitlePerson>,
+    val staff: List<TitlePerson>,
+    val creators: List<TitlePerson> = emptyList(),
+    val moreCharacters: Boolean = false,
+    val moreStaff: Boolean = false
+)
 
 // An episode of an anime: its number, its name, a picture of it, how long it is in minutes and the day it aired as the phone writes it
 data class TitleEpisode(val number: Int, val title: String?, val image: String?, val minutes: Int?, val aired: String?)
@@ -254,7 +279,6 @@ data class TitleStatusShare(val label: String, val amount: Int)
 
 // What the tab of the community of a title shows
 data class TitleCommunity(
-    val friends: List<TitleFriend>,
     val reviews: List<TitleReview>,
     val scores: List<TitleScoreBar>,
     val statuses: List<TitleStatusShare>,

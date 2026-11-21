@@ -32,7 +32,9 @@ data class ProfileMediaUi(
     val sort: MediaSort = MediaSort.Newest,
     val hasMore: Boolean = true,
     val loading: Boolean = false,
-    val failed: Boolean = false
+    val failed: Boolean = false,
+    // Counts the times the list started again, so the grid knows to go back to its top
+    val restarts: Int = 0
 )
 
 // Asks for the titles of a character, a person of the staff or a studio a page at a time, again from the start when a filter changes
@@ -64,7 +66,7 @@ class ProfileMediaViewModel(application: Application, savedStateHandle: SavedSta
         page = 0
         scroll.index = 0
         scroll.offset = 0
-        mutableState.value = next.copy(items = emptyList(), hasMore = true, loading = false, failed = false)
+        mutableState.value = next.copy(items = emptyList(), hasMore = true, loading = false, failed = false, restarts = next.restarts + 1)
         loadMore()
     }
 

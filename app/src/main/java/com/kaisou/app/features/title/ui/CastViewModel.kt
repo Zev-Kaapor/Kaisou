@@ -9,11 +9,9 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 // Project resources
 import com.kaisou.app.core.designsystem.components.ScrollPosition
-import com.kaisou.app.core.language.DubPreference
 import com.kaisou.app.core.navigation.CastKindArg
 import com.kaisou.app.core.navigation.CastStaff
 import com.kaisou.app.core.navigation.TitleIdArg
@@ -37,16 +35,6 @@ class CastViewModel(application: Application, savedStateHandle: SavedStateHandle
     val scroll = ScrollPosition()
 
     init {
-        loadMore()
-        // The voices come again from the start when the user chooses another language
-        if (!staff) viewModelScope.launch { DubPreference.language.drop(1).collect { restart() } }
-    }
-
-    private fun restart() {
-        page = 0
-        scroll.index = 0
-        scroll.offset = 0
-        mutableState.value = CastUi()
         loadMore()
     }
 

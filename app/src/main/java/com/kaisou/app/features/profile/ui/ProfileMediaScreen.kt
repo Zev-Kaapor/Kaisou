@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
@@ -27,9 +26,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 // Material 3 components
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,8 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 // UI styling and utilities
@@ -70,8 +64,16 @@ import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.title.data.TitlePerson
 import com.kaisou.app.features.title.ui.TitleDimens
 import com.kaisou.app.features.title.ui.components.DetailsError
-import com.kaisou.app.features.title.ui.components.DetailsSkeleton
 import com.kaisou.app.features.title.ui.components.TitleTabs
+import androidx.compose.foundation.shape.CircleShape
+import com.kaisou.app.core.designsystem.components.OverlaySheet
+import com.kaisou.app.features.settings.ui.components.Choice
+import com.kaisou.app.features.settings.ui.components.ChoiceSheet
+import com.kaisou.app.features.title.ui.components.PickerPill
+import com.kaisou.app.features.title.ui.components.CardsGridSkeleton
+import com.kaisou.app.features.title.ui.components.PostersRowSkeleton
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.unit.dp
 
 // All the titles of a character, a person of the staff or a studio, with back and the name of what they are on top
 @Composable
@@ -134,6 +136,10 @@ fun ProfileMediaContent(viewModel: ProfileMediaViewModel, onOpenTitle: (Int) -> 
             viewModel.scroll.offset = offset
         }
     }
+    // A filter that changes starts the list again, and the grid goes back to its top
+    LaunchedEffect(state.restarts) {
+        if (state.restarts > 0) gridState.scrollToItem(0)
+    }
     // The next page is asked for when the last rows are on the screen
     LaunchedEffect(gridState, state.items.size) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }.collect { last ->
@@ -146,136 +152,114 @@ fun ProfileMediaContent(viewModel: ProfileMediaViewModel, onOpenTitle: (Int) -> 
             TitleTabs(
                 labels = tabs.map { stringResource(it.label) },
                 selected = tabs.indexOf(state.tab).coerceAtLeast(0),
-                onSelect = { viewModel.chooseTab(tabs[it]) }
+                onSelect = { viewModel.chooseTab(tabs[it]) },
+                top = 0.dp
             )
         }
+        // How the titles are sorted, in a sheet, and the capsule that shows only what is on the list of the user
+        val sortTitle = stringResource(R.string.profile_sort)
+        val sortLabels = MediaSort.entries.associateWith { stringResource(it.label) }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = dimens.spaceSmall),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding, vertical = dimens.spaceSmall),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SortMenu(selected = state.sort, onSelect = viewModel::chooseSort)
-            Spacer(modifier = Modifier.weight(1f))
-            OnListBox(checked = state.onList, onChange = viewModel::chooseOnList)
-        }
-        LazyVerticalGrid(
-            state = gridState,
-            columns = GridCells.Adaptive(HomeDimens.PosterWidth + dimens.spaceSmall),
-            modifier = Modifier.fillMaxSize().scrollIndicator(gridState),
-            contentPadding = PaddingValues(horizontal = dimens.screenPadding, vertical = dimens.spaceMedium),
-            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
-            verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
-        ) {
-            val groups = if (state.sort.byYear) state.items.groupBy { it.year } else mapOf(null to state.items)
-            groups.forEach { (year, inYear) ->
-                if (state.sort.byYear) {
-                    item(key = "year-$year", span = { GridItemSpan(maxLineSpan) }) {
-                        Text(
-                            text = stringResource(
-                                R.string.profile_year_count,
-                                year?.toString() ?: stringResource(R.string.profile_year_unknown),
-                                pluralStringResource(R.plurals.profile_titles_count, inYear.size, inYear.size)
-                            ),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground
+            PickerPill(
+                text = stringResource(state.sort.label),
+                icon = KaisouIcons.ArrowUpDown,
+                onClick = {
+                    OverlaySheet.show {
+                        ChoiceSheet(
+                            title = sortTitle,
+                            choices = MediaSort.entries.map { sort -> Choice(sortLabels.getValue(sort), sort == state.sort) { viewModel.chooseSort(sort) } },
+                            onDismiss = OverlaySheet::dismiss
                         )
                     }
                 }
-                items(inYear, key = { it.key }) { item ->
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-                        val card = item.card
-                        val person = item.person
-                        if (card != null) {
-                            TitleCard(card, HomeDimens.PosterWidth, HomeDimens.PosterRatio, showWide = false, onClick = { onOpenTitle(card.anilistId) }, detailsLines = 2)
-                        } else if (person != null) {
-                            PersonCard(person, onOpen = { person.ref?.let(onOpenProfile) })
+            )
+            OnListPill(checked = state.onList, onChange = viewModel::chooseOnList)
+        }
+        if (state.items.isEmpty() && (state.loading || state.hasMore) && !state.failed) {
+            CardsGridSkeleton(grouped = state.sort.byYear)
+            return@Column
+        }
+        Box(modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds()) {
+            LazyVerticalGrid(
+                state = gridState,
+                columns = GridCells.Adaptive(HomeDimens.PosterWidth + dimens.spaceSmall),
+                modifier = Modifier.fillMaxSize().scrollIndicator(gridState),
+                contentPadding = PaddingValues(horizontal = dimens.screenPadding, vertical = dimens.spaceMedium),
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+                verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
+            ) {
+                val groups = if (state.sort.byYear) state.items.groupBy { it.year } else mapOf(null to state.items)
+                groups.forEach { (year, inYear) ->
+                    if (state.sort.byYear) {
+                        item(key = "year-$year", span = { GridItemSpan(maxLineSpan) }) {
+                            Text(
+                                text = stringResource(
+                                    R.string.profile_year_count,
+                                    year?.toString() ?: stringResource(R.string.profile_year_unknown),
+                                    pluralStringResource(R.plurals.profile_titles_count, inYear.size, inYear.size)
+                                ),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+                    items(inYear, key = { it.key }) { item ->
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+                            val card = item.card
+                            val person = item.person
+                            if (card != null) {
+                                TitleCard(card, HomeDimens.PosterWidth, HomeDimens.PosterRatio, showWide = false, onClick = { onOpenTitle(card.anilistId) }, detailsLines = 2)
+                            } else if (person != null) {
+                                PersonCard(person, onOpen = { person.ref?.let(onOpenProfile) })
+                            }
                         }
                     }
                 }
-            }
-            when {
-                state.failed -> item(key = "error", span = { GridItemSpan(maxLineSpan) }) { DetailsError(onRetry = viewModel::loadMore) }
-                state.loading || state.hasMore -> item(key = "loading", span = { GridItemSpan(maxLineSpan) }) { DetailsSkeleton() }
-                state.items.isEmpty() -> item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
-                    Text(
-                        text = stringResource(R.string.profile_media_empty),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().padding(dimens.screenPadding)
-                    )
+                when {
+                    state.failed -> item(key = "error", span = { GridItemSpan(maxLineSpan) }) { DetailsError(onRetry = viewModel::loadMore) }
+                    state.loading || state.hasMore -> item(key = if (state.items.isEmpty()) "loading-first" else "loading-more", span = { GridItemSpan(maxLineSpan) }) { PostersRowSkeleton() }
+                    state.items.isEmpty() -> item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
+                        Text(
+                            text = stringResource(R.string.profile_media_empty),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().padding(dimens.screenPadding)
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-// The sort in use with the arrows of sorting, which opens the menu of all of them, the one in use with a check
+// The capsule that shows only what is on the list of the user. It has the icon of the list even when it is off, so it reads as something to
+// touch, with its fill like the others; on, it takes the color of the app and the words in the color over it. A touch anywhere on it turns it
 @Composable
-private fun SortMenu(selected: MediaSort, onSelect: (MediaSort) -> Unit) {
+private fun OnListPill(checked: Boolean, onChange: (Boolean) -> Unit) {
     val dimens = KaisouTheme.dimens
-    var open by remember { mutableStateOf(false) }
+    val content = if (checked) KaisouTheme.colors.onAccentFill else MaterialTheme.colorScheme.onSurface
 
-    Box {
-        Row(
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.small)
-                .clickable(role = Role.DropdownList) { open = true }
-                .padding(vertical = dimens.spaceSmall),
-            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(imageVector = KaisouIcons.ArrowUpDown, contentDescription = stringResource(R.string.profile_sort), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(TitleDimens.ListIcon))
-            Text(text = stringResource(selected.label), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
-            Icon(imageVector = KaisouIcons.ChevronDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(TitleDimens.ListIcon))
-        }
-        DropdownMenu(
-            expanded = open,
-            onDismissRequest = { open = false },
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            shape = MaterialTheme.shapes.large
-        ) {
-            MediaSort.entries.forEach { sort ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(sort.label),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (sort == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
-                        )
-                    },
-                    trailingIcon = if (sort == selected) {
-                        { Icon(imageVector = KaisouIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(TitleDimens.ListIcon)) }
-                    } else {
-                        null
-                    },
-                    onClick = {
-                        open = false
-                        onSelect(sort)
-                    }
-                )
-            }
-        }
-    }
-}
-
-// A box to show only what is on the list of the user, with its words, a touch anywhere on it turns it
-@Composable
-private fun OnListBox(checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
-        modifier = Modifier.clip(MaterialTheme.shapes.small).clickable(role = Role.Checkbox) { onChange(!checked) },
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (checked) MaterialTheme.colorScheme.primary else KaisouTheme.colors.elevated)
+            .clickable(role = Role.Checkbox) { onChange(!checked) }
+            .padding(start = dimens.spaceMedium, end = dimens.spaceMedium, top = dimens.spaceExtraSmall, bottom = dimens.spaceExtraSmall),
+        horizontalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = null,
-            colors = CheckboxDefaults.colors(
-                checkedColor = MaterialTheme.colorScheme.primary,
-                uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                checkmarkColor = KaisouTheme.colors.onAccentFill
-            ),
-            modifier = Modifier.padding(KaisouTheme.dimens.spaceSmall)
+        Icon(
+            imageVector = if (checked) KaisouIcons.Check else KaisouIcons.ListChecks,
+            contentDescription = null,
+            tint = if (checked) content else MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(TitleDimens.SortIcon)
         )
-        Text(text = stringResource(R.string.profile_on_list), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
+        Text(text = stringResource(R.string.profile_on_list), style = MaterialTheme.typography.bodySmall, color = content)
     }
 }
 

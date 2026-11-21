@@ -43,7 +43,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 // View model
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 // Project resources
 import com.kaisou.app.R
@@ -73,6 +72,9 @@ import com.kaisou.app.features.title.ui.components.TitleTabs
 import com.kaisou.app.features.title.ui.components.titleCommunityItems
 import com.kaisou.app.features.title.ui.components.titleDetailsItems
 import com.kaisou.app.features.title.ui.components.titleEpisodesItems
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.delay
 
 // The page of a title, anime or manga. Prototype, to be thrown away when the look is decided: for now it has the top and the synopsis,
 // the rest comes part by part
@@ -83,6 +85,7 @@ fun TitleScreen(
     onOpenNews: (id: Int, malId: Int?, manga: Boolean) -> Unit,
     onOpenProfile: (ProfileRef) -> Unit,
     onOpenCast: (id: Int, staff: Boolean) -> Unit,
+    onOpenCards: (id: Int, order: Boolean, manga: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TitleViewModel = viewModel()
 ) {
@@ -100,8 +103,18 @@ fun TitleScreen(
         stringResource(R.string.title_tab_community)
     )
 
-    // Each time the page comes back to the screen what AniList says is asked again, so the heart and the list are never behind
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
+    // Each time the page comes back to the screen what AniList says is asked again, so the heart and the list are never behind, and every
+    // few minutes while it is open, so the friends are not either. Nothing is asked while the app is in the background
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner, viewModel) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.refresh()
+            while (true) {
+                delay(TitleDimens.AutoRefreshMillis)
+                viewModel.refresh()
+            }
+        }
+    }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         val context = LocalContext.current
@@ -166,7 +179,7 @@ fun TitleScreen(
                         TitleTab.Details -> titleDetailsItems(
                             details = state.details,
                             watchOrder = state.watchOrder,
-                            manga = title.manga,
+                            title = title,
                             people = state.people,
                             recommendations = state.recommendations,
                             themes = state.themes,
@@ -178,6 +191,8 @@ fun TitleScreen(
                             onOpenNews = { onOpenNews(title.anilistId, title.malId, title.manga) },
                             onOpenProfile = onOpenProfile,
                             onOpenCast = { staff -> onOpenCast(title.anilistId, staff) },
+                            onOpenRelated = { onOpenCards(title.anilistId, false, title.manga) },
+                            onOpenOrder = { onOpenCards(title.anilistId, true, title.manga) },
                             onRetryWatchOrder = viewModel::retryWatchOrder
                         )
                         TitleTab.Episodes -> titleEpisodesItems(
@@ -187,7 +202,7 @@ fun TitleScreen(
                             onToggleOrder = { newestFirst = !newestFirst },
                             onRetry = viewModel::retryEpisodes
                         )
-                        TitleTab.Community -> titleCommunityItems(state.community, title = title, onRetry = viewModel::retryCommunity)
+                        TitleTab.Community -> titleCommunityItems(state.community, onRetry = viewModel::retryCommunity)
                     }
                     item(key = "end") { Spacer(modifier = Modifier.height(KaisouTheme.dimens.spaceLarge)) }
                 }

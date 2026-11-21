@@ -21,4 +21,8 @@ object KaisouMotion {
     // Loading placeholders, one light sweep and the wait before the next one
     const val SkeletonSweepMillis = 900
     const val SkeletonPauseMillis = 300
+
+    // The light that passes over what the page wants seen, how long it takes and how long it waits for the next one
+    const val ShineSweepMillis = 1100
+    const val ShinePauseMillis = 4500
 }

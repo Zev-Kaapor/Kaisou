@@ -34,8 +34,6 @@ import com.kaisou.app.core.artwork.logoRequest
 import com.kaisou.app.core.designsystem.components.ComponentDimens
 import com.kaisou.app.core.designsystem.components.Toasts
 import com.kaisou.app.core.anilist.AniDescription
-import com.kaisou.app.core.language.DubPreference
-import kotlinx.coroutines.flow.drop
 import com.kaisou.app.core.language.AppLanguage
 import com.kaisou.app.core.navigation.TitleIdArg
 import com.kaisou.app.core.rating.ContentRating
@@ -59,6 +57,7 @@ import com.kaisou.app.features.title.data.TitleUiState
 import com.kaisou.app.features.title.ui.components.TitleTab
 import com.kaisou.app.core.designsystem.components.ScrollPosition
 import com.kaisou.app.features.title.data.ListChanges
+import com.kaisou.app.features.title.data.TitleTrailer
 
 // Loads the title of the page as soon as it is opened and keeps it while the page is on the stack
 class TitleViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
@@ -86,16 +85,6 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
 
     init {
         load()
-        // The voices of the characters come again when the user chooses another language, nothing else is asked
-        viewModelScope.launch { DubPreference.language.drop(1).collect { reloadPeople() } }
-    }
-
-    private fun reloadPeople() {
-        val title = mutableState.value.title ?: return
-        viewModelScope.launch {
-            val extras = repository.extras(title.anilistId) ?: return@launch
-            mutableState.update { it.copy(people = Load.Done(extras.people)) }
-        }
     }
 
     // The heart of the title: it changes at once and goes back if AniList does not take it. The island says what happened
@@ -225,20 +214,34 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
                     it.copy(details = Load.Done(extras.details), recommendations = Load.Done(extras.recommendations), people = Load.Done(extras.people))
                 }
             }
-            loadWatchOrder(extras?.details?.relations.orEmpty())
+            if (extras != null && extras.details.trailer == null) loadFallbackTrailer(title)
+            loadWatchOrder(extras?.details?.relations.orEmpty(), extras?.details?.malId)
+        }
+    }
+
+    // The trailer TMDB has, for a title AniList has none for. It is asked once the details are there and show none, and it goes in them
+    private fun loadFallbackTrailer(title: TitleUi) {
+        if (title.manga) return
+        viewModelScope.launch {
+            val id = ArtworkRepository.Shared.trailer(title.anilistId, title.query, AppLanguage.code) ?: return@launch
+            val trailer = TitleTrailer("https://www.youtube.com/watch?v=$id", "https://img.youtube.com/vi/$id/hqdefault.jpg", id)
+            mutableState.update { state ->
+                val details = (state.details as? Load.Done)?.value
+                if (details != null && details.trailer == null) state.copy(details = Load.Done(details.copy(trailer = trailer))) else state
+            }
         }
     }
 
     fun retryWatchOrder() {
         val details = (mutableState.value.details as? Load.Done)?.value
-        loadWatchOrder(details?.relations.orEmpty())
+        loadWatchOrder(details?.relations.orEmpty(), details?.malId)
     }
 
-    private fun loadWatchOrder(relations: List<TitleRelation>) {
+    private fun loadWatchOrder(relations: List<TitleRelation>, malId: Int?) {
         val title = mutableState.value.title ?: return
         mutableState.update { it.copy(watchOrder = Load.Loading) }
         viewModelScope.launch {
-            val order = repository.watchOrder(title, relations)
+            val order = repository.watchOrder(title.anilistId, title.manga, relations, malId)
             mutableState.update { it.copy(watchOrder = if (order == null) Load.Failed else Load.Done(order)) }
         }
     }
