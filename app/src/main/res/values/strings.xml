@@ -114,6 +114,7 @@
     <string name="title_show_less">Show less</string>
     <string name="title_synopsis">Synopsis</string>
     <string name="title_section_watch_order">Watch order</string>
+    <string name="title_section_read_order">Reading order</string>
     <string name="title_watch_current">You are here</string>
     <string name="title_rank_popular">Most popular</string>
     <string name="title_rank_rated">Highest rated</string>

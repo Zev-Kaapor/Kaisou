@@ -56,7 +56,6 @@ import com.kaisou.app.features.title.data.TitleRepository
 import com.kaisou.app.features.title.data.TitleStatus
 import com.kaisou.app.features.title.data.TitleUi
 import com.kaisou.app.features.title.data.TitleUiState
-import com.kaisou.app.features.title.data.TitleWatchOrder
 import com.kaisou.app.features.title.ui.components.TitleTab
 import com.kaisou.app.core.designsystem.components.ScrollPosition
 import com.kaisou.app.features.title.data.ListChanges
@@ -226,12 +225,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
                     it.copy(details = Load.Done(extras.details), recommendations = Load.Done(extras.recommendations), people = Load.Done(extras.people))
                 }
             }
-            // The order of the series is only for an anime, a manga has none to show
-            if (title.manga) {
-                mutableState.update { it.copy(watchOrder = Load.Done(TitleWatchOrder(emptyList(), 0))) }
-            } else {
-                loadWatchOrder(extras?.details?.relations.orEmpty())
-            }
+            loadWatchOrder(extras?.details?.relations.orEmpty())
         }
     }
 

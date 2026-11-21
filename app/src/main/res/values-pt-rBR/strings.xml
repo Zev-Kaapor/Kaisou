@@ -109,6 +109,7 @@
     <string name="title_show_less">Mostrar menos</string>
     <string name="title_synopsis">Sinopse</string>
     <string name="title_section_watch_order">Ordem para assistir</string>
+    <string name="title_section_read_order">Ordem para ler</string>
     <string name="title_watch_current">Você está aqui</string>
     <string name="title_rank_popular">Mais popular</string>
     <string name="title_rank_rated">Mais bem avaliado</string>

@@ -253,6 +253,7 @@ fun TitleTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, modi
 fun LazyListScope.titleDetailsItems(
     details: Load<TitleDetails>,
     watchOrder: Load<TitleWatchOrder>,
+    manga: Boolean,
     people: Load<TitlePeople>,
     recommendations: Load<List<CardUi>>,
     themes: Load<List<TitleTheme>>,
@@ -295,7 +296,7 @@ fun LazyListScope.titleDetailsItems(
     when (watchOrder) {
         is Load.Done -> if (watchOrder.value.cards.size > 1) {
             item(key = "details-watch-order") {
-                CardsBlock(R.string.title_section_watch_order, watchOrder.value.cards, onOpenTitle, startIndex = watchOrder.value.current, simple = true)
+                CardsBlock(if (manga) R.string.title_section_read_order else R.string.title_section_watch_order, watchOrder.value.cards, onOpenTitle, startIndex = watchOrder.value.current, simple = true)
             }
         }
         is Load.Failed -> item(key = "watch-order-error") { DetailsError(onRetry = onRetryWatchOrder) }

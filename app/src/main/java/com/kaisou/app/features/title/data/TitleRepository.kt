@@ -225,17 +225,19 @@ class TitleRepository(context: Context) {
 
     private fun objects(list: JSONArray?): List<JSONObject> = if (list == null) emptyList() else (0 until list.length()).map { list.getJSONObject(it) }
 
-    // The whole series of an anime in the order it came out, with a card for each title. What is tied to this title is known from
+    // The whole series of an anime or of a manga in the order it came out, with a card for each title. What is tied to this title is known from
     // its details, so the first question already goes two steps from it. What was found is kept on the phone, a series does not change.
     // Null when AniList could not be reached
     suspend fun watchOrder(title: TitleUi, relations: List<TitleRelation>): TitleWatchOrder? {
         val seeds = relations.filter { it.type in SeriesTies }.map { it.card.anilistId }
-        val raw = kept(SeriesSpace, title.anilistId.toString()) { series(title.anilistId, seeds)?.toString() } ?: return null
-        val ordered = objects(JSONArray(raw)).sortedBy { item ->
-            val start = item.optJSONObject("startDate")
-            val year = start?.let { number(it, "year") } ?: return@sortedBy Int.MAX_VALUE
-            year * 10_000 + (number(start, "month") ?: 0) * 100 + (number(start, "day") ?: 0)
-        }
+        // The series is the same from each of its titles, so what was found is kept for all of them and going from one to the next asks nothing
+        val raw = kept(SeriesSpace, title.anilistId.toString()) {
+            series(title.anilistId, seeds, title.manga)?.also { found ->
+                val text = found.toString()
+                withContext(Dispatchers.IO) { objects(found).forEach { AppStore.put(SeriesSpace, it.getInt("id").toString(), text) } }
+            }?.toString()
+        } ?: return null
+        val ordered = inOrder(objects(JSONArray(raw)))
         val separator = resources.getString(R.string.home_card_separator)
         val cards = ordered.mapNotNull { item ->
             val card = AniShelvesParser.card(item) ?: return@mapNotNull null
@@ -245,15 +247,50 @@ class TitleRepository(context: Context) {
         return TitleWatchOrder(cards, cards.indexOfFirst { it.anilistId == title.anilistId }.coerceAtLeast(0))
     }
 
+    // The day a title started as a number that can be sorted, the ones with no day last
+    private fun startKey(item: JSONObject): Int {
+        val start = item.optJSONObject("startDate")
+        val year = start?.let { number(it, "year") } ?: return Int.MAX_VALUE
+        return year * 10_000 + (number(start, "month") ?: 0) * 100 + (number(start, "day") ?: 0)
+    }
+
+    // The titles of a series in the order to take them. What AniList says comes before another comes first, even when it came out later, as
+    // a prequel that was drawn after the story it tells the start of, and the ones with nothing tying them in that way go by the day they started
+    private fun inOrder(items: List<JSONObject>): List<JSONObject> {
+        val ids = items.map { it.getInt("id") }.toSet()
+        val before = mutableMapOf<Int, MutableSet<Int>>()
+        items.forEach { item ->
+            val id = item.getInt("id")
+            objects(item.optJSONObject("relations")?.optJSONArray("edges")).forEach { edge ->
+                val other = edge.optJSONObject("node")?.optInt("id") ?: return@forEach
+                if (other !in ids) return@forEach
+                when (text(edge, "relationType")) {
+                    "PREQUEL" -> before.getOrPut(id) { mutableSetOf() }.add(other)
+                    "SEQUEL" -> before.getOrPut(other) { mutableSetOf() }.add(id)
+                }
+            }
+        }
+        val remaining = items.sortedBy(::startKey).toMutableList()
+        val result = mutableListOf<JSONObject>()
+        while (remaining.isNotEmpty()) {
+            // The first by day that has nothing left before it, and when they wait for each other in a loop, the first by day
+            val waiting = remaining.map { it.getInt("id") }.toSet()
+            val next = remaining.firstOrNull { item -> before[item.getInt("id")].orEmpty().none { it in waiting } } ?: remaining.first()
+            result += next
+            remaining -= next
+        }
+        return result
+    }
+
     // The titles of the series, as AniList has them. It starts from this title and the ones tied to it and follows what comes before and
     // after and the stories apart, a few questions of many titles each, until there is nothing new or it is big enough. The first question
     // failing is a failure, a later one only ends the search
-    private suspend fun series(id: Int, seeds: List<Int>): JSONArray? {
+    private suspend fun series(id: Int, seeds: List<Int>, manga: Boolean): JSONArray? {
         val found = LinkedHashMap<Int, JSONObject>()
         var next = (listOf(id) + seeds).distinct()
         var hops = 0
         while (next.isNotEmpty() && found.size < MaxSeries && hops < MaxHops) {
-            val variables = JSONObject().put("ids", JSONArray(next.take(SeriesBatch)))
+            val variables = JSONObject().put("ids", JSONArray(next.take(SeriesBatch))).put("type", if (manga) MangaType else AnimeType)
             val media = client.query(WatchOrderQuery, variables, AniListSession.token)?.optJSONObject("Page")?.optJSONArray("media")
             if (media == null) {
                 if (found.isEmpty()) return null
@@ -264,7 +301,7 @@ class TitleRepository(context: Context) {
                 found[item.getInt("id")] = item
                 objects(item.optJSONObject("relations")?.optJSONArray("edges")).forEach { edge ->
                     val node = edge.optJSONObject("node") ?: return@forEach
-                    if (text(edge, "relationType") in SeriesTies && text(node, "type") == AnimeType) tied += node.getInt("id")
+                    if (text(edge, "relationType") in SeriesTies && text(node, "type") == (if (manga) MangaType else AnimeType)) tied += node.getInt("id")
                 }
             }
             next = tied.distinct().filter { it !in found }
@@ -686,8 +723,8 @@ class TitleRepository(context: Context) {
             "staff(sort: RELEVANCE, perPage: 20) { edges { role node { id name { userPreferred } image { large } } } } } }"
 
         // The titles of a series, each with when it started and what it is tied to, asked many at once
-        const val WatchOrderQuery = "query (\$ids: [Int]) { Page(perPage: 50) { " +
-            "media(id_in: \$ids, type: ANIME) { ${AniShelvesParser.CardFields} startDate { year month day } " +
+        const val WatchOrderQuery = "query (\$ids: [Int], \$type: MediaType) { Page(perPage: 50) { " +
+            "media(id_in: \$ids, type: \$type) { ${AniShelvesParser.CardFields} startDate { year month day } " +
             "relations { edges { relationType(version: 2) node { id type } } } } } }"
 
         // The community: how the scores and the lists are spread, the reviews, the friends that have the title and the threads about it

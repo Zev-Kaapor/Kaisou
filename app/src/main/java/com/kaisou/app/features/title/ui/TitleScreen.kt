@@ -166,6 +166,7 @@ fun TitleScreen(
                         TitleTab.Details -> titleDetailsItems(
                             details = state.details,
                             watchOrder = state.watchOrder,
+                            manga = title.manga,
                             people = state.people,
                             recommendations = state.recommendations,
                             themes = state.themes,
