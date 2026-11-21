@@ -51,6 +51,7 @@ private class Thanks(
 private val SpecialThanks = listOf(
     Thanks(R.string.thanks_youtube_player, R.string.thanks_youtube_player_subtitle, R.string.thanks_youtube_player_address, iconRes = R.string.thanks_youtube_player_icon),
     Thanks(R.string.thanks_anilist, R.string.thanks_anilist_subtitle, R.string.thanks_anilist_address, pictureRes = R.drawable.ic_anilist),
+    Thanks(R.string.thanks_chiaki, R.string.thanks_chiaki_subtitle, R.string.thanks_chiaki_address, R.drawable.thanks_chiaki),
     Thanks(R.string.thanks_crunchyroll, R.string.thanks_crunchyroll_subtitle, R.string.thanks_crunchyroll_address, R.drawable.thanks_crunchyroll),
     Thanks(R.string.thanks_dantotsu, R.string.thanks_dantotsu_subtitle, R.string.thanks_dantotsu_address, R.drawable.thanks_dantotsu),
     Thanks(R.string.thanks_google_translate, R.string.thanks_google_translate_subtitle, R.string.thanks_google_translate_address, R.drawable.thanks_google_translate),

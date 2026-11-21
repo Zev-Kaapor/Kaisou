@@ -43,7 +43,7 @@
 </details>
 
 > [!WARNING]
-> **Early version** - Kaisou is being built one screen at a time. Version 0.2.0 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, the page of each anime and manga with the editor of your list, and the pages of the characters, the staff and the studios, and some tabs and buttons are still empty. It is a version to be tested, not a finished app.
+> **Early version** - Kaisou is being built one screen at a time. Version 0.3.0 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, the page of each anime and manga with the editor of your list, the pages of the characters, the staff and the studios, and the pages with all the related titles, the order to watch and read and all the people of a title, and some tabs and buttons are still empty. It is a version to be tested, not a finished app.
 
 > [!NOTE]
 > **Your privacy** - Kaisou has no server of its own and does not track you. Your AniList access key is kept only on your phone and is left out of the Android backups. The app only talks to the services it needs: AniList for your account and your lists, TMDB, TheTVDB and ani.zip to find the posters, the logos, the ratings and the seasons of each title (the name and the id of the title are sent), MyAnimeList for the age rating (the id of the title is sent), Jikan, or one of its public mirrors, for the openings and the endings of an anime (the id of MyAnimeList is sent), YouTube when a trailer is played, in its own player (the id of the video is sent), MangaDex for the covers of a manga (the name and the id of AniList of the manga are sent), Kuroiru for the news of an anime (the id of MyAnimeList is sent), MangaBaka for the news of a manga (the id of AniList is sent), Google Translate when a synopsis is translated (only the text of the synopsis is sent), the site that hosts a picture when a status of AniList shows one, and GitHub to look for a new version. More in the [FAQ](#faq).
@@ -90,7 +90,9 @@ Kaisou grows one small piece at a time, with every screen reviewed on a real pho
 | **Explore, Calendar and Library:** the other three tabs | 🔜 Planned |
 | **Title page:** the top with your list and the heart, the synopsis, the data with its links, the tags, the trailer, the covers of a manga, the news, the places among the best and the friends that have it | ✅ Done, version 0.2.0 |
 | **Editor of your list:** put a title on your AniList list or change it, with the status, the progress, the score in the way your account gives it, the days, the notes and your own lists | ✅ Done, version 0.2.0 |
-| **Characters, staff and studios:** the page of each one, with the favourite, the voices in the language you choose and all their titles | ✅ Done, version 0.2.0 |
+| **Characters, staff and studios:** the page of each one, with the favourite, the voices in all the languages and all their titles | ✅ Done, version 0.2.0 |
+| **Related titles and order to watch or read:** the pages with all the titles tied to one, grouped by the kind of tie, and the whole series in the order to take it, which for an anime is the one of chiaki.site | ✅ Done, version 0.3.0 |
+| **Characters, staff and voices of a title:** the pages with all of them, each with the beginning of what it says of itself, its spoilers covered, and the voices of a character in every language | ✅ Done, version 0.3.0 |
 | **Episodes and community of a title:** the tabs of the episodes or chapters and of the community, with their own care | 🚧 Basic, to be reviewed |
 | **Search and notifications:** the search and the notices of AniList | 🔜 Planned |
 | **Your profile and your lists:** the lists of anime and manga, with the progress | 🔜 Planned |
@@ -358,7 +360,7 @@ The workflow in `.github/workflows/release.yml` publishes a release when `appVer
 <details>
   <summary><b>Is the app ready to use?</b></summary>
   <br>
-  Not yet. Version 0.2.0 has the sign in, the Home with its shelves and the stories, the page of the title with the editor of your list, and the pages of the characters, the staff and the studios, and some tabs and buttons are still empty. See what it does in the <a href="#features">Features</a> section.
+  Not yet. Version 0.3.0 has the sign in, the Home with its shelves and the stories, the page of the title with the editor of your list, the pages of the characters, the staff and the studios, and the pages with the related titles, the order to watch and all the people of a title, and some tabs and buttons are still empty. See what it does in the <a href="#features">Features</a> section.
   <br>
 </details>
 
@@ -493,6 +495,12 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
       <td><strong>AniList &amp; ani.zip</strong></td>
       <td><a href="https://anilist.co">AniList</a></td>
       <td>The catalog, the lists and the account of the user, and the link between their ids and the ones of the other sites</td>
+    </tr>
+    <tr>
+      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_chiaki.webp" width="32" height="32" alt="Chiaki"></td>
+      <td><strong>Chiaki</strong></td>
+      <td><a href="https://chiaki.site">Chiaki</a></td>
+      <td>The order to watch the anime, made by hand</td>
     </tr>
     <tr>
       <td align="center"><img src="https://www.google.com/s2/favicons?domain=crunchyroll.com&sz=128" width="32" height="32" alt="Crunchyroll"></td>
