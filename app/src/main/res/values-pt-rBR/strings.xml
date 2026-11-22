@@ -275,6 +275,8 @@
     <string name="title_news_all">Ver todas as notícias</string>
     <string name="title_news_empty">Ainda não há notícias</string>
     <string name="title_section_covers">Capas</string>
+    <string name="title_cover_download_started">Baixando a capa. Ela ficará na pasta Kaisou das suas imagens</string>
+    <string name="title_cover_download_failed">Não foi possível baixar a capa</string>
     <string name="title_cover_volume">Vol. %1$s</string>
     <string name="title_list_progress">Episódios assistidos</string>
     <string name="title_list_score">Sua nota</string>
@@ -552,6 +554,8 @@
 
     <!-- Menu da conta, configurações, sobre, versões e agradecimentos -->
     <string name="cd_back">Voltar</string>
+    <string name="cd_close">Fechar</string>
+    <string name="cd_download">Baixar</string>
     <string name="cd_profile">Perfil</string>
     <string name="cd_sign_out">Sair</string>
     <string name="action_cancel">Cancelar</string>

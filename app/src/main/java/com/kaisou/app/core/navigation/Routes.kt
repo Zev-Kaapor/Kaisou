@@ -38,6 +38,11 @@ const val CastRoute = "title/{$TitleIdArg}/cast/{$CastKindArg}"
 
 fun castRoute(id: Int, staff: Boolean): String = "title/$id/cast/${if (staff) CastStaff else CastCharacters}"
 
+// All the covers of the volumes of a manga
+const val CoversRoute = "title/{$TitleIdArg}/covers"
+
+fun coversRoute(id: Int): String = "title/$id/covers"
+
 // All the titles tied to a title, or the whole series in the order to take it, and whether it is a manga, which says what the order is called
 const val CardsKindArg = "kind"
 const val CardsRelated = "related"

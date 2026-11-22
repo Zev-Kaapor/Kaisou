@@ -340,6 +340,8 @@
     <string name="title_news_all">See all the news</string>
     <string name="title_news_empty">No news yet</string>
     <string name="title_section_covers">Covers</string>
+    <string name="title_cover_download_started">Downloading the cover. It will be in the Kaisou folder of your pictures</string>
+    <string name="title_cover_download_failed">Could not download the cover</string>
     <string name="title_cover_volume">Vol. %1$s</string>
     <string name="title_list_progress">Episodes watched</string>
     <string name="title_list_score">Your score</string>
@@ -718,6 +720,8 @@
 
     <!-- Menu of the account, settings, about, versions and thanks -->
     <string name="cd_back">Back</string>
+    <string name="cd_close">Close</string>
+    <string name="cd_download">Download</string>
     <string name="cd_profile">Profile</string>
     <string name="cd_sign_out">Sign out</string>
     <string name="action_cancel">Cancel</string>

@@ -269,6 +269,7 @@ fun LazyListScope.titleDetailsItems(
     themes: Load<List<TitleTheme>>,
     news: Load<List<TitleNews>>,
     covers: List<MangaCover>,
+    onOpenCovers: () -> Unit,
     onOpenTitle: (Int) -> Unit,
     onRetryExtras: () -> Unit,
     onRetryNews: () -> Unit,
@@ -299,7 +300,7 @@ fun LazyListScope.titleDetailsItems(
                 news is Load.Done && news.value.isNotEmpty() -> item(key = "details-news") { NewsBlock(news.value, onOpenAll = onOpenNews) }
                 news is Load.Failed -> item(key = "details-news-error") { DetailsError(onRetry = onRetryNews) }
             }
-            if (covers.isNotEmpty()) item(key = "details-covers") { CoversBlock(covers) }
+            if (covers.isNotEmpty()) item(key = "details-covers") { CoversBlock(covers, onSeeAll = onOpenCovers.takeIf { covers.size > TitleDimens.CardsShown }) }
             if (value.relations.isNotEmpty()) {
                 item(key = "details-relations") { CardsBlock(
                         R.string.title_section_relations,

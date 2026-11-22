@@ -5,8 +5,6 @@ import android.content.Intent
 // Compose layouts and foundations
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,17 +37,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 // Pictures
@@ -76,6 +67,8 @@ import com.kaisou.app.features.title.ui.components.DetailsError
 import com.kaisou.app.features.title.ui.components.ProfileSkeleton
 import com.kaisou.app.features.title.ui.components.PeopleBlock
 import com.kaisou.app.features.title.ui.components.TitleSynopsis
+import com.kaisou.app.core.designsystem.components.ImageViewer
+import com.kaisou.app.core.designsystem.components.ViewerImage
 
 // The page of a character, a person of the staff or a studio: back, the heart and share on top, then its picture and name, what is known
 // of it, what it says of itself and the rows of titles and people that go with it
@@ -180,47 +173,13 @@ fun ProfileScreen(
     }
 }
 
-// The picture over the whole screen on black, which can be zoomed with two fingers and moved when it is zoomed. A tap closes it
-@Composable
-private fun ImageViewer(url: String, onDismiss: () -> Unit) {
-    var scale by remember { mutableFloatStateOf(1f) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
-
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .pointerInput(Unit) { detectTapGestures { onDismiss() } }
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        scale = (scale * zoom).coerceIn(1f, MaxZoom)
-                        offset = if (scale == 1f) Offset.Zero else offset + pan
-                    }
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            AsyncImage(
-                model = url,
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer(scaleX = scale, scaleY = scale, translationX = offset.x, translationY = offset.y)
-            )
-        }
-    }
-}
-
-private const val MaxZoom = 5f
-
 // Its picture, or a mark when it has none, with its name, the name in its own writing and how many people have it as a favourite
 @Composable
 private fun ProfileHeader(profile: ProfileUi) {
     val dimens = KaisouTheme.dimens
     val format = remember { NumberFormat.getIntegerInstance(Locale.getDefault()) }
     var viewing by rememberSaveable { mutableStateOf(false) }
-    if (viewing && profile.image != null) ImageViewer(url = profile.image, onDismiss = { viewing = false })
+    if (viewing && profile.image != null) ImageViewer(images = listOf(ViewerImage(profile.image)), onDismiss = { viewing = false })
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = dimens.spaceMedium),

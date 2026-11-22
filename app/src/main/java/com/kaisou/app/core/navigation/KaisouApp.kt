@@ -82,6 +82,7 @@ import com.kaisou.app.features.updates.data.UpdateWork
 import com.kaisou.app.features.updates.data.Updates
 import com.kaisou.app.features.title.ui.TitleCardsScreen
 import com.kaisou.app.features.profile.ui.ProfileVoicesScreen
+import com.kaisou.app.features.title.ui.TitleCoversScreen
 
 // The app only opens for a user that is signed in to AniList, the login comes first
 @Composable
@@ -129,7 +130,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     // The bar shows the tab of the screen that is on, the start tab while there is none yet
     val selected = MainTab.entries.firstOrNull { it.route == backStackEntry?.destination?.route } ?: startTab
     // The page of a title has the whole screen, with no bar and no rail
-    val onTitle = backStackEntry?.destination?.route.let { it == TitleRoute || it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute }
+    val onTitle = backStackEntry?.destination?.route.let { it == TitleRoute || it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute }
 
     val onSelect: (MainTab) -> Unit = { tab ->
         navController.navigate(tab.route) {
@@ -278,6 +279,7 @@ private fun MainNavHost(
                 onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
                 onOpenCast = { id, staff -> navController.navigate(castRoute(id, staff)) },
                 onOpenCards = { id, order, manga -> navController.navigate(cardsRoute(id, order, manga)) },
+                onOpenCovers = { navController.navigate(coversRoute(it)) },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -342,6 +344,10 @@ private fun MainNavHost(
                 onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
                 modifier = Modifier.fillMaxSize()
             )
+        }
+        // All the covers of the volumes of a manga, open over it with no bar
+        composable(route = CoversRoute, arguments = listOf(navArgument(TitleIdArg) { type = NavType.IntType })) {
+            TitleCoversScreen(onBack = { navController.popBackStack() }, modifier = Modifier.fillMaxSize())
         }
         // All the titles tied to a title, or its whole series in order, open over it with no bar
         composable(

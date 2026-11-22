@@ -86,6 +86,7 @@ fun TitleScreen(
     onOpenProfile: (ProfileRef) -> Unit,
     onOpenCast: (id: Int, staff: Boolean) -> Unit,
     onOpenCards: (id: Int, order: Boolean, manga: Boolean) -> Unit,
+    onOpenCovers: (id: Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TitleViewModel = viewModel()
 ) {
@@ -185,6 +186,7 @@ fun TitleScreen(
                             themes = state.themes,
                             news = state.news,
                             covers = state.covers,
+                            onOpenCovers = { onOpenCovers(title.anilistId) },
                             onOpenTitle = onOpenTitle,
                             onRetryExtras = viewModel::loadExtras,
                             onRetryNews = viewModel::retryNews,

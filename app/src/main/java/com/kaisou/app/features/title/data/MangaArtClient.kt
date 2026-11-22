@@ -41,6 +41,13 @@ object MangaArtClient {
         runCatching { parse(body, preferred(language, region)) }.getOrNull()
     }
 
+    // The covers that were kept a moment ago for a manga, with no question to MangaDex. Null when nothing is kept, so the page of all the covers
+    // does not take an empty answer for the one of a manga that has none
+    suspend fun kept(anilistId: Int, language: String, region: String): List<MangaCover>? = withContext(Dispatchers.IO) {
+        val body = AppStore.get(StoreSpace, anilistId.toString(), StoreMillis) ?: return@withContext null
+        runCatching { parse(body, preferred(language, region)) }.getOrNull()
+    }
+
     // The cover that stands for the manga: the first volume in the language of the user if there is one, then in the other languages, and
     // the first of the list when there is no first volume
     fun poster(covers: List<MangaCover>): MangaCover? = covers.firstOrNull { it.volume == FirstVolume } ?: covers.firstOrNull()

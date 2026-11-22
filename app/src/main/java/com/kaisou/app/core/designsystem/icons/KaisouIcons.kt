@@ -232,6 +232,7 @@ object KaisouIcons {
         "Percent",
         "M19 5 5 19", "M6.5 4a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z", "M17.5 15a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"
     )
+    val Download = strokeIcon("Download", "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", "m7 10 5 5 5-5", "M12 15V3")
     val ChevronDown = strokeIcon("ChevronDown", "m6 9 6 6 6-6")
     val ArrowUpDown = strokeIcon("ArrowUpDown", "m21 16-4 4-4-4", "M17 20V4", "m3 8 4-4 4 4", "M7 4v16")
     val ChevronRight = strokeIcon("ChevronRight", "m9 18 6-6-6-6")

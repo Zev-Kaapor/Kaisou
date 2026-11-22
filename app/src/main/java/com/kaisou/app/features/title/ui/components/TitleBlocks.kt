@@ -67,6 +67,15 @@ import com.kaisou.app.core.language.DubLanguage
 import com.kaisou.app.core.designsystem.components.shine
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.kaisou.app.core.designsystem.components.ImageViewer
+import com.kaisou.app.core.download.ImageDownload
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.ui.platform.LocalResources
+import com.kaisou.app.core.designsystem.components.ViewerImage
 
 // A row of titles that slides, as the cards of the Home, each one opens the page of its title. It can start at a card that is not the
 // first, like the place of this title in its series
@@ -350,48 +359,105 @@ fun RoundImage(url: String?, size: androidx.compose.ui.unit.Dp, modifier: Modifi
 }
 
 // The covers of the volumes of a manga in a row that slides, each with its volume and its language under it, and a tap opens the picture
-// whole in the browser that stays over the app
+// over the whole screen. When there are more than the row shows, it has the arrow and the last card for the page with
+// all of them
 @Composable
-fun CoversBlock(covers: List<MangaCover>) {
+fun CoversBlock(covers: List<MangaCover>, onSeeAll: (() -> Unit)? = null) {
     val dimens = KaisouTheme.dimens
-    val context = LocalContext.current
-    val separator = stringResource(R.string.home_card_separator)
+    var viewing by rememberSaveable { mutableStateOf<Int?>(null) }
+    viewing?.let { CoversViewer(covers, startIndex = it, onDismiss = { viewing = null }) }
+    val shown = if (onSeeAll != null) covers.take(TitleDimens.CardsShown) else covers
 
     Column(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
-        BlockTitle(text = stringResource(R.string.title_section_covers), modifier = Modifier.padding(horizontal = dimens.screenPadding))
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding), verticalAlignment = Alignment.CenterVertically) {
+            BlockTitle(text = stringResource(R.string.title_section_covers), modifier = Modifier.weight(1f))
+            if (onSeeAll != null) SeeAllArrow(onSeeAll)
+        }
         LazyRow(
             contentPadding = PaddingValues(horizontal = dimens.screenPadding),
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
             modifier = Modifier.padding(top = dimens.spaceSmall)
         ) {
-            items(covers, key = { it.original }) { cover ->
-                Column(
-                    modifier = Modifier.width(TitleDimens.CoverWidth).clickable(role = Role.Button) { InAppBrowser.open(context, cover.original) },
-                    verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)
-                ) {
-                    AsyncImage(
-                        model = cover.thumbnail,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
+            itemsIndexed(shown, key = { _, cover -> cover.original }) { index, cover -> CoverTile(cover, onClick = { viewing = index }) }
+            if (onSeeAll != null) {
+                item(key = "see-all") {
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .width(TitleDimens.CoverWidth)
                             .aspectRatio(TitleDimens.CoverRatio)
                             .clip(MaterialTheme.shapes.medium)
-                            .background(KaisouTheme.colors.skeleton)
-                    )
-                    Text(
-                        text = listOfNotNull(cover.volume?.let { stringResource(R.string.title_cover_volume, it) }, cover.language.uppercase().takeIf { it.isNotBlank() })
-                            .joinToString(separator),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                            .background(KaisouTheme.colors.elevated)
+                            .clickable(role = Role.Button, onClick = onSeeAll),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(imageVector = KaisouIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = stringResource(R.string.cast_see_all), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
     }
 }
+
+// A cover of a volume: its picture and under it its volume and its language. A touch on it is left to the page, which opens the covers. It has
+// the width of the row unless the page gives it another
+@Composable
+fun CoverTile(cover: MangaCover, onClick: () -> Unit, modifier: Modifier = Modifier.width(TitleDimens.CoverWidth)) {
+    val dimens = KaisouTheme.dimens
+    val separator = stringResource(R.string.home_card_separator)
+
+    Column(modifier = modifier.clickable(role = Role.Button, onClick = onClick), verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)) {
+        AsyncImage(
+            model = cover.thumbnail,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(TitleDimens.CoverRatio)
+                .clip(MaterialTheme.shapes.medium)
+                .background(KaisouTheme.colors.skeleton)
+        )
+        Text(
+            text = coverName(cover, separator),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+// The covers over the whole screen, one that slides to the next, each with its name on top and the download of the one that is on. It starts on
+// the one with the place given in the list
+@Composable
+fun CoversViewer(covers: List<MangaCover>, startIndex: Int, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val separator = stringResource(R.string.home_card_separator)
+    val started = stringResource(R.string.title_cover_download_started)
+    val failed = stringResource(R.string.title_cover_download_failed)
+    val images = remember(covers) {
+        covers.map { cover ->
+            val name = listOfNotNull(
+                cover.volume?.let { resources.getString(R.string.title_cover_volume, it) },
+                cover.language.uppercase().takeIf { it.isNotBlank() }
+            ).joinToString(separator)
+            ViewerImage(url = cover.original, placeholder = cover.thumbnail, title = name.ifEmpty { null })
+        }
+    }
+    ImageViewer(
+        images = images,
+        startIndex = startIndex,
+        onDismiss = onDismiss,
+        onDownload = { image -> if (ImageDownload.save(context, image.url, ImageDownload.nameOf(image.url, CoverFilePrefix))) started else failed }
+    )
+}
+
+// The words under a cover: its volume and its language
+@Composable
+private fun coverName(cover: MangaCover, separator: String): String =
+    listOfNotNull(cover.volume?.let { stringResource(R.string.title_cover_volume, it) }, cover.language.uppercase().takeIf { it.isNotBlank() }).joinToString(separator)
 
 // The friends that have the title in a row that slides, the user first. Each has the picture with the score they gave on it, the name, where
 // the title is on their list and how far they are. A tap opens their page on AniList
@@ -504,3 +570,6 @@ private fun FriendItem(friend: TitleFriend, total: Int?, manga: Boolean) {
         )
     }
 }
+
+// How the file of a cover starts when it is saved
+private const val CoverFilePrefix = "Kaisou"
