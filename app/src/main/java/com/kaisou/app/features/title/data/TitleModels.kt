@@ -15,6 +15,7 @@ import com.kaisou.app.core.artwork.ArtQuery
 import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.home.data.HeroArt
+import com.kaisou.app.core.rating.AgeGroup
 
 // The states a title can have on the list of the user, as AniList names them
 enum class ListStatus(val apiName: String) {
@@ -218,7 +219,9 @@ data class TitleDetails(
     val links: List<TitleLink>,
     val relations: List<TitleRelation>,
     // The id of the title on MyAnimeList, which the watch order of the anime is asked by
-    val malId: Int? = null
+    val malId: Int? = null,
+    // The age a manga is for, worked out from its tags and genres, since no source rates a manga. Null for an anime and for a manga with nothing known
+    val ageGroup: AgeGroup? = null
 )
 
 // Who voices a character and the language of the voice, as AniList names it, like Japanese or Portuguese

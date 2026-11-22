@@ -54,6 +54,8 @@ import com.kaisou.app.features.settings.ui.components.Choice
 import com.kaisou.app.features.settings.ui.components.ChoiceSheet
 import androidx.compose.foundation.layout.Spacer
 import com.kaisou.app.features.title.ui.components.PickerPill
+import androidx.compose.ui.platform.LocalDensity
+import kotlinx.coroutines.flow.first
 
 // All the titles tied to a title, or its whole series in the order to take it, in a grid. The relations can be told apart by the kind of tie
 // with the buttons over the grid, and the order of the series has the place of each title on its picture and opens where the title of the
@@ -73,9 +75,15 @@ fun TitleCardsScreen(onBack: () -> Unit, onOpenTitle: (Int) -> Unit, modifier: M
             viewModel.scroll.offset = offset
         }
     }
-    // The order of the series opens where the title of the page is, the first time
+    // The order of the series opens where the title of the page is, the first time, with its card in the middle of the screen and not at its top
+    val density = LocalDensity.current
     LaunchedEffect(loaded) {
-        if (loaded != null && viewModel.order && viewModel.scroll.index == 0 && loaded.current > 0) gridState.scrollToItem(loaded.current)
+        if (loaded != null && viewModel.order && viewModel.scroll.index == 0 && loaded.current > 0) {
+            gridState.scrollToItem(loaded.current)
+            val item = snapshotFlow { gridState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == loaded.current } }.first { it != null }!!
+            val edge = with(density) { dimens.spaceMedium.roundToPx() }
+            gridState.scrollToItem(loaded.current, -((gridState.layoutInfo.viewportSize.height - item.size.height) / 2 - edge))
+        }
     }
 
     Column(

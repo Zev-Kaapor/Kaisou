@@ -55,6 +55,8 @@ import com.kaisou.app.features.title.data.ListOptions
 import com.kaisou.app.features.title.data.TitleRepository
 import com.kaisou.app.features.title.data.TitleUi
 import com.kaisou.app.features.title.data.ListChanges
+import com.kaisou.app.core.rating.MangaAgeRepository
+import com.kaisou.app.features.home.data.ShelfUi
 
 // Loads the Home as soon as it is asked for and keeps it, so it is not asked again when the user scrolls or comes back to it
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
@@ -315,6 +317,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         if (mutableState.value.status != HomeStatus.Content) return
         val built = repository.build(userId, parts) ?: return
         mutableState.update { it.copy(ownStory = built.ownStory, friends = built.friends, shelves = built.shelves) }
+        prefetchMangaAges(built.shelves)
+    }
+
+    // Says all the manga of the shelves to the ones that work out their age, so they are asked together and the cards find it ready
+    private fun prefetchMangaAges(shelves: List<ShelfUi>) {
+        val ids = shelves.flatMap { shelf -> shelf.cards.filter { it.rating.manga }.map { it.rating.anilistId } }
+        if (ids.isNotEmpty()) MangaAgeRepository.prefetch(ids)
     }
 
     // Deletes an activity of the user. It goes from the stories at once, and when AniList has answered they are asked for again, so one
@@ -404,6 +413,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     shelves = built?.shelves.orEmpty()
                 )
             }
+            built?.shelves?.let(::prefetchMangaAges)
         }
     }
 

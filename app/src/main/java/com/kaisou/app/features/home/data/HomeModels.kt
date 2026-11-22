@@ -62,6 +62,9 @@ class HeroArt(
 ) {
     // The same, with the season that was found after it
     fun withSeason(season: Int?) = HeroArt(posterUrl, backdropUrl, logoUrl, synopsis, rating, season)
+
+    // The same, with the rating that was worked out after it
+    fun withRating(rating: ContentRating?) = HeroArt(posterUrl, backdropUrl, logoUrl, synopsis, rating, season)
 }
 
 // The shelves of posters and wide cards under the hero, in the order they show, and the words that name each one

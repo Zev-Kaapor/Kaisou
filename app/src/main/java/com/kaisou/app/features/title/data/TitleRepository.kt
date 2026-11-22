@@ -46,6 +46,9 @@ import com.kaisou.app.features.profile.data.ProfileKind
 import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.core.anilist.AboutSnippet
 import com.kaisou.app.core.net.HttpText
+import com.kaisou.app.core.rating.AgeGroup
+import com.kaisou.app.core.rating.AgeTag
+import com.kaisou.app.core.rating.MangaAgeEstimate
 
 // Asks AniList for the title of a page and turns the answer into what the screen shows. Prototype: the top of the page and the details
 class TitleRepository(context: Context) {
@@ -482,6 +485,14 @@ class TitleRepository(context: Context) {
         }
     }
 
+    // The age a manga is for, from the tags and the genres in English as AniList gives them, before the names are put in the language of the app
+    private fun mangaAge(media: JSONObject): AgeGroup? {
+        val tags = objects(media.optJSONArray("tags")).mapNotNull { tag ->
+            text(tag, "name")?.let { AgeTag(it, tag.optInt("rank"), tag.optBoolean("isMediaSpoiler"), tag.optBoolean("isAdult")) }
+        }
+        return MangaAgeEstimate.of(tags, strings(media.optJSONArray("genres")), media.optBoolean("isAdult"))
+    }
+
     // The data of the title, the places it has among the best, the tags, the trailer and the links to other sites
     private fun parseDetails(media: JSONObject): TitleDetails {
         val numbers = NumberFormat.getIntegerInstance(Locale.getDefault())
@@ -555,7 +566,8 @@ class TitleRepository(context: Context) {
             trailer = media.optJSONObject("trailer")?.let(::trailer),
             links = links(media.optJSONArray("externalLinks")),
             relations = relations(media.optJSONObject("relations")?.optJSONArray("edges")),
-            malId = media.optInt("idMal").takeIf { it > 0 }
+            malId = media.optInt("idMal").takeIf { it > 0 },
+            ageGroup = if (manga) mangaAge(media) else null
         )
     }
 
@@ -768,7 +780,7 @@ class TitleRepository(context: Context) {
         const val MaxHops = 6
         const val AnimeType = "ANIME"
         // Where what AniList says of a title and of its series is kept on the phone, and for how long: half an hour, since it changes slowly
-        const val ExtrasSpace = "title-extras12"
+        const val ExtrasSpace = "title-extras13"
         const val SeriesSpace = "title-series3"
         // What a title of a series keeps in place of the series, the id of the title that has it
         const val SeriesPointer = "@"
@@ -814,7 +826,7 @@ class TitleRepository(context: Context) {
         // and what is tied to it), what other people recommend, the ones with a score above zero being the ones that people agreed on, and the
         // characters, the best known first, with who voices them in Japanese, and the staff
         const val ExtrasQuery = "query (\$id: Int) { " +
-            "details: Media(id: \$id) { idMal type format status title { romaji english native } synonyms episodes chapters volumes duration " +
+            "details: Media(id: \$id) { idMal isAdult type format status title { romaji english native } synonyms episodes chapters volumes duration " +
             "season seasonYear startDate { year month day } endDate { year month day } source countryOfOrigin " +
             "studios { edges { isMain node { id name isAnimationStudio } } } popularity favourites " +
             "averageScore meanScore hashtag genres airingSchedule(notYetAired: true, perPage: 12) { nodes { episode airingAt } } rankings { rank type allTime year season } tags { name description rank isMediaSpoiler isGeneralSpoiler isAdult } " +

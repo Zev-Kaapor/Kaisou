@@ -60,6 +60,7 @@ import com.kaisou.app.features.title.data.ListChanges
 import com.kaisou.app.features.title.data.TitleTrailer
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
+import com.kaisou.app.core.rating.AgeGroup
 
 // Loads the title of the page as soon as it is opened and keeps it while the page is on the stack
 class TitleViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
@@ -217,8 +218,16 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
                 }
             }
             if (extras != null && extras.details.trailer == null) loadFallbackTrailer(title)
+            extras?.details?.ageGroup?.let { group -> applyMangaRating(group) }
             loadWatchOrder(extras?.details?.relations.orEmpty(), extras?.details?.malId)
         }
+    }
+
+    // The age of a manga, worked out from its tags, is its rating on the top of the page, as the one of an anime is. It comes with the details, after
+    // the top, so it goes into it when it comes. It has the symbol of Brazil in Brazil and the square with the age in every other country
+    private fun applyMangaRating(group: AgeGroup) {
+        val rating = ContentRating(group, official = false, symbol = AppLanguage.region == BrazilRegion)
+        mutableState.update { state -> state.art?.let { state.copy(art = it.withRating(rating)) } ?: state }
     }
 
     // The trailer TMDB has, for a title AniList has none for. It is asked once the details are there and show none, and it goes in them
@@ -396,6 +405,9 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
     }
 
     private companion object {
+        // The country whose symbols of rating are the official ones of the app
+        const val BrazilRegion = "BR"
+
         // How long the page waits for its pictures before it shows with what it has
         const val ArtWaitMillis = 6_000L
 

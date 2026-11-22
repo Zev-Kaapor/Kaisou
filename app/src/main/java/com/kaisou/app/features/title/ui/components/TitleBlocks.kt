@@ -76,9 +76,12 @@ import com.kaisou.app.core.download.ImageDownload
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.ui.platform.LocalResources
 import com.kaisou.app.core.designsystem.components.ViewerImage
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.first
 
 // A row of titles that slides, as the cards of the Home, each one opens the page of its title. It can start at a card that is not the
-// first, like the place of this title in its series
+// first, like the place of this title in its series, and then that card is in the middle of the row, not at its start
 @Composable
 fun CardsBlock(
     title: Int,
@@ -93,6 +96,17 @@ fun CardsBlock(
     // With a page for all of them only a few are shown, around the one of the page when it is in the series, and the last card says there are more
     val from = if (onSeeAll != null) (startIndex - 2).coerceIn(0, (cards.size - TitleDimens.CardsShown).coerceAtLeast(0)) else 0
     val shown = if (onSeeAll != null) cards.drop(from).take(TitleDimens.CardsShown) else cards
+    val rowState = rememberLazyListState(initialFirstVisibleItemIndex = (startIndex - from).coerceAtLeast(0))
+    val density = LocalDensity.current
+
+    // The card of the title goes to the middle of the row once it is laid out and its width is known, as far as the cards before it allow
+    LaunchedEffect(startIndex, shown.size) {
+        if (startIndex <= 0) return@LaunchedEffect
+        val width = snapshotFlow { rowState.layoutInfo.viewportSize.width }.first { it > 0 }
+        val card = with(density) { HomeDimens.PosterWidth.roundToPx() }
+        val edge = with(density) { dimens.screenPadding.roundToPx() }
+        rowState.scrollToItem((startIndex - from).coerceAtLeast(0), -((width - card) / 2 - edge))
+    }
 
     Column(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding), verticalAlignment = Alignment.CenterVertically) {
@@ -100,7 +114,7 @@ fun CardsBlock(
             if (onSeeAll != null) SeeAllArrow(onSeeAll)
         }
         LazyRow(
-            state = rememberLazyListState(initialFirstVisibleItemIndex = (startIndex - from).coerceAtLeast(0)),
+            state = rowState,
             contentPadding = PaddingValues(horizontal = dimens.screenPadding),
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
             modifier = Modifier.padding(top = dimens.spaceSmall)
