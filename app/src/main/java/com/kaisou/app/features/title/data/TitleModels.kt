@@ -337,12 +337,25 @@ data class TitleThread(val title: String, val replies: Int, val author: String, 
 data class TitleScoreBar(val score: Int, val amount: Int)
 data class TitleStatusShare(val label: String, val amount: Int)
 
+// How much happened around the title on a day, as AniList counts it: the day as seconds and the activity of that day
+data class TitleTrend(val day: Long, val activity: Int)
+
+// What a person did to the title lately: who, what they did in the language of the app, and when as seconds
+data class TitleActivity(val id: Int, val author: String, val avatar: String?, val text: String, val createdAt: Long)
+
 // What the tab of the community of a title shows
 data class TitleCommunity(
     val reviews: List<TitleReview>,
     val scores: List<TitleScoreBar>,
     val statuses: List<TitleStatusShare>,
-    val threads: List<TitleThread>
+    val threads: List<TitleThread>,
+    // The last days of activity, from the oldest to the newest
+    val trends: List<TitleTrend> = emptyList(),
+    // How many people have the title on a list and how many made it a favourite
+    val popularity: Int = 0,
+    val favourites: Int = 0,
+    // What people did to the title lately, the newest first
+    val activity: List<TitleActivity> = emptyList()
 )
 
 // What the page is doing: loading with nothing to show, showing the title, or failed

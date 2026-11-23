@@ -238,6 +238,10 @@ class TitleRepository(context: Context) {
             statuses = objects(stats?.optJSONArray("statusDistribution")).mapNotNull { share ->
                 listNames(manga)[text(share, "status")]?.let { TitleStatusShare(it, share.optInt("amount")) }
             },
+            activity = objects(data.optJSONObject("activity")?.optJSONArray("activities")).mapNotNull(::activityOf),
+            popularity = media?.optInt("popularity") ?: 0,
+            favourites = media?.optInt("favourites") ?: 0,
+            trends = objects(media?.optJSONObject("trends")?.optJSONArray("nodes")).map { TitleTrend(it.optLong("date"), it.optInt("trending")) }.sortedBy { it.day },
             threads = objects(threads).mapNotNull { thread ->
                 TitleThread(
                     title = text(thread, "title") ?: return@mapNotNull null,
@@ -247,6 +251,31 @@ class TitleRepository(context: Context) {
                 )
             }
         )
+    }
+
+    // What a person did to the title as AniList gives it, said in the language of the app, null when it has no author
+    private fun activityOf(activity: JSONObject): TitleActivity? {
+        val id = activity.optInt("id").takeIf { it > 0 } ?: return null
+        val user = activity.optJSONObject("user") ?: return null
+        val name = text(user, "name") ?: return null
+        val status = text(activity, "status").orEmpty().lowercase()
+        val progress = text(activity, "progress").orEmpty()
+        val range = " - " in progress
+
+        fun of(single: Int, several: Int) = resources.getString(if (range) several else single, progress)
+        val said = when {
+            status.startsWith("rewatched") -> of(R.string.activity_rewatched, R.string.activity_rewatched_range)
+            status.startsWith("watched") -> of(R.string.activity_watched, R.string.activity_watched_range)
+            status.startsWith("reread") -> of(R.string.activity_reread, R.string.activity_reread_range)
+            status.startsWith("read") -> of(R.string.activity_read, R.string.activity_read_range)
+            status.startsWith("plans to watch") -> resources.getString(R.string.activity_plans_watch)
+            status.startsWith("plans to read") -> resources.getString(R.string.activity_plans_read)
+            status.startsWith("completed") -> resources.getString(R.string.activity_completed)
+            status.startsWith("paused") -> resources.getString(R.string.activity_paused)
+            status.startsWith("dropped") -> resources.getString(R.string.activity_dropped)
+            else -> return null
+        }
+        return TitleActivity(id, name, user.optJSONObject("avatar")?.let { text(it, "large") }, said, activity.optLong("createdAt"))
     }
 
     // What the user has done with the title, as AniList names the lists in the language of the app: reading for a manga, watching for
@@ -857,11 +886,16 @@ class TitleRepository(context: Context) {
             "media(id_in: \$ids, type: \$type) { ${AniShelvesParser.CardFields} startDate { year month day } " +
             "relations { edges { relationType(version: 2) node { id type } } } } } }"
 
+        // How many days of activity the community shows
+        const val TrendDays = 30
+
         // The community: how the scores and the lists are spread, the reviews and the threads about it
         const val CommunityQuery = "query (\$id: Int, \$fresh: Int) { " +
-            "Media(id: \$id, popularity_greater: \$fresh) { stats { scoreDistribution { score amount } statusDistribution { status amount } } " +
+            "Media(id: \$id, popularity_greater: \$fresh) { popularity favourites stats { scoreDistribution { score amount } statusDistribution { status amount } } " +
+            "trends(sort: ID_DESC, perPage: $TrendDays) { nodes { date trending } } " +
             "reviews(perPage: 5, sort: RATING_DESC) { nodes { id summary score rating user { name avatar { large } } } } } " +
-            "threads: Page(perPage: 5) { threads(mediaCategoryId: \$id, sort: REPLIED_AT_DESC) { id title replyCount user { name } } } }"
+            "threads: Page(perPage: 5) { threads(mediaCategoryId: \$id, sort: REPLIED_AT_DESC) { id title replyCount user { name } } } " +
+            "activity: Page(perPage: 10) { activities(mediaId: \$id, type: MEDIA_LIST, sort: ID_DESC) { ... on ListActivity { id status progress createdAt user { name avatar { large } } } } } }"
 
         // Puts a title on the list of the user or changes its entry, and takes it off
         const val SaveEntryQuery = "mutation (\$mediaId: Int, \$status: MediaListStatus, \$progress: Int, \$progressVolumes: Int, \$score: Float, " +
