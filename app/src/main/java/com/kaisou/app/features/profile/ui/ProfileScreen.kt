@@ -102,6 +102,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.weight(1f))
             if (profile != null) {
                 HeaderAction(
+                    active = profile.isFavourite,
                     icon = if (profile.isFavourite) KaisouIcons.HeartFilled else KaisouIcons.Heart,
                     contentDescription = stringResource(if (profile.isFavourite) R.string.cd_unfavourite else R.string.cd_favourite),
                     onClick = viewModel::toggleFavourite

@@ -88,6 +88,7 @@ fun StudioScreen(
             }
             if (studio != null) {
                 HeaderAction(
+                    active = studio.isFavourite,
                     icon = if (studio.isFavourite) KaisouIcons.HeartFilled else KaisouIcons.Heart,
                     contentDescription = stringResource(if (studio.isFavourite) R.string.cd_unfavourite else R.string.cd_favourite),
                     onClick = profileModel::toggleFavourite
