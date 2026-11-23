@@ -25,6 +25,8 @@ data class KaisouColors(
     val rankTopTen: Color,
     val rankTopFifty: Color,
     val rankTopHundred: Color,
+    // The colors that tell apart the parts of a chart, like the genres of a person, from the one with the most to the one with the least
+    val chart: List<Color>,
     // Tag with the day of the week of a weekly release and what is drawn over it
     val weeklyBadge: Color,
     val onWeeklyBadge: Color,
@@ -65,6 +67,7 @@ val KaisouPalette = KaisouColors(
     rankTopTen = Color(0xFF34D399),
     rankTopFifty = Color(0xFF60A5FA),
     rankTopHundred = Color(0xFFF472B6),
+    chart = listOf(Color(0xFF6AD83F), Color(0xFF00A8FF), Color(0xFF9156F1), Color(0xFFFA7AA0), Color(0xFFE85D75), Color(0xFFFC9B5E)),
     weeklyBadge = Color(0xFF1578C8),
     onWeeklyBadge = OnFilled,
     onAccentFill = OnFilled,

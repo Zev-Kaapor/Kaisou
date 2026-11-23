@@ -761,18 +761,19 @@ private fun TagsBlock(tags: List<TitleTag>) {
 // translation arrives
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TagTip(description: String, content: @Composable () -> Unit) {
+internal fun TagTip(description: String, content: @Composable () -> Unit, modifier: Modifier = Modifier, translate: Boolean = true) {
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above, TitleDimens.TagTipGap),
         tooltip = {
             val words by produceState(description, description) {
-                if (AppLanguage.needsTranslation) {
+                if (translate && AppLanguage.needsTranslation) {
                     GoogleTranslator.translate(description, AppLanguage.translationCode)?.let { value = it }
                 }
             }
             PlainTooltip { Text(text = words) }
         },
-        state = rememberTooltipState()
+        state = rememberTooltipState(),
+        modifier = modifier
     ) { content() }
 }
 

@@ -106,6 +106,7 @@ import com.kaisou.app.core.designsystem.components.SheetCloseButton
 import com.kaisou.app.core.designsystem.components.clickableNoIndication
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
+import com.kaisou.app.core.navigation.LocalOpenUser
 import com.kaisou.app.features.home.data.RepliesUi
 import com.kaisou.app.features.home.data.ReplyUi
 import com.kaisou.app.features.home.data.StoryItemUi
@@ -210,6 +211,12 @@ private fun StoryPlayer(
     var replyMenu by remember { mutableStateOf<ReplyUi?>(null) }
     var replyToDelete by remember { mutableStateOf<ReplyUi?>(null) }
     val context = LocalContext.current
+    // The page of the person opens behind the stories, so they close first
+    val openUser = LocalOpenUser.current
+    val openProfile: (String) -> Unit = { name ->
+        onClose()
+        openUser(name)
+    }
     val scope = rememberCoroutineScope()
     // The cube that turns from a person to another: where it goes and which way, how far it has turned from nothing to all, and the movement
     // that takes it to its end
@@ -384,7 +391,7 @@ private fun StoryPlayer(
                 onClose = onClose,
                 onOpenReplies = onOpenReplies,
                 onLike = onLike,
-                onOpenProfile = { InAppBrowser.open(context, UserUrl + user.name) }
+                onOpenProfile = { openProfile(user.name) }
             )
         } else {
             // While the cube turns the person that goes out and the one that comes in are both drawn, each on its side of the corner, and
@@ -452,8 +459,7 @@ private fun StoryPlayer(
                 onSend = onSendReply,
                 onLike = onLikeReply,
                 onMenu = { replyMenu = it },
-                // The profile is not in the app yet, so for now the name and the picture open the page of the person on AniList
-                onProfile = { InAppBrowser.open(context, UserUrl + it.userName) },
+                onProfile = { openProfile(it.userName) },
                 onCancelEdit = onCancelEdit,
                 onDismiss = onCloseReplies,
                 modifier = Modifier.clickableNoIndication {}
@@ -831,7 +837,7 @@ private fun StoryMenu(user: StoryUi, item: StoryItemUi, isOwn: Boolean, onDelete
 // The comments of an activity in the sheet of the app: who wrote each one and when, and where the user writes theirs. The keyboard
 // lifts the sheet, and a comment that comes in slides into the list
 @Composable
-private fun RepliesSheet(
+internal fun RepliesSheet(
     replies: RepliesUi,
     onSend: (String) -> Unit,
     onLike: (Int) -> Unit,
@@ -1028,7 +1034,7 @@ private fun ReplyRow(reply: ReplyUi, onLike: () -> Unit, onMenu: () -> Unit, onP
 // The menu of a comment in the sheet of the app: changing it and deleting it, only for the ones of the user, and for all of them
 // copying the text, sharing the activity and opening it on AniList, which has no page of its own for a comment
 @Composable
-private fun ReplyMenu(reply: ReplyUi, activityId: Int, isOwn: Boolean, onEdit: () -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit) {
+internal fun ReplyMenu(reply: ReplyUi, activityId: Int, isOwn: Boolean, onEdit: () -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit) {
     val dimens = KaisouTheme.dimens
     val colors = KaisouTheme.colors
     val context = LocalContext.current
@@ -1189,9 +1195,8 @@ private fun CountText(count: Int, color: Color = KaisouTheme.colors.onMedia) {
 // How many milliseconds a second has, for the moment an activity happened
 private const val MillisPerSecond = 1000L
 
-// Where an activity and a person are on AniList
-private const val ActivityUrl = "https://anilist.co/activity/"
-private const val UserUrl = "https://anilist.co/user/"
+// Where an activity is on AniList
+internal const val ActivityUrl = "https://anilist.co/activity/"
 
 // A touch that lasts less than this is a tap, longer is holding
 private const val HoldMillis = 250L

@@ -45,6 +45,9 @@ class HomeRepository(context: Context) {
     // The like of an activity, given or taken back, and how it stands now, null when it did not go
     suspend fun toggleLike(activityId: Int): AniLike? = client.toggleLike(activityId, reply = false, token = AniListSession.token)
 
+    // Follows an activity or stops following it, and whether it is followed now, null when it did not go
+    suspend fun toggleSubscription(activityId: Int, subscribe: Boolean): Boolean? = client.toggleSubscription(activityId, subscribe, AniListSession.token)
+
     // The same for a comment
     suspend fun toggleReplyLike(replyId: Int): AniLike? = client.toggleLike(replyId, reply = true, token = AniListSession.token)
 

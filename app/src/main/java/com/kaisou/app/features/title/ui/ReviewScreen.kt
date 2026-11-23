@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import com.kaisou.app.core.navigation.LocalOpenUser
 import androidx.lifecycle.viewmodel.compose.viewModel
 // Java time
 import java.time.Instant
@@ -136,17 +137,26 @@ private fun ReviewContent(review: TitleReview, summary: String, text: String, vo
     val dimens = KaisouTheme.dimens
     val day = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault()) }
 
+    val openUser = LocalOpenUser.current
+
     Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)) {
         Row(horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall), verticalAlignment = Alignment.CenterVertically) {
-            RoundImage(url = review.avatar, size = TitleDimens.ReviewReaderAvatar)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = review.author, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
-                if (review.createdAt > 0) {
-                    Text(
-                        text = day.format(Instant.ofEpochSecond(review.createdAt)),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            // The picture and the name of the author open their page
+            Row(
+                modifier = Modifier.weight(1f).clip(MaterialTheme.shapes.medium).clickable(role = Role.Button) { openUser(review.author) },
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RoundImage(url = review.avatar, size = TitleDimens.ReviewReaderAvatar)
+                Column {
+                    Text(text = review.author, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+                    if (review.createdAt > 0) {
+                        Text(
+                            text = day.format(Instant.ofEpochSecond(review.createdAt)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
             review.score?.let { ScoreMark(it / ReviewScoreScale) }

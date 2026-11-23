@@ -528,6 +528,63 @@
         <item quantity="other">%s favourites</item>
     </plurals>
     <string name="profile_voices_none">No voices in this language</string>
+    <string name="user_titles">Titles</string>
+    <string name="user_total_anime">Total Anime</string>
+    <string name="user_total_manga">Total Manga</string>
+    <string name="user_days_watched">Days Watched</string>
+    <string name="user_mean_score">Mean Score</string>
+    <string name="user_chapters_read">Chapters Read</string>
+    <string name="user_section_activity">Activity History</string>
+    <plurals name="user_activity_total">
+        <item quantity="one">%s activity in the last months</item>
+        <item quantity="other">%s activities in the last months</item>
+    </plurals>
+    <plurals name="user_activity_day">
+        <item quantity="one">%1$s · %2$s activity</item>
+        <item quantity="other">%1$s · %2$s activities</item>
+    </plurals>
+    <string name="user_section_genres">Genre Overview</string>
+    <string name="user_section_recent">Recent Activity</string>
+    <string name="user_joined">Member since %s</string>
+    <string name="user_fav_anime">Favourite anime</string>
+    <string name="user_fav_manga">Favourite manga</string>
+    <string name="user_fav_characters">Favourite characters</string>
+    <string name="user_fav_staff">Favourite staff</string>
+    <string name="user_fav_studios">Favourite studios</string>
+    <string name="user_follow">Follow</string>
+    <string name="user_following">Following</string>
+    <string name="user_follows_you">Follows you</string>
+    <string name="user_tab_overview">Overview</string>
+    <string name="user_tab_lists">Lists</string>
+    <string name="user_tab_stats">Stats</string>
+    <string name="user_tab_community">Community</string>
+    <string name="user_tab_soon">Coming soon</string>
+    <string name="user_previous_names">Previously: %s</string>
+    <string name="user_follow_counts">%1$s following · %2$s</string>
+    <plurals name="user_followers">
+        <item quantity="one">%s follower</item>
+        <item quantity="other">%s followers</item>
+    </plurals>
+    <string name="cd_activity_follow">Follow the activity</string>
+    <string name="cd_activity_unfollow">Stop following the activity</string>
+    <string name="activity_followed">Following this activity</string>
+    <string name="activity_unfollowed">Stopped following this activity</string>
+    <string name="activity_follow_failed">Could not change if you follow the activity</string>
+    <string name="activity_copy_link">Copy link</string>
+    <string name="activity_liked">You liked this activity</string>
+    <string name="comment_liked">You liked this comment</string>
+    <string name="like_removed">You removed your like</string>
+    <string name="like_failed">Could not change your like</string>
+    <string name="reply_sent">Your comment was posted</string>
+    <string name="reply_edited">Your comment was updated</string>
+    <string name="reply_failed">Could not post your comment</string>
+    <string name="reply_deleted">Your comment was deleted</string>
+    <string name="activity_deleted">Your activity was deleted</string>
+    <string name="activity_delete_failed">Could not delete your activity</string>
+    <string name="activity_link_copied">Link copied</string>
+    <string name="user_follow_added">Following %s</string>
+    <string name="user_follow_removed">Stopped following %s</string>
+    <string name="user_follow_failed">Could not change who you follow</string>
     <string-array name="title_staff_keys" translatable="false">
         <item>Director</item>
         <item>Chief Director</item>

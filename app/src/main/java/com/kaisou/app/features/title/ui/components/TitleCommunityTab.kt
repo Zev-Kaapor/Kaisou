@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -50,7 +49,7 @@ import java.time.format.FormatStyle
 import java.util.Locale
 // Project resources
 import com.kaisou.app.R
-import com.kaisou.app.core.browser.InAppBrowser
+import com.kaisou.app.core.navigation.LocalOpenUser
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.title.data.Load
@@ -207,8 +206,7 @@ private fun StatsBlock(trends: List<TitleTrend>, scores: List<TitleScoreBar>, st
         BlockTitle(stringResource(R.string.title_section_stats))
         if (trends.isNotEmpty()) {
             val top = trends.maxOf { it.activity }.coerceAtLeast(1)
-            // The short date of the language with the whole year
-            val day = remember { DateTimeFormatter.ofPattern(DateTimeFormatterBuilder.getLocalizedDateTimePattern(FormatStyle.SHORT, null, IsoChronology.INSTANCE, Locale.getDefault()).replace(Regex("y+"), "yyyy"), Locale.getDefault()).withZone(ZoneId.systemDefault()) }
+            val day = rememberShortDay()
             // The day that is picked, the last one until a touch picks another
             var picked by remember(trends) { mutableIntStateOf(trends.lastIndex) }
             Row(modifier = Modifier.fillMaxWidth().padding(top = dimens.spaceSmall), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -314,6 +312,12 @@ private fun StatsBlock(trends: List<TitleTrend>, scores: List<TitleScoreBar>, st
     }
 }
 
+// The short date of the language with the whole year, in the zone of the phone
+@Composable
+internal fun rememberShortDay(): DateTimeFormatter = remember {
+    DateTimeFormatter.ofPattern(DateTimeFormatterBuilder.getLocalizedDateTimePattern(FormatStyle.SHORT, null, IsoChronology.INSTANCE, Locale.getDefault()).replace(Regex("y+"), "yyyy"), Locale.getDefault()).withZone(ZoneId.systemDefault())
+}
+
 // How long ago something was, as the phone says it, like 3 days ago, from the day it happened in seconds
 internal fun relativeTime(seconds: Long): String =
     DateUtils.getRelativeTimeSpanString(seconds * MillisPerSecond, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
@@ -324,7 +328,7 @@ private const val MillisPerSecond = 1000L
 @Composable
 private fun ActivityBlock(activity: List<TitleActivity>) {
     val dimens = KaisouTheme.dimens
-    val context = LocalContext.current
+    val openUser = LocalOpenUser.current
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
         BlockTitle(stringResource(R.string.title_section_activity))
@@ -335,7 +339,7 @@ private fun ActivityBlock(activity: List<TitleActivity>) {
                     .fillMaxWidth()
                     .padding(top = dimens.spaceSmall)
                     .clip(MaterialTheme.shapes.medium)
-                    .clickable(role = Role.Button) { InAppBrowser.open(context, "https://anilist.co/user/${item.author}") },
+                    .clickable(role = Role.Button) { openUser(item.author) },
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
                 verticalAlignment = Alignment.CenterVertically
             ) {

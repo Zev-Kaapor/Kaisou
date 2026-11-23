@@ -141,7 +141,7 @@ class HomeMapper(private val resources: Resources) {
     }
 
     // What a person did to a title, in the language of the app: the status AniList writes and the episodes or chapters
-    private fun line(activity: AniActivity): String? {
+    fun line(activity: AniActivity): String? {
         val card = activity.card ?: return null
         val status = activity.status.orEmpty().lowercase()
         val progress = activity.progress.orEmpty()

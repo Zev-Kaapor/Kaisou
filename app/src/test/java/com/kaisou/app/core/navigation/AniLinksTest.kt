@@ -15,8 +15,14 @@ class AniLinksTest {
     }
 
     @Test
+    fun theAddressOfAPersonOfAniListOpensTheirPage() {
+        assertEquals("user/ZevKaapor", aniLinkRoute("https://anilist.co/user/ZevKaapor"))
+        assertEquals("user/ZevKaapor", aniLinkRoute("https://anilist.co/user/ZevKaapor/animelist?x=1"))
+        assertEquals("user/ZevKaapor", aniLinkRoute("http://www.anilist.co/user/ZevKaapor/"))
+    }
+
+    @Test
     fun anyOtherAddressGoesToTheBrowser() {
-        assertNull(aniLinkRoute("https://anilist.co/user/ZevKaapor"))
         assertNull(aniLinkRoute("https://example.org/anime/12"))
         assertNull(aniLinkRoute("https://anilist.co/anime/abc"))
     }

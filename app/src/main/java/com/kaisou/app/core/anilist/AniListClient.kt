@@ -258,6 +258,16 @@ class AniListClient {
         }
     }
 
+    // Follows an activity to know of its new comments, or stops following it, and says whether it is followed now, null when AniList did not do it
+    suspend fun toggleSubscription(activityId: Int, subscribe: Boolean, token: String?): Boolean? = withContext(Dispatchers.IO) {
+        try {
+            post(SubscribeActivityQuery, JSONObject().put("id", activityId).put("subscribe", subscribe), token)?.optJSONObject("ToggleActivitySubscription")
+                ?.optBoolean("isSubscribed")
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     // Deletes an activity of the user from AniList for good, so it is only called after they confirm. True when AniList did it
     suspend fun deleteActivity(activityId: Int, token: String?): Boolean = withContext(Dispatchers.IO) {
         try {
@@ -375,6 +385,11 @@ class AniListClient {
             }
             if (connection.responseCode == TooManyRequests.Code) throw TooManyRequests.of(connection)
             if (connection.responseCode != HttpURLConnection.HTTP_OK) return null
+            // AniList says how much of its limit is left, which is 30 a minute when it is slow and 90 when it is not. When little is left the next
+            // requests wait for it to come back, so a burst of screens does not get turned away
+            val left = connection.getHeaderField("X-RateLimit-Remaining")?.trim()?.toIntOrNull()
+            val reset = connection.getHeaderField("X-RateLimit-Reset")?.trim()?.toLongOrNull()
+            if (left != null && reset != null && left <= RateReserve) Gates.AniList.restUntil(reset * MillisPerSecond)
             val body = connection.inputStream.bufferedReader().use { it.readText() }
             JSONObject(body).optJSONObject("data")
         } finally {
@@ -385,11 +400,6 @@ class AniListClient {
     private fun parseMedia(json: JSONObject): AniMedia {
         val title = json.getJSONObject("title")
         val next = json.optJSONObject("nextAiringEpisode")
-            // AniList says how much of its limit is left, which is 30 a minute when it is slow and 90 when it is not. When little is left the next
-            // requests wait for it to come back, so a burst of screens does not get turned away
-            val left = connection.getHeaderField("X-RateLimit-Remaining")?.trim()?.toIntOrNull()
-            val reset = connection.getHeaderField("X-RateLimit-Reset")?.trim()?.toLongOrNull()
-            if (left != null && reset != null && left <= RateReserve) Gates.AniList.restUntil(reset * MillisPerSecond)
         val entry = json.optJSONObject("mediaListEntry")
         val cover = json.optJSONObject("coverImage")
         val english = stringOrNull(title, "english")
@@ -444,6 +454,8 @@ class AniListClient {
     private companion object {
         const val ApiUrl = "https://graphql.anilist.co"
         const val TimeoutMillis = 15_000
+        // How many requests of the limit are kept for what comes after, when the limit says how many are left
+        const val RateReserve = 2
         // How many titles the pool of the featured ones holds, where it is kept on the disk and for how long
         const val PoolSize = 40
         const val PoolSpace = "pool"
@@ -454,8 +466,6 @@ class AniListClient {
             query (${'$'}season: MediaSeason, ${'$'}seasonYear: Int) {
               Page(perPage: $PoolSize) {
                 media(type: ANIME, season: ${'$'}season, seasonYear: ${'$'}seasonYear, status_in: [RELEASING, FINISHED], sort: TRENDING_DESC, isAdult: false) {
-        // How many requests of the limit are kept for what comes after, when the limit says how many are left
-        const val RateReserve = 2
                   id
                   idMal
                   isAdult
@@ -495,6 +505,8 @@ class AniListClient {
         const val DeleteReplyQuery = "mutation (${'$'}id: Int) { DeleteActivityReply(id: ${'$'}id) { deleted } }"
         const val EditReplyQuery = "mutation (${'$'}id: Int, ${'$'}activity: Int, ${'$'}text: String) { " +
             "SaveActivityReply(id: ${'$'}id, activityId: ${'$'}activity, text: ${'$'}text) { $ReplyFields } }"
+        const val SubscribeActivityQuery = "mutation (${'$'}id: Int, ${'$'}subscribe: Boolean) { ToggleActivitySubscription(activityId: ${'$'}id, subscribe: ${'$'}subscribe) { " +
+            "... on ListActivity { isSubscribed } ... on TextActivity { isSubscribed } ... on MessageActivity { isSubscribed } } }"
         const val DeleteActivityQuery = "mutation (${'$'}id: Int) { DeleteActivity(id: ${'$'}id) { deleted } }"
         const val SaveStatusQuery = "mutation (${'$'}text: String) { SaveTextActivity(text: ${'$'}text) { id } }"
         const val RepliesQuery = "query (${'$'}id: Int) { Page(perPage: 50) { activityReplies(activityId: ${'$'}id) { $ReplyFields } } }"

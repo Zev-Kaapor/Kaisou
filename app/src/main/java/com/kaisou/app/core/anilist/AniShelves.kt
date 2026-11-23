@@ -52,7 +52,9 @@ data class AniActivity(
     val adult: Boolean,
     val likeCount: Int,
     val replyCount: Int,
-    val isLiked: Boolean
+    val isLiked: Boolean,
+    // Whether the user follows the activity, to know of its new comments, which only the questions that ask for it say
+    val isSubscribed: Boolean = false
 )
 
 // A comment on an activity, with the time in seconds
@@ -207,7 +209,7 @@ object AniShelvesParser {
         )
 
     // The activities of a list or of a text, the private messages and the ones with no user left out
-    private fun activities(items: JSONArray?): List<AniActivity> {
+    fun activities(items: JSONArray?): List<AniActivity> {
         if (items == null) return emptyList()
         return (0 until items.length()).mapNotNull { index ->
             val item = items.getJSONObject(index)
@@ -231,7 +233,8 @@ object AniShelvesParser {
                 adult = media?.optBoolean("isAdult") == true,
                 likeCount = item.optInt("likeCount"),
                 replyCount = item.optInt("replyCount"),
-                isLiked = item.optBoolean("isLiked")
+                isLiked = item.optBoolean("isLiked"),
+                isSubscribed = item.optBoolean("isSubscribed")
             )
         }
     }

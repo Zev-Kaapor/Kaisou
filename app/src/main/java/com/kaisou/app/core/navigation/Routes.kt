@@ -1,5 +1,7 @@
 package com.kaisou.app.core.navigation
 
+import java.net.URLEncoder
+
 // The screens of the settings, which open over the tabs: the list of sections, and one route for each section by its name
 const val SettingsRoute = "settings"
 const val SettingsSectionArg = "section"
@@ -18,6 +20,24 @@ const val ProfileKindArg = "kind"
 const val ProfileRoute = "profile/{$ProfileKindArg}/{$TitleIdArg}"
 
 fun profileRoute(kind: String, id: Int): String = "profile/$kind/$id"
+
+// The page of a person of AniList, by their name
+const val UserNameArg = "name"
+const val UserRoute = "user/{$UserNameArg}"
+
+fun userRoute(name: String): String = "user/${URLEncoder.encode(name, Charsets.UTF_8.name()).replace("+", "%20")}"
+
+// The whole list of one kind of favourites of a person, by their name and the name of the kind
+const val UserFavouritesKindArg = "favouriteKind"
+const val UserFavouritesRoute = "user/{$UserNameArg}/favourites/{$UserFavouritesKindArg}"
+
+fun userFavouritesRoute(name: String, kind: String): String = "${userRoute(name)}/favourites/$kind"
+
+// Everything a person did lately, by their name and their id on AniList
+const val UserIdArg = "userId"
+const val UserActivityRoute = "user/{$UserNameArg}/activity/{$UserIdArg}"
+
+fun userActivityRoute(name: String, id: Int): String = "${userRoute(name)}/activity/$id"
 
 // All the titles of a character, a person of the staff or a studio
 const val ProfileTabArg = "tab"

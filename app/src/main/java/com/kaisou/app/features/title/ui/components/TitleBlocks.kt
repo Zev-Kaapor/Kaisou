@@ -40,6 +40,8 @@ import coil3.compose.AsyncImage
 import com.kaisou.app.R
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.browser.InAppBrowser
+import com.kaisou.app.core.navigation.LocalAniLinks
+import androidx.compose.ui.unit.dp
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.home.ui.components.CardRating
@@ -264,7 +266,15 @@ internal fun SeeAllArrow(onClick: () -> Unit) {
 // A row of people that slides, the characters with their voices or the staff with what they did, each one opens its page. When there is a way
 // to see all of them it is the last card of the row
 @Composable
-fun PeopleBlock(title: Int, people: List<TitlePerson>, onOpen: (TitlePerson) -> Unit, onSeeAll: (() -> Unit)? = null, trailing: (@Composable () -> Unit)? = null) {
+fun PeopleBlock(
+    title: Int,
+    people: List<TitlePerson>,
+    onOpen: (TitlePerson) -> Unit,
+    onSeeAll: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    // Whether the room of two lines under each name is kept even when there is nothing to say, which a row of people with no part to tell leaves empty
+    keepRoom: Boolean = true
+) {
     val dimens = KaisouTheme.dimens
 
     Column(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
@@ -309,7 +319,7 @@ fun PeopleBlock(title: Int, people: List<TitlePerson>, onOpen: (TitlePerson) -> 
                     // What they do in the title, and who voices a character, in two lines together whose room is always kept, so the row
                     // does not change its height when a person with more lines comes by
                     val lineHeight = MaterialTheme.typography.labelSmall.lineHeight
-                    val room = with(LocalDensity.current) { (lineHeight * PersonLines).toDp() }
+                    val room = if (keepRoom) with(LocalDensity.current) { (lineHeight * PersonLines).toDp() } else 0.dp
                     Column(modifier = Modifier.heightIn(min = room)) {
                         person.role?.let { role ->
                             Text(
@@ -475,7 +485,7 @@ private fun coverName(cover: MangaCover, separator: String): String =
     listOfNotNull(cover.volume?.let { stringResource(R.string.title_cover_volume, it) }, cover.language.uppercase().takeIf { it.isNotBlank() }).joinToString(separator)
 
 // The friends that have the title in a row that slides, the user first. Each has the picture with the score they gave on it, the name, where
-// the title is on their list and how far they are. A tap opens their page on AniList
+// the title is on their list and how far they are. A tap opens their page
 @Composable
 internal fun FriendsBlock(title: TitleUi) {
     val dimens = KaisouTheme.dimens
@@ -519,6 +529,7 @@ internal fun FriendsBlock(title: TitleUi) {
 private fun FriendItem(friend: TitleFriend, total: Int?, manga: Boolean) {
     val dimens = KaisouTheme.dimens
     val context = LocalContext.current
+    val aniLinks = LocalAniLinks.current
     val format = rememberScoreFormat()
     val accent = MaterialTheme.colorScheme.primary
     val separator = stringResource(R.string.home_card_progress_separator)
@@ -537,7 +548,7 @@ private fun FriendItem(friend: TitleFriend, total: Int?, manga: Boolean) {
     Column(
         modifier = Modifier
             .width(TitleDimens.FriendWidth)
-            .clickable(role = Role.Button) { InAppBrowser.open(context, friend.url) },
+            .clickable(role = Role.Button) { if (!aniLinks(friend.url)) InAppBrowser.open(context, friend.url) },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(contentAlignment = Alignment.BottomCenter) {

@@ -458,6 +458,66 @@
         <item quantity="other">%s favoritos</item>
     </plurals>
     <string name="profile_voices_none">Sem dubladores neste idioma</string>
+    <string name="user_titles">Títulos</string>
+    <string name="user_total_anime">Total de animes</string>
+    <string name="user_total_manga">Total de mangás</string>
+    <string name="user_days_watched">Dias assistidos</string>
+    <string name="user_mean_score">Nota média</string>
+    <string name="user_chapters_read">Capítulos lidos</string>
+    <string name="user_section_activity">Histórico de atividade</string>
+    <plurals name="user_activity_total">
+        <item quantity="one">%s atividade nos últimos meses</item>
+        <item quantity="many">%s atividades nos últimos meses</item>
+        <item quantity="other">%s atividades nos últimos meses</item>
+    </plurals>
+    <plurals name="user_activity_day">
+        <item quantity="one">%1$s · %2$s atividade</item>
+        <item quantity="many">%1$s · %2$s atividades</item>
+        <item quantity="other">%1$s · %2$s atividades</item>
+    </plurals>
+    <string name="user_section_genres">Visão geral de gêneros</string>
+    <string name="user_section_recent">Atividade recente</string>
+    <string name="user_joined">Membro desde %s</string>
+    <string name="user_fav_anime">Animes favoritos</string>
+    <string name="user_fav_manga">Mangás favoritos</string>
+    <string name="user_fav_characters">Personagens favoritos</string>
+    <string name="user_fav_staff">Equipe favorita</string>
+    <string name="user_fav_studios">Estúdios favoritos</string>
+    <string name="user_follow">Seguir</string>
+    <string name="user_following">Seguindo</string>
+    <string name="user_follows_you">Segue você</string>
+    <string name="user_tab_overview">Geral</string>
+    <string name="user_tab_lists">Listas</string>
+    <string name="user_tab_stats">Stats</string>
+    <string name="user_tab_community">Comunidade</string>
+    <string name="user_tab_soon">Em breve</string>
+    <string name="user_previous_names">Antes: %s</string>
+    <string name="user_follow_counts">%1$s seguindo · %2$s</string>
+    <plurals name="user_followers">
+        <item quantity="one">%s seguidor</item>
+        <item quantity="many">%s seguidores</item>
+        <item quantity="other">%s seguidores</item>
+    </plurals>
+    <string name="cd_activity_follow">Seguir a atividade</string>
+    <string name="cd_activity_unfollow">Deixar de seguir a atividade</string>
+    <string name="activity_followed">Você segue esta atividade</string>
+    <string name="activity_unfollowed">Você deixou de seguir esta atividade</string>
+    <string name="activity_follow_failed">Não foi possível mudar se você segue a atividade</string>
+    <string name="activity_copy_link">Copiar link</string>
+    <string name="activity_liked">Você curtiu esta atividade</string>
+    <string name="comment_liked">Você curtiu este comentário</string>
+    <string name="like_removed">Você tirou a sua curtida</string>
+    <string name="like_failed">Não foi possível mudar a sua curtida</string>
+    <string name="reply_sent">Seu comentário foi publicado</string>
+    <string name="reply_edited">Seu comentário foi atualizado</string>
+    <string name="reply_failed">Não foi possível enviar seu comentário</string>
+    <string name="reply_deleted">Seu comentário foi apagado</string>
+    <string name="activity_deleted">Sua atividade foi apagada</string>
+    <string name="activity_delete_failed">Não foi possível apagar sua atividade</string>
+    <string name="activity_link_copied">Link copiado</string>
+    <string name="user_follow_added">Você segue %s</string>
+    <string name="user_follow_removed">Você deixou de seguir %s</string>
+    <string name="user_follow_failed">Não foi possível mudar quem você segue</string>
     <string-array name="title_staff_names">
         <item>Direção</item>
         <item>Direção-chefe</item>

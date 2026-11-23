@@ -90,6 +90,9 @@ import com.kaisou.app.features.updates.data.Updates
 import com.kaisou.app.features.title.ui.TitleCardsScreen
 import com.kaisou.app.features.profile.ui.ProfileVoicesScreen
 import com.kaisou.app.features.title.ui.TitleCoversScreen
+import com.kaisou.app.features.user.ui.UserActivityScreen
+import com.kaisou.app.features.user.ui.UserFavouritesScreen
+import com.kaisou.app.features.user.ui.UserScreen
 
 // The app only opens for a user that is signed in to AniList, the login comes first
 @Composable
@@ -139,9 +142,9 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     // The pages that open over the tabs have the whole screen, with no bar and no rail, except the page of a title, which keeps the bar with
     // its own sections in place of the destinations
     val route = backStackEntry?.destination?.route
-    val fullScreen = route.let { it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute || it == ReviewsRoute || it == ReviewRoute || it == ThreadsRoute || it == ThreadRoute }
+    val fullScreen = route.let { it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute || it == ReviewsRoute || it == ReviewRoute || it == ThreadsRoute || it == ThreadRoute || it == UserActivityRoute || it == UserFavouritesRoute }
     val titleSections by NavSectionsHost.sections.collectAsState()
-    val sections = if (route == TitleRoute) titleSections else null
+    val sections = if (route == TitleRoute || route == UserRoute) titleSections else null
 
     val onSelect: (MainTab) -> Unit = { tab ->
         navController.navigate(tab.route) {
@@ -167,7 +170,9 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     // The links of the texts of AniList to a title or to a person open their pages here, and not in the browser
     val aniLinks: (String) -> Boolean = { address -> aniLinkRoute(address)?.let { navController.navigate(it) } != null }
 
-    CompositionLocalProvider(LocalAniLinks provides aniLinks) {
+    val openUser: (String) -> Unit = { name -> navController.navigate(userRoute(name)) }
+
+    CompositionLocalProvider(LocalAniLinks provides aniLinks, LocalOpenUser provides openUser) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
@@ -224,7 +229,10 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
                 profileOpen = false
                 onSignOut()
             },
-            onProfile = { profileOpen = false },
+            onProfile = {
+                profileOpen = false
+                navController.navigate(userRoute(viewer.name))
+            },
             onSettings = {
                 profileOpen = false
                 navController.navigate(SettingsRoute)
@@ -329,6 +337,36 @@ private fun MainNavHost(
                 onOpenVoices = { ref -> navController.navigate(profileVoicesRoute(ref.kind.path, ref.id)) },
                 modifier = Modifier.fillMaxSize()
             )
+        }
+        // The page of a person of AniList opens over the page it came from, with no bar
+        composable(route = UserRoute, arguments = listOf(navArgument(UserNameArg) { type = NavType.StringType })) {
+            UserScreen(
+                onBack = { navController.popBackStack() },
+                onOpenTitle = { navController.navigate(titleRoute(it)) },
+                onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
+                onOpenActivity = { name, id -> navController.navigate(userActivityRoute(name, id)) },
+                onOpenFavourites = { name, kind -> navController.navigate(userFavouritesRoute(name, kind.path)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        // The whole list of one kind of favourites of a person opens over their page, with no bar
+        composable(
+            route = UserFavouritesRoute,
+            arguments = listOf(navArgument(UserNameArg) { type = NavType.StringType }, navArgument(UserFavouritesKindArg) { type = NavType.StringType })
+        ) {
+            UserFavouritesScreen(
+                onBack = { navController.popBackStack() },
+                onOpenTitle = { navController.navigate(titleRoute(it)) },
+                onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        // Everything a person did lately opens over their page, with no bar
+        composable(
+            route = UserActivityRoute,
+            arguments = listOf(navArgument(UserNameArg) { type = NavType.StringType }, navArgument(UserIdArg) { type = NavType.IntType })
+        ) {
+            UserActivityScreen(onBack = { navController.popBackStack() }, onOpenTitle = { navController.navigate(titleRoute(it)) }, modifier = Modifier.fillMaxSize())
         }
         // All the voices of a character, in every language
         composable(

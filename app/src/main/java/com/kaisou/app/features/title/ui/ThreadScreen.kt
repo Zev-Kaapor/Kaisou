@@ -58,6 +58,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 // Project resources
 import com.kaisou.app.R
 import com.kaisou.app.core.browser.InAppBrowser
+import com.kaisou.app.core.navigation.LocalOpenUser
 import com.kaisou.app.core.designsystem.components.Toasts
 import com.kaisou.app.core.designsystem.components.rememberKeptListState
 import com.kaisou.app.core.designsystem.components.scrollIndicator
@@ -237,14 +238,22 @@ private fun ThreadContent(
 ) {
     val dimens = KaisouTheme.dimens
     val day = relativeTime(thread.thread.createdAt)
+    val openUser = LocalOpenUser.current
 
     Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)) {
         if (thread.tags.isNotEmpty()) ThreadTags(tags = thread.tags, onOpenTitle = onOpenTitle)
         Row(horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall), verticalAlignment = Alignment.CenterVertically) {
-            RoundImage(url = thread.thread.avatar, size = TitleDimens.ReviewReaderAvatar)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = thread.thread.author, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
-                Text(text = day, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // The picture and the name of the author open their page
+            Row(
+                modifier = Modifier.weight(1f).clip(MaterialTheme.shapes.medium).clickable(role = Role.Button) { openUser(thread.thread.author) },
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RoundImage(url = thread.thread.avatar, size = TitleDimens.ReviewReaderAvatar)
+                Column {
+                    Text(text = thread.thread.author, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+                    Text(text = day, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             ActionButton(
                 icon = if (thread.subscribed) KaisouIcons.BellRinging else KaisouIcons.Bell,
@@ -286,6 +295,7 @@ private fun CommentRow(
 ) {
     val dimens = KaisouTheme.dimens
     val day = relativeTime(comment.createdAt)
+    val openUser = LocalOpenUser.current
 
     Column(modifier = Modifier.fillMaxWidth()) {
         if (depth == 0 && !first) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(bottom = dimens.spaceMedium))
@@ -296,14 +306,14 @@ private fun CommentRow(
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall), verticalAlignment = Alignment.CenterVertically) {
-                    RoundImage(url = comment.avatar, size = TitleDimens.CommentAvatar)
+                    RoundImage(url = comment.avatar, size = TitleDimens.CommentAvatar, modifier = Modifier.clickable(role = Role.Button) { openUser(comment.author) })
                     Text(
                         text = comment.author,
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
+                        modifier = Modifier.weight(1f, fill = false).clickable(role = Role.Button) { openUser(comment.author) }
                     )
                     Text(text = day, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 }
@@ -320,7 +330,7 @@ private fun CommentRow(
 
 // The heart that is filled and in the accent when the user gave one, with how many people gave one
 @Composable
-private fun LikeButton(liked: Boolean, count: Int, onClick: () -> Unit) {
+internal fun LikeButton(liked: Boolean, count: Int, onClick: () -> Unit) {
     val dimens = KaisouTheme.dimens
 
     Row(
@@ -378,7 +388,7 @@ private fun MenuLine(icon: ImageVector, label: Int, onClick: () -> Unit) {
 
 // A round button with an icon, in the accent when it is on
 @Composable
-private fun ActionButton(icon: ImageVector, description: String, onClick: () -> Unit, active: Boolean = false) {
+internal fun ActionButton(icon: ImageVector, description: String, onClick: () -> Unit, active: Boolean = false) {
     Box(
         modifier = Modifier
             .size(TitleDimens.ThreadAction)
