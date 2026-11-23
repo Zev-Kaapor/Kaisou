@@ -1,6 +1,9 @@
 package com.kaisou.app.core.navigation
 
 // Compose animation and layouts
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -129,8 +132,12 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     val backStackEntry by navController.currentBackStackEntryAsState()
     // The bar shows the tab of the screen that is on, the start tab while there is none yet
     val selected = MainTab.entries.firstOrNull { it.route == backStackEntry?.destination?.route } ?: startTab
-    // The page of a title has the whole screen, with no bar and no rail
-    val onTitle = backStackEntry?.destination?.route.let { it == TitleRoute || it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute }
+    // The pages that open over the tabs have the whole screen, with no bar and no rail, except the page of a title, which keeps the bar with
+    // its own sections in place of the destinations
+    val route = backStackEntry?.destination?.route
+    val fullScreen = route.let { it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute }
+    val titleSections by NavSectionsHost.sections.collectAsState()
+    val sections = if (route == TitleRoute) titleSections else null
 
     val onSelect: (MainTab) -> Unit = { tab ->
         navController.navigate(tab.route) {
@@ -164,15 +171,19 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     ) {
         if (maxWidth > maxHeight) {
             Row(modifier = Modifier.fillMaxSize()) {
-                if (!onTitle) KaisouNavRail(selected = selected, onSelect = onSelect)
+                AnimatedVisibility(
+                    visible = !fullScreen,
+                    enter = slideInHorizontally(tween(KaisouMotion.ExpandMillis)) { -it },
+                    exit = slideOutHorizontally(tween(KaisouMotion.ExpandMillis)) { -it }
+                ) { KaisouNavRail(selected = selected, onSelect = onSelect, sections = sections) }
 
                 // The rail already makes room for the camera cutout on its side, the content keeps away from it on the other. Without
                 // the rail it keeps away from both
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .then(if (onTitle) Modifier else Modifier.consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start)))
-                        .windowInsetsPadding(WindowInsets.displayCutout.only(if (onTitle) WindowInsetsSides.Horizontal else WindowInsetsSides.End))
+                        .then(if (fullScreen) Modifier else Modifier.consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start)))
+                        .windowInsetsPadding(WindowInsets.displayCutout.only(if (fullScreen) WindowInsetsSides.Horizontal else WindowInsetsSides.End))
                 ) {
                     MainNavHost(
                         navController = navController,
@@ -192,7 +203,11 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
                     onProfile = { profileOpen = true },
                     modifier = Modifier.weight(1f)
                 )
-                if (!onTitle) KaisouNavBar(selected = selected, onSelect = onSelect)
+                AnimatedVisibility(
+                    visible = !fullScreen,
+                    enter = slideInVertically(tween(KaisouMotion.ExpandMillis)) { it },
+                    exit = slideOutVertically(tween(KaisouMotion.ExpandMillis)) { it }
+                ) { KaisouNavBar(selected = selected, onSelect = onSelect, sections = sections) }
             }
         }
 

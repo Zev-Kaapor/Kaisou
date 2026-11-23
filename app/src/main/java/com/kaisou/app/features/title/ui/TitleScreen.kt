@@ -3,6 +3,8 @@ package com.kaisou.app.features.title.ui
 // Android framework
 import android.content.Intent
 // Compose animation
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 // Compose layouts and foundations
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,10 +27,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 // Compose state and runtime
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 // UI styling and utilities
@@ -51,7 +57,10 @@ import com.kaisou.app.core.designsystem.components.OverlaySheet
 import com.kaisou.app.core.designsystem.components.rememberKeptListState
 import com.kaisou.app.core.designsystem.components.Toasts
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
+import com.kaisou.app.core.designsystem.theme.KaisouMotion
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
+import com.kaisou.app.core.navigation.NavSections
+import com.kaisou.app.core.navigation.NavSectionsHost
 import com.kaisou.app.features.home.ui.HomeDimens
 import com.kaisou.app.features.home.ui.components.HeaderAction
 import com.kaisou.app.features.home.ui.components.HomeHeroSkeleton
@@ -68,13 +77,14 @@ import com.kaisou.app.features.title.ui.components.TitleFacts
 import com.kaisou.app.features.title.ui.components.TitleHero
 import com.kaisou.app.features.title.ui.components.TitleSynopsis
 import com.kaisou.app.features.title.ui.components.TitleTab
-import com.kaisou.app.features.title.ui.components.TitleTabs
+import com.kaisou.app.features.title.ui.components.EnterScope
 import com.kaisou.app.features.title.ui.components.titleCommunityItems
 import com.kaisou.app.features.title.ui.components.titleDetailsItems
 import com.kaisou.app.features.title.ui.components.titleEpisodesItems
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // The page of a title, anime or manga. Prototype, to be thrown away when the look is decided: for now it has the top and the synopsis,
 // the rest comes part by part
@@ -94,6 +104,13 @@ fun TitleScreen(
     val listState = rememberKeptListState(viewModel.scroll)
     var tab by viewModel::tab
     var newestFirst by viewModel::newestFirst
+    val scope = rememberCoroutineScope()
+    // How far the items of the section that was just opened have come in, from nothing to all, and how far to the side they start
+    var enter by remember { mutableFloatStateOf(1f) }
+    var enterShift by remember { mutableFloatStateOf(0f) }
+    // The sections go to the bar of the app while the page is there, and are taken from it when the page goes
+    val barOwner = remember { Any() }
+    DisposableEffect(barOwner) { onDispose { NavSectionsHost.clear(barOwner) } }
     // The tabs that ask for their own data do it when they are opened
     LaunchedEffect(tab, state.status) { if (state.status == TitleStatus.Content) viewModel.openTab(tab) }
     val alerts by ReleaseAlerts.titles.collectAsState()
@@ -102,6 +119,13 @@ fun TitleScreen(
         stringResource(R.string.title_tab_details),
         stringResource(if (state.title?.manga == true) R.string.title_tab_chapters else R.string.title_tab_episodes),
         stringResource(R.string.title_tab_community)
+    )
+
+    // The icons of the sections, the same as the names
+    val tabIcons = listOf(
+        KaisouIcons.Info,
+        if (state.title?.manga == true) KaisouIcons.BookOpen else KaisouIcons.ListVideo,
+        KaisouIcons.Comment
     )
 
     // Each time the page comes back to the screen what AniList says is asked again, so the heart and the list are never behind, and every
@@ -120,6 +144,19 @@ fun TitleScreen(
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         val context = LocalContext.current
         val landscape = maxWidth > maxHeight
+        val density = LocalDensity.current
+        val shiftPx = with(density) { maxWidth.toPx() } * TitleDimens.SectionShift
+        // Opens a section: its items slide in from the side it is on, the page stays where it is
+        val openTab: (Int) -> Unit = { index ->
+            if (index != tab.ordinal) {
+                enterShift = if (index > tab.ordinal) shiftPx else -shiftPx
+                enter = 0f
+                tab = TitleTab.entries[index]
+                scope.launch { animate(0f, 1f, animationSpec = tween(KaisouMotion.ExpandMillis)) { value, _ -> enter = value } }
+            }
+        }
+        SideEffect { NavSectionsHost.show(barOwner, NavSections(tabLabels, tabIcons, tab.ordinal), openTab) }
+
         // Standing up the art is a poster as tall as the screen is wide times a ratio, lying down it takes a share of the height, so
         // the synopsis shows under it
         val heroHeight = if (landscape) maxHeight * HomeDimens.HeroLandscapeHeightFraction else maxWidth * HomeDimens.HeroAspect
@@ -174,8 +211,8 @@ fun TitleScreen(
                     if (synopsis.isNotBlank()) item(key = "synopsis") { TitleSynopsis(text = synopsis) }
                     item(key = "facts") { TitleFacts(title = title) }
                     title.nextAiring?.let { next -> item(key = "next-episode") { NextEpisodeCard(next = next) } }
-                    item(key = "tabs") { TitleTabs(labels = tabLabels, selected = tab.ordinal, onSelect = { tab = TitleTab.entries[it] }) }
-                    // Each tab shows its own blocks
+                    // Each tab shows its own blocks, which come in as the tab is opened
+                    with(EnterScope(this, { enter }, { enterShift })) {
                     when (tab) {
                         TitleTab.Details -> titleDetailsItems(
                             details = state.details,
@@ -205,6 +242,7 @@ fun TitleScreen(
                             onRetry = viewModel::retryEpisodes
                         )
                         TitleTab.Community -> titleCommunityItems(state.community, onRetry = viewModel::retryCommunity)
+                    }
                     }
                     item(key = "end") { Spacer(modifier = Modifier.height(KaisouTheme.dimens.spaceLarge)) }
                 }

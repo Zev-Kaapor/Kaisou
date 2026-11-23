@@ -63,6 +63,8 @@ object TitleDimens {
     // The tabs: how tall each is and how thick the line under the one that is on
     val TabHeight = 44.dp
     val TabIndicator = 2.dp
+    // How far to the side, as a share of the width, the items of a section start when it is opened
+    const val SectionShift = 0.25f
     // The lines of data: how much of the width the name takes, and the room above each line
     const val DataLabelFraction = 0.38f
     val DataLineTop = 6.dp
