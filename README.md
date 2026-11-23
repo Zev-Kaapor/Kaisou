@@ -43,7 +43,7 @@
 </details>
 
 > [!WARNING]
-> **Early version** - Kaisou is being built one screen at a time. Version 0.6.1 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, the page of each anime and manga with the editor of your list, the pages of the characters, the staff and the studios, the pages with all the related titles, the order to watch and read and all the people of a title, the episodes of an anime with their scores and the community of a title, with its reviews and its forum, and some tabs and buttons are still empty. It is a version to be tested, not a finished app.
+> **Early version** - Kaisou is being built one screen at a time. Version 0.7.0 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, the page of each anime and manga with the editor of your list, the pages of the characters, the staff and the studios, the pages with all the related titles, the order to watch and read and all the people of a title, the episodes of an anime with their scores, the community of a title, with its reviews and its forum, and the page of a person, with its overview, its favourites and what it did lately, and some tabs and buttons are still empty. It is a version to be tested, not a finished app.
 
 > [!NOTE]
 > **Your privacy** - Kaisou has no server of its own and does not track you. Your AniList access key is kept only on your phone and is left out of the Android backups. The app only talks to the services it needs: AniList for your account and your lists, TMDB, TheTVDB and ani.zip to find the posters, the logos, the ratings and the seasons of each title (the name and the id of the title are sent), IMDb for the score of each episode (the id of IMDb is sent), Jikan, or one of its public mirrors, for the score of each episode on MyAnimeList (the id of MyAnimeList is sent), TVmaze for the score of each episode when the others have none (the id of IMDb or of TheTVDB is sent), MyAnimeList for the age rating (the id of the title is sent), Jikan, or one of its public mirrors, for the openings and the endings of an anime (the id of MyAnimeList is sent), YouTube when a trailer is played, in its own player (the id of the video is sent), MangaDex for the covers of a manga (the name and the id of AniList of the manga are sent), Kuroiru for the news of an anime (the id of MyAnimeList is sent), MangaBaka for the news of a manga (the id of AniList is sent), Google Translate when a synopsis is translated (only the text of the synopsis is sent), the site that hosts a picture when a status of AniList shows one, and GitHub to look for a new version. More in the [FAQ](#faq).
@@ -97,6 +97,7 @@ Kaisou grows one small piece at a time, with every screen reviewed on a real pho
 | **Characters, staff and voices of a title:** the pages with all of them, each with the beginning of what it says of itself, its spoilers covered, and the voices of a character in every language | ✅ Done, version 0.3.0 |
 | **Episodes of an anime:** the seasons or the ranges, each episode with its picture, text in your language, the score people gave it on IMDb, MyAnimeList, TVmaze or TMDB, the mark of what you watched and the next one to watch | ✅ Done, version 0.5.0 |
 | **Community of a title:** the activity of the days, the numbers of the title and what people did to it lately, and the reviews and the threads of the forum read inside the app, in your language, with the votes, the hearts, the answers, the bell and the cards of the titles | ✅ Done, version 0.6.0 |
+| **Page of a person:** the overview with what they say of themselves, their totals, genres, days of activity, what they did lately and their favourites, the bar with its sections, and the button to follow | ✅ Overview done, version 0.7.0, the lists, the stats and the community are next |
 | **Chapters of a manga:** the tab of the chapters, with its own care | 🚧 Basic, to be reviewed |
 | **Search and notifications:** the search and the notices of AniList | 🔜 Planned |
 | **Your profile and your lists:** the lists of anime and manga, with the progress | 🔜 Planned |
@@ -184,6 +185,13 @@ Nothing is being built right now.
 - The **forum** in cards with the picture of who opened each thread, and the thread read whole, with its tags, its comments and their answers, in your language
 - The link to a title in a thread or in a comment comes as a **card** with its cover, its name and its format
 - **Like** the thread and the comments, **answer**, **follow** the thread with the bell, copy and report, and a button turns the translation off
+
+#### 👤 Page of a person
+- The page of anyone opens inside the app from the stories, the reviews, the threads, the comments and the friends of a title, with the **banner**, the picture, the year they joined, how many follow them and how many they follow, and the name held shows the ones they had before
+- The **button to follow** them, and what they say of themselves in your language, with a button to turn the translation off, and the sizes and the formats of the text kept
+- The **totals** of anime and manga with the scale, the **genres** in a card of colors that says each one when it is held, the **days of activity** in a grid and **what they did lately**, with the bell, the menu, the comments and the heart, and a page for all of it
+- Their **favourites** of each kind, with the arrow to the whole list of each
+- The bar of the app shows the sections of the page, as in a title: the overview, the lists, the stats and the community
 
 #### 📝 Your list
 - Put a title on your **AniList list** or change it, from the page of the title or from the featured title of the Home
@@ -383,7 +391,7 @@ The workflow in `.github/workflows/release.yml` publishes a release when `appVer
 <details>
   <summary><b>Is the app ready to use?</b></summary>
   <br>
-  Not yet. Version 0.6.1 has the sign in, the Home with its shelves and the stories, the page of the title with the editor of your list, the episodes of an anime with their scores and the community with its reviews and its forum, the pages of the characters, the staff and the studios, and the pages with the related titles, the order to watch and all the people of a title, and some tabs and buttons are still empty. See what it does in the <a href="#features">Features</a> section.
+  Not yet. Version 0.7.0 has the sign in, the Home with its shelves and the stories, the page of the title with the editor of your list, the episodes of an anime with their scores and the community with its reviews and its forum, the page of a person with its overview, its favourites and what it did lately, the pages of the characters, the staff and the studios, and the pages with the related titles, the order to watch and all the people of a title, and some tabs and buttons are still empty. See what it does in the <a href="#features">Features</a> section.
   <br>
 </details>
 
