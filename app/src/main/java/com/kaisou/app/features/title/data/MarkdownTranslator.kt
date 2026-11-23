@@ -25,6 +25,14 @@ object MarkdownTranslator {
     private val signs = Regex("""$SignOpen\s*(\d+)\s*$SignClose""")
     private val letters = Regex("""\p{L}""")
 
+    // Short texts of one line each, as the titles of a list, in the language given, all in one go. They stay as they were written when they do not
+    // come back one by one
+    suspend fun translateLines(texts: List<String>, language: String): List<String> {
+        if (texts.isEmpty()) return texts
+        val lines = translate(texts.joinToString("\n") { it.replace('\n', ' ') }, language).lines()
+        return if (lines.size == texts.size) lines.mapIndexed { index, line -> line.ifBlank { texts[index] } } else texts
+    }
+
     // The line that sets one text apart from the next when several go together. It has no words, so it is not sent to be translated
     private const val Separator = "\u27E6\u00B6\u27E7"
 

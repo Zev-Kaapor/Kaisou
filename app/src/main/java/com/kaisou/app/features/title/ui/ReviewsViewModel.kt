@@ -9,10 +9,12 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 // Project resources
 import com.kaisou.app.core.designsystem.components.ScrollPosition
 import com.kaisou.app.core.navigation.TitleIdArg
+import com.kaisou.app.features.title.data.ReviewSummaries
 import com.kaisou.app.features.title.data.TitleRepository
 import com.kaisou.app.features.title.data.TitleReview
 
@@ -47,6 +49,11 @@ class ReviewsViewModel(application: Application, savedStateHandle: SavedStateHan
             } else {
                 page++
                 before.copy(reviews = (before.reviews + next.reviews).distinctBy { it.id }, hasMore = next.hasMore, loading = false)
+            }
+            // The summaries show as they were written and come in the language of the app a moment after
+            if (next != null) {
+                val translated = ReviewSummaries.translated(next.reviews).associateBy { it.id }
+                mutableState.update { state -> state.copy(reviews = state.reviews.map { translated[it.id] ?: it }) }
             }
         }
     }
