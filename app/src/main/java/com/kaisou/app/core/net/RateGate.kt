@@ -83,7 +83,7 @@ object Gates {
     val TvMaze = RateGate("TVmaze", maxAtOnce = 2)
     val Imdb = RateGate("IMDb", maxAtOnce = 2)
     val Mal = RateGate("MyAnimeList", maxAtOnce = 3)
-    val Google = RateGate("Google Translate", maxAtOnce = 2)
+    val Google = RateGate("Google Translate", maxAtOnce = 3)
     val Jikan = RateGate("Jikan", maxAtOnce = 1)
     val News = RateGate("News", maxAtOnce = 2)
     val MangaDex = RateGate("MangaDex", maxAtOnce = 2)

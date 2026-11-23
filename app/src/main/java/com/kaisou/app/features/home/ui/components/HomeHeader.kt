@@ -172,14 +172,15 @@ private fun AccountInfo(viewer: AniViewer?, modifier: Modifier = Modifier) {
     }
 }
 
-// Plain round button with an icon and, when asked, the counter of what is new on its corner
+// Plain round button with an icon and, when asked, the counter of what is new on its corner, and the icon in the accent while it is active
 @Composable
 fun HeaderAction(
     icon: ImageVector,
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    counter: Int = 0
+    counter: Int = 0,
+    active: Boolean = false
 ) {
     Box(
         modifier = modifier
@@ -203,7 +204,7 @@ fun HeaderAction(
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = KaisouTheme.colors.onMedia,
+            tint = if (active) MaterialTheme.colorScheme.primary else KaisouTheme.colors.onMedia,
             modifier = Modifier.size(HomeDimens.HeaderIcon)
         )
         if (counter > 0) Counter(count = counter, modifier = Modifier.align(Alignment.TopEnd))

@@ -244,7 +244,7 @@ fun PickerPill(text: String, onClick: () -> Unit, modifier: Modifier = Modifier,
 
 // The arrow at the end of the title of a block, which opens the page with all of what the block has
 @Composable
-private fun SeeAllArrow(onClick: () -> Unit) {
+internal fun SeeAllArrow(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(TitleDimens.SeeAllTouch)

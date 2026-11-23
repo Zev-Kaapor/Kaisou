@@ -149,6 +149,12 @@
     <string name="activity_completed">Completed</string>
     <string name="activity_paused">Paused</string>
     <string name="activity_dropped">Dropped</string>
+    <string name="title_review">Review</string>
+    <string name="title_review_votes">Useful: %1$d of %2$d</string>
+    <string name="title_translate">Translate</string>
+    <string name="cd_review_like">Like the review</string>
+    <string name="cd_review_dislike">Dislike the review</string>
+    <string name="title_review_vote_failed">Could not save your vote</string>
     <string name="title_review_useful">Useful: %1$d</string>
     <string name="title_community_empty">Nothing here yet</string>
     <string name="title_episodes_sort_old">Oldest first</string>

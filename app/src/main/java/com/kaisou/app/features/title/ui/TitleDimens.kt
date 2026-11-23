@@ -118,7 +118,10 @@ object TitleDimens {
     val FriendRing = 2.dp
     val FriendBadgeOffset = 8.dp
     val ReviewAvatar = 28.dp
+    val ReviewReaderAvatar = 40.dp
+    val ReviewVoteTouch = 44.dp
     val CommentAvatar = 24.dp
+    val ReviewVoteIcon = 22.dp
     const val ReviewLines = 3
     val ScoreBarHeight = 64.dp
     val ScoreBarGap = 4.dp

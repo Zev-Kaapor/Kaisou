@@ -328,7 +328,30 @@ data class TitleFriend(
 )
 
 // A review of the title: who wrote it, the score they gave, how it starts and how many people found it useful
-data class TitleReview(val id: Int, val author: String, val avatar: String?, val score: Int?, val summary: String, val helpful: Int, val url: String)
+data class TitleReview(
+    val id: Int,
+    val author: String,
+    val avatar: String?,
+    val score: Int?,
+    val summary: String,
+    val helpful: Int,
+    val url: String,
+    // How many people voted on it, those who found it useful are the ones in helpful, and the day it was written as seconds, 0 when it is not known
+    val votes: Int = 0,
+    val createdAt: Long = 0
+)
+
+// A page of the reviews of a title, and whether there are more
+class ReviewsPage(val reviews: List<TitleReview>, val hasMore: Boolean)
+
+// What the user voted on a review: nothing, the thumb up or the thumb down
+enum class ReviewVote { None, Up, Down }
+
+// A review with its whole text and the vote of the user
+data class ReviewBody(val review: TitleReview, val text: String, val vote: ReviewVote = ReviewVote.None)
+
+// How a review stands after a vote, as AniList counts it
+class ReviewTally(val helpful: Int, val votes: Int, val vote: ReviewVote)
 
 // A thread of the forum about the title
 data class TitleThread(val title: String, val replies: Int, val author: String, val url: String)

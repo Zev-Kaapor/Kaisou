@@ -66,14 +66,14 @@ import com.kaisou.app.features.home.ui.components.rememberScoreFormat
 
 // The tab of the community: the reviews, how the scores and the lists are spread, and the threads of the
 // forum. A block that has nothing is left out, and when all of them have nothing the tab says so
-fun LazyListScope.titleCommunityItems(community: Load<TitleCommunity>, onRetry: () -> Unit) {
+fun LazyListScope.titleCommunityItems(community: Load<TitleCommunity>, onOpenReviews: () -> Unit, onOpenReview: (Int) -> Unit, onRetry: () -> Unit) {
     when (community) {
         is Load.Done -> {
             val value = community.value
             val empty = value.reviews.isEmpty() && value.scores.isEmpty() && value.statuses.isEmpty() && value.threads.isEmpty() && value.trends.isEmpty() && value.popularity == 0 && value.favourites == 0 && value.activity.isEmpty()
             if (empty) item(key = "community-empty") { CommunityMessage() }
             if (value.popularity > 0 || value.favourites > 0) item(key = "community-counters") { CountersBlock(value.popularity, value.favourites) }
-            if (value.reviews.isNotEmpty()) item(key = "community-reviews") { ReviewsBlock(value.reviews) }
+            if (value.reviews.isNotEmpty()) item(key = "community-reviews") { ReviewsBlock(value.reviews, onOpenReviews, onOpenReview) }
             if (value.scores.isNotEmpty() || value.statuses.isNotEmpty() || value.trends.isNotEmpty()) item(key = "community-stats") { StatsBlock(value.trends, value.scores, value.statuses) }
             if (value.activity.isNotEmpty()) item(key = "community-activity") { ActivityBlock(value.activity) }
             if (value.threads.isNotEmpty()) item(key = "community-threads") { ThreadsBlock(value.threads) }
@@ -122,7 +122,7 @@ private fun CountersBlock(popularity: Int, favourites: Int) {
 
 // The score on the scale of ten with its star, in the accent
 @Composable
-private fun ScoreMark(score: Float) {
+internal fun ScoreMark(score: Float) {
     val format = rememberScoreFormat()
 
     Row(horizontalArrangement = Arrangement.spacedBy(KaisouTheme.dimens.spaceExtraSmall), verticalAlignment = Alignment.CenterVertically) {
@@ -131,53 +131,62 @@ private fun ScoreMark(score: Float) {
     }
 }
 
-// The reviews, each in a card with who wrote it, the score, how it starts and how many found it useful, and it opens on AniList
+// The first reviews, each in a card, and the arrow of the title opens all of them
 @Composable
-private fun ReviewsBlock(reviews: List<TitleReview>) {
+private fun ReviewsBlock(reviews: List<TitleReview>, onOpenReviews: () -> Unit, onOpenReview: (Int) -> Unit) {
     val dimens = KaisouTheme.dimens
-    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
-        BlockTitle(stringResource(R.string.title_section_reviews))
-        reviews.forEach { review ->
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = dimens.spaceSmall)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(KaisouTheme.colors.elevated)
-                    .clickable(role = Role.Button) { InAppBrowser.open(context, review.url) }
-                    .padding(dimens.spaceMedium),
-                verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall), verticalAlignment = Alignment.CenterVertically) {
-                    RoundImage(url = review.avatar, size = TitleDimens.ReviewAvatar)
-                    Text(
-                        text = review.author,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    review.score?.let { ScoreMark(it / ScoreScale) }
-                }
-                if (review.summary.isNotBlank()) {
-                    Text(
-                        text = review.summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = TitleDimens.ReviewLines,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.title_review_useful, review.helpful),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            BlockTitle(text = stringResource(R.string.title_section_reviews), modifier = Modifier.weight(1f))
+            SeeAllArrow(onOpenReviews)
         }
+        reviews.forEach { review ->
+            ReviewCard(review = review, onClick = { onOpenReview(review.id) }, modifier = Modifier.padding(top = dimens.spaceSmall))
+        }
+    }
+}
+
+// A review in a card with who wrote it, the score, how it starts and how many found it useful, and it opens to be read
+@Composable
+internal fun ReviewCard(review: TitleReview, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val dimens = KaisouTheme.dimens
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(KaisouTheme.colors.elevated)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(dimens.spaceMedium),
+        verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall), verticalAlignment = Alignment.CenterVertically) {
+            RoundImage(url = review.avatar, size = TitleDimens.ReviewAvatar)
+            Text(
+                text = review.author,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            review.score?.let { ScoreMark(it / ScoreScale) }
+        }
+        if (review.summary.isNotBlank()) {
+            Text(
+                text = review.summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = TitleDimens.ReviewLines,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Text(
+            text = if (review.votes > 0) stringResource(R.string.title_review_votes, review.helpful, review.votes) else stringResource(R.string.title_review_useful, review.helpful),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

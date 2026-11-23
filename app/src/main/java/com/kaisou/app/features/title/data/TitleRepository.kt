@@ -222,18 +222,7 @@ class TitleRepository(context: Context) {
         val reviews = media?.optJSONObject("reviews")?.optJSONArray("nodes")
         val stats = media?.optJSONObject("stats")
         return TitleCommunity(
-            reviews = objects(reviews).take(MaxReviews).mapNotNull { review ->
-                val user = review.optJSONObject("user") ?: return@mapNotNull null
-                TitleReview(
-                    id = review.getInt("id"),
-                    author = text(user, "name") ?: return@mapNotNull null,
-                    avatar = user.optJSONObject("avatar")?.let { text(it, "large") },
-                    score = number(review, "score"),
-                    summary = text(review, "summary").orEmpty(),
-                    helpful = review.optInt("rating"),
-                    url = "https://anilist.co/review/${review.getInt("id")}"
-                )
-            },
+            reviews = objects(reviews).take(MaxReviews).mapNotNull(::reviewOf),
             scores = objects(stats?.optJSONArray("scoreDistribution")).map { TitleScoreBar(it.optInt("score"), it.optInt("amount")) }.sortedBy { it.score },
             statuses = objects(stats?.optJSONArray("statusDistribution")).mapNotNull { share ->
                 listNames(manga)[text(share, "status")]?.let { TitleStatusShare(it, share.optInt("amount")) }
@@ -276,6 +265,53 @@ class TitleRepository(context: Context) {
             else -> return null
         }
         return TitleActivity(id, name, user.optJSONObject("avatar")?.let { text(it, "large") }, said, activity.optLong("createdAt"))
+    }
+
+    // A review as AniList gives it, null when it has no author
+    private fun reviewOf(review: JSONObject): TitleReview? {
+        val user = review.optJSONObject("user") ?: return null
+        return TitleReview(
+            id = review.getInt("id"),
+            author = text(user, "name") ?: return null,
+            avatar = user.optJSONObject("avatar")?.let { text(it, "large") },
+            score = number(review, "score"),
+            summary = text(review, "summary").orEmpty(),
+            helpful = review.optInt("rating"),
+            url = "https://anilist.co/review/${review.getInt("id")}",
+            votes = review.optInt("ratingAmount"),
+            createdAt = review.optLong("createdAt")
+        )
+    }
+
+    // A page of the reviews of a title, the most useful first. Null when AniList could not be reached
+    suspend fun reviewsPage(id: Int, page: Int): ReviewsPage? {
+        val block = client.query(ReviewsQuery, JSONObject().put("id", id).put("page", page), AniListSession.token)?.optJSONObject("Page") ?: return null
+        return ReviewsPage(objects(block.optJSONArray("reviews")).mapNotNull(::reviewOf), block.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true)
+    }
+
+    // A review with its whole text. Null when AniList could not be reached or does not have it
+    suspend fun review(id: Int): ReviewBody? {
+        val media = client.query(ReviewQuery, JSONObject().put("id", id), AniListSession.token)?.optJSONObject("Review") ?: return null
+        val review = reviewOf(media) ?: return null
+        return ReviewBody(review, text(media, "body").orEmpty(), voteOf(text(media, "userRating")))
+    }
+
+    // Votes on a review: the thumb up, the thumb down, or takes the vote back. This changes the account of the user, so it is only called when
+    // they touch a thumb. Null when AniList did not take it
+    suspend fun rateReview(id: Int, vote: ReviewVote): ReviewTally? {
+        val rating = when (vote) {
+            ReviewVote.Up -> "UP_VOTE"
+            ReviewVote.Down -> "DOWN_VOTE"
+            ReviewVote.None -> "NO_VOTE"
+        }
+        val result = client.query(RateReviewQuery, JSONObject().put("id", id).put("rating", rating), AniListSession.token)?.optJSONObject("RateReview") ?: return null
+        return ReviewTally(result.optInt("rating"), result.optInt("ratingAmount"), voteOf(text(result, "userRating")))
+    }
+
+    private fun voteOf(rating: String?): ReviewVote = when (rating) {
+        "UP_VOTE" -> ReviewVote.Up
+        "DOWN_VOTE" -> ReviewVote.Down
+        else -> ReviewVote.None
     }
 
     // What the user has done with the title, as AniList names the lists in the language of the app: reading for a manga, watching for
@@ -893,9 +929,16 @@ class TitleRepository(context: Context) {
         const val CommunityQuery = "query (\$id: Int, \$fresh: Int) { " +
             "Media(id: \$id, popularity_greater: \$fresh) { popularity favourites stats { scoreDistribution { score amount } statusDistribution { status amount } } " +
             "trends(sort: ID_DESC, perPage: $TrendDays) { nodes { date trending } } " +
-            "reviews(perPage: 5, sort: RATING_DESC) { nodes { id summary score rating user { name avatar { large } } } } } " +
+            "reviews(perPage: 5, sort: RATING_DESC) { nodes { id summary score rating ratingAmount createdAt user { name avatar { large } } } } } " +
             "threads: Page(perPage: 5) { threads(mediaCategoryId: \$id, sort: REPLIED_AT_DESC) { id title replyCount user { name } } } " +
             "activity: Page(perPage: 10) { activities(mediaId: \$id, type: MEDIA_LIST, sort: ID_DESC) { ... on ListActivity { id status progress createdAt user { name avatar { large } } } } } }"
+
+        // A page of the reviews of a title, the most useful first, and one review with its text
+        const val ReviewsQuery = "query (\$id: Int, \$page: Int) { Page(page: \$page, perPage: 20) { pageInfo { hasNextPage } " +
+            "reviews(mediaId: \$id, sort: RATING_DESC) { id summary score rating ratingAmount createdAt user { name avatar { large } } } } }"
+        const val ReviewQuery = "query (\$id: Int) { Review(id: \$id) { id body(asHtml: false) summary score rating ratingAmount userRating createdAt user { name avatar { large } } } }"
+
+        const val RateReviewQuery = "mutation (\$id: Int, \$rating: ReviewRating) { RateReview(reviewId: \$id, rating: \$rating) { rating ratingAmount userRating } }"
 
         // Puts a title on the list of the user or changes its entry, and takes it off
         const val SaveEntryQuery = "mutation (\$mediaId: Int, \$status: MediaListStatus, \$progress: Int, \$progressVolumes: Int, \$score: Float, " +

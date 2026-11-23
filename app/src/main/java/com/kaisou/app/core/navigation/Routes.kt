@@ -38,6 +38,15 @@ const val CastRoute = "title/{$TitleIdArg}/cast/{$CastKindArg}"
 
 fun castRoute(id: Int, staff: Boolean): String = "title/$id/cast/${if (staff) CastStaff else CastCharacters}"
 
+// All the reviews of a title, and one review read whole, by its id on AniList
+const val ReviewsRoute = "title/{$TitleIdArg}/reviews"
+const val ReviewIdArg = "reviewId"
+const val ReviewRoute = "review/{$ReviewIdArg}"
+
+fun reviewsRoute(id: Int): String = "title/$id/reviews"
+
+fun reviewRoute(id: Int): String = "review/$id"
+
 // All the covers of the volumes of a manga
 const val CoversRoute = "title/{$TitleIdArg}/covers"
 

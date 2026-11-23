@@ -97,6 +97,8 @@ fun TitleScreen(
     onOpenCast: (id: Int, staff: Boolean) -> Unit,
     onOpenCards: (id: Int, order: Boolean, manga: Boolean) -> Unit,
     onOpenCovers: (id: Int) -> Unit,
+    onOpenReviews: (id: Int) -> Unit,
+    onOpenReview: (id: Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TitleViewModel = viewModel()
 ) {
@@ -246,7 +248,12 @@ fun TitleScreen(
                             onSource = { viewModel.episodeSource = it },
                             onRetry = viewModel::retryEpisodes
                         )
-                        TitleTab.Community -> titleCommunityItems(state.community, onRetry = viewModel::retryCommunity)
+                        TitleTab.Community -> titleCommunityItems(
+                            community = state.community,
+                            onOpenReviews = { onOpenReviews(title.anilistId) },
+                            onOpenReview = onOpenReview,
+                            onRetry = viewModel::retryCommunity
+                        )
                     }
                     }
                     item(key = "end") { Spacer(modifier = Modifier.height(KaisouTheme.dimens.spaceLarge)) }
