@@ -43,7 +43,7 @@
 </details>
 
 > [!WARNING]
-> **Early version** - Kaisou is being built one screen at a time. Version 0.4.0 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, the page of each anime and manga with the editor of your list, the pages of the characters, the staff and the studios, and the pages with all the related titles, the order to watch and read and all the people of a title, and some tabs and buttons are still empty. It is a version to be tested, not a finished app.
+> **Early version** - Kaisou is being built one screen at a time. Version 0.5.0 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, the page of each anime and manga with the editor of your list, the pages of the characters, the staff and the studios, the pages with all the related titles, the order to watch and read and all the people of a title, and the episodes of an anime with their scores, and some tabs and buttons are still empty. It is a version to be tested, not a finished app.
 
 > [!NOTE]
 > **Your privacy** - Kaisou has no server of its own and does not track you. Your AniList access key is kept only on your phone and is left out of the Android backups. The app only talks to the services it needs: AniList for your account and your lists, TMDB, TheTVDB and ani.zip to find the posters, the logos, the ratings and the seasons of each title (the name and the id of the title are sent), IMDb for the score of each episode (the id of IMDb is sent), Jikan, or one of its public mirrors, for the score of each episode on MyAnimeList (the id of MyAnimeList is sent), TVmaze for the score of each episode when the others have none (the id of IMDb or of TheTVDB is sent), MyAnimeList for the age rating (the id of the title is sent), Jikan, or one of its public mirrors, for the openings and the endings of an anime (the id of MyAnimeList is sent), YouTube when a trailer is played, in its own player (the id of the video is sent), MangaDex for the covers of a manga (the name and the id of AniList of the manga are sent), Kuroiru for the news of an anime (the id of MyAnimeList is sent), MangaBaka for the news of a manga (the id of AniList is sent), Google Translate when a synopsis is translated (only the text of the synopsis is sent), the site that hosts a picture when a status of AniList shows one, and GitHub to look for a new version. More in the [FAQ](#faq).
@@ -95,7 +95,8 @@ Kaisou grows one small piece at a time, with every screen reviewed on a real pho
 | **Age rating of a manga:** no source rates a manga, so the age is worked out from the tags and the genres that AniList has for it: the tag that weighs most sets the floor when enough people voted on it, and the public of the series, a few tags together and the adult mark move it. It uses the same symbols of the anime, on the page and on the cards, and is an estimate, not an official rating | ✅ Done, version 0.4.0 |
 | **Covers of a manga:** the covers of the volumes in a row with a page for all of them, three in each line, and a viewer over the whole screen in the size the picture has, with a swipe to the next cover, zoom with animation and a button to save it | ✅ Done, version 0.3.3 |
 | **Characters, staff and voices of a title:** the pages with all of them, each with the beginning of what it says of itself, its spoilers covered, and the voices of a character in every language | ✅ Done, version 0.3.0 |
-| **Episodes and community of a title:** the tabs of the episodes or chapters and of the community, with their own care | 🚧 Basic, to be reviewed |
+| **Episodes of an anime:** the seasons or the ranges, each episode with its picture, text in your language, the score people gave it on IMDb, MyAnimeList, TVmaze or TMDB, the mark of what you watched and the next one to watch | ✅ Done, version 0.5.0 |
+| **Chapters of a manga and community of a title:** the tabs of the chapters and of the community, with their own care | 🚧 Basic, to be reviewed |
 | **Search and notifications:** the search and the notices of AniList | 🔜 Planned |
 | **Your profile and your lists:** the lists of anime and manga, with the progress | 🔜 Planned |
 | **Extensions:** support for the sources the user adds, with none of them included | 🔜 Planned |
@@ -362,7 +363,7 @@ The workflow in `.github/workflows/release.yml` publishes a release when `appVer
 <details>
   <summary><b>Is the app ready to use?</b></summary>
   <br>
-  Not yet. Version 0.4.0 has the sign in, the Home with its shelves and the stories, the page of the title with the editor of your list, the pages of the characters, the staff and the studios, and the pages with the related titles, the order to watch and all the people of a title, and some tabs and buttons are still empty. See what it does in the <a href="#features">Features</a> section.
+  Not yet. Version 0.5.0 has the sign in, the Home with its shelves and the stories, the page of the title with the editor of your list and the episodes of an anime with their scores, the pages of the characters, the staff and the studios, and the pages with the related titles, the order to watch and all the people of a title, and some tabs and buttons are still empty. See what it does in the <a href="#features">Features</a> section.
   <br>
 </details>
 
