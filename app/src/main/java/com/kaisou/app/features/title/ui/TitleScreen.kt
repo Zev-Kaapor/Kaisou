@@ -99,6 +99,8 @@ fun TitleScreen(
     onOpenCovers: (id: Int) -> Unit,
     onOpenReviews: (id: Int) -> Unit,
     onOpenReview: (id: Int) -> Unit,
+    onOpenThreads: (id: Int) -> Unit,
+    onOpenThread: (id: Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TitleViewModel = viewModel()
 ) {
@@ -252,6 +254,8 @@ fun TitleScreen(
                             community = state.community,
                             onOpenReviews = { onOpenReviews(title.anilistId) },
                             onOpenReview = onOpenReview,
+                            onOpenThreads = { onOpenThreads(title.anilistId) },
+                            onOpenThread = onOpenThread,
                             onRetry = viewModel::retryCommunity
                         )
                     }

@@ -28,6 +28,7 @@ import kotlin.random.Random
 // Project resources
 import com.kaisou.app.R
 import com.kaisou.app.core.anilist.AniDescription
+import com.kaisou.app.core.anilist.AniLike
 import com.kaisou.app.core.anilist.AniListClient
 import com.kaisou.app.core.anilist.AniShelvesParser
 import com.kaisou.app.core.anilist.SeasonNumber
@@ -231,14 +232,7 @@ class TitleRepository(context: Context) {
             popularity = media?.optInt("popularity") ?: 0,
             favourites = media?.optInt("favourites") ?: 0,
             trends = objects(media?.optJSONObject("trends")?.optJSONArray("nodes")).map { TitleTrend(it.optLong("date"), it.optInt("trending")) }.sortedBy { it.day },
-            threads = objects(threads).mapNotNull { thread ->
-                TitleThread(
-                    title = text(thread, "title") ?: return@mapNotNull null,
-                    replies = thread.optInt("replyCount"),
-                    author = thread.optJSONObject("user")?.let { text(it, "name") }.orEmpty(),
-                    url = "https://anilist.co/forum/thread/${thread.getInt("id")}"
-                )
-            }
+            threads = objects(threads).mapNotNull(::threadOf)
         )
     }
 
@@ -266,6 +260,93 @@ class TitleRepository(context: Context) {
         }
         return TitleActivity(id, name, user.optJSONObject("avatar")?.let { text(it, "large") }, said, activity.optLong("createdAt"))
     }
+
+    // A thread of the forum as AniList gives it, null when it has no title
+    private fun threadOf(thread: JSONObject): TitleThread? {
+        val id = thread.optInt("id").takeIf { it > 0 } ?: return null
+        val user = thread.optJSONObject("user")
+        return TitleThread(
+            id = id,
+            title = text(thread, "title") ?: return null,
+            replies = thread.optInt("replyCount"),
+            author = user?.let { text(it, "name") }.orEmpty(),
+            avatar = user?.optJSONObject("avatar")?.let { text(it, "large") },
+            likes = thread.optInt("likeCount"),
+            createdAt = thread.optLong("createdAt"),
+            url = "https://anilist.co/forum/thread/$id"
+        )
+    }
+
+    // A page of the threads of a title, the ones with the newest answer first. Null when AniList could not be reached
+    suspend fun threadsPage(id: Int, page: Int): ThreadsPage? {
+        val block = client.query(ThreadsQuery, JSONObject().put("id", id).put("page", page), AniListSession.token)?.optJSONObject("Page") ?: return null
+        return ThreadsPage(objects(block.optJSONArray("threads")).mapNotNull(::threadOf), block.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true)
+    }
+
+    // A thread with its whole text. Null when AniList could not be reached or does not have it
+    suspend fun thread(id: Int): ThreadBody? {
+        val found = client.query(ThreadQuery, JSONObject().put("id", id), AniListSession.token)?.optJSONObject("Thread") ?: return null
+        val thread = threadOf(found) ?: return null
+        val tags = objects(found.optJSONArray("categories")).mapNotNull { category -> text(category, "name")?.let { ThreadTag(it) } } +
+            objects(found.optJSONArray("mediaCategories")).mapNotNull { media ->
+                val name = media.optJSONObject("title")?.let { text(it, "userPreferred") } ?: return@mapNotNull null
+                ThreadTag(name, media.optInt("id").takeIf { it > 0 })
+            }
+        return ThreadBody(thread, text(found, "body").orEmpty(), found.optBoolean("isLiked"), found.optBoolean("isSubscribed"), found.optBoolean("isLocked"), tags)
+    }
+
+    // Follows a thread or stops following it, and says how it stands. This changes the account of the user, so it is only called when they touch
+    // the bell. Null when AniList did not do it
+    suspend fun subscribeThread(id: Int, subscribe: Boolean): Boolean? =
+        client.query(SubscribeThreadQuery, JSONObject().put("id", id).put("subscribe", subscribe), AniListSession.token)
+            ?.optJSONObject("ToggleThreadSubscription")?.optBoolean("isSubscribed")
+
+    // Writes a comment on a thread, or an answer to a comment, and gives it as AniList has it. This is posted on the account of the user, so it is
+    // only called after they confirm. Null when AniList did not take it
+    suspend fun saveComment(threadId: Int, parentId: Int?, comment: String): ThreadComment? {
+        val variables = JSONObject().put("id", threadId).put("text", comment)
+        if (parentId != null) variables.put("parent", parentId)
+        return client.query(SaveThreadCommentQuery, variables, AniListSession.token)?.optJSONObject("SaveThreadComment")?.let(::commentOf)
+    }
+
+    // The titles of AniList that are linked in a text, to show them as cards, by id
+    suspend fun linkedTitles(ids: List<Int>): Map<Int, LinkedTitle> {
+        if (ids.isEmpty()) return emptyMap()
+        val media = client.query(LinkedTitlesQuery, JSONObject().put("ids", JSONArray(ids.take(LinkedMax))), AniListSession.token)
+            ?.optJSONObject("Page")?.optJSONArray("media") ?: return emptyMap()
+        return objects(media).mapNotNull { item ->
+            val id = item.optInt("id").takeIf { it > 0 } ?: return@mapNotNull null
+            val name = item.optJSONObject("title")?.let { text(it, "userPreferred") } ?: return@mapNotNull null
+            val info = listOfNotNull(text(item, "format")?.replace('_', ' '), item.optJSONObject("startDate")?.optInt("year")?.takeIf { it > 0 }?.toString()).joinToString(" · ")
+            id to LinkedTitle(id, name, item.optJSONObject("coverImage")?.let { text(it, "large") }, info)
+        }.toMap()
+    }
+
+    // A page of the comments of a thread, each with the answers to it that AniList gives. Null when AniList could not be reached
+    suspend fun threadComments(id: Int, page: Int): CommentsPage? {
+        val block = client.query(ThreadCommentsQuery, JSONObject().put("id", id).put("page", page), AniListSession.token)?.optJSONObject("Page") ?: return null
+        return CommentsPage(objects(block.optJSONArray("threadComments")).mapNotNull(::commentOf), block.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true)
+    }
+
+    private fun commentOf(comment: JSONObject): ThreadComment? {
+        val user = comment.optJSONObject("user") ?: return null
+        return ThreadComment(
+            id = comment.optInt("id").takeIf { it > 0 } ?: return null,
+            author = text(user, "name") ?: return null,
+            avatar = user.optJSONObject("avatar")?.let { text(it, "large") },
+            text = text(comment, "comment").orEmpty(),
+            likes = comment.optInt("likeCount"),
+            liked = comment.optBoolean("isLiked"),
+            createdAt = comment.optLong("createdAt"),
+            replies = objects(comment.optJSONArray("childComments")).mapNotNull(::commentOf)
+        )
+    }
+
+    // Likes a thread or a comment, or takes the like back, and says how it stands. This changes the account of the user, so it is only called
+    // when they touch the heart. Null when AniList did not do it
+    suspend fun toggleThreadLike(id: Int): AniLike? = client.toggleLikeOf(id, "THREAD", AniListSession.token)
+
+    suspend fun toggleCommentLike(id: Int): AniLike? = client.toggleLikeOf(id, "THREAD_COMMENT", AniListSession.token)
 
     // A review as AniList gives it, null when it has no author
     private fun reviewOf(review: JSONObject): TitleReview? {
@@ -925,13 +1006,29 @@ class TitleRepository(context: Context) {
         // How many days of activity the community shows
         const val TrendDays = 30
 
+        // What is asked of every thread
+        const val ThreadFields = "id title replyCount likeCount isLiked createdAt user { name avatar { large } }"
+
         // The community: how the scores and the lists are spread, the reviews and the threads about it
         const val CommunityQuery = "query (\$id: Int, \$fresh: Int) { " +
             "Media(id: \$id, popularity_greater: \$fresh) { popularity favourites stats { scoreDistribution { score amount } statusDistribution { status amount } } " +
             "trends(sort: ID_DESC, perPage: $TrendDays) { nodes { date trending } } " +
             "reviews(perPage: 5, sort: RATING_DESC) { nodes { id summary score rating ratingAmount createdAt user { name avatar { large } } } } } " +
-            "threads: Page(perPage: 5) { threads(mediaCategoryId: \$id, sort: REPLIED_AT_DESC) { id title replyCount user { name } } } " +
+            "threads: Page(perPage: 5) { threads(mediaCategoryId: \$id, sort: REPLIED_AT_DESC) { $ThreadFields } } " +
             "activity: Page(perPage: 10) { activities(mediaId: \$id, type: MEDIA_LIST, sort: ID_DESC) { ... on ListActivity { id status progress createdAt user { name avatar { large } } } } } }"
+
+        // What is asked of a thread, a page of them, one with its text, and a page of its comments
+        const val ThreadsQuery = "query (\$id: Int, \$page: Int) { Page(page: \$page, perPage: 20) { pageInfo { hasNextPage } " +
+            "threads(mediaCategoryId: \$id, sort: REPLIED_AT_DESC) { $ThreadFields } } }"
+        const val ThreadQuery = "query (\$id: Int) { Thread(id: \$id) { $ThreadFields body(asHtml: false) isSubscribed isLocked categories { name } " +
+            "mediaCategories { id title { userPreferred } } } }"
+        const val SubscribeThreadQuery = "mutation (\$id: Int, \$subscribe: Boolean) { ToggleThreadSubscription(threadId: \$id, subscribe: \$subscribe) { id isSubscribed } }"
+        const val SaveThreadCommentQuery = "mutation (\$id: Int, \$parent: Int, \$text: String) { SaveThreadComment(threadId: \$id, parentCommentId: \$parent, comment: \$text) { " +
+            "id comment(asHtml: false) likeCount isLiked createdAt user { name avatar { large } } childComments } }"
+        const val LinkedMax = 50
+        const val LinkedTitlesQuery = "query (\$ids: [Int]) { Page(perPage: $LinkedMax) { media(id_in: \$ids) { id format startDate { year } title { userPreferred } coverImage { large } } } }"
+        const val ThreadCommentsQuery = "query (\$id: Int, \$page: Int) { Page(page: \$page, perPage: 25) { pageInfo { hasNextPage } " +
+            "threadComments(threadId: \$id) { id comment(asHtml: false) likeCount isLiked createdAt user { name avatar { large } } childComments } } }"
 
         // A page of the reviews of a title, the most useful first, and one review with its text
         const val ReviewsQuery = "query (\$id: Int, \$page: Int) { Page(page: \$page, perPage: 20) { pageInfo { hasNextPage } " +

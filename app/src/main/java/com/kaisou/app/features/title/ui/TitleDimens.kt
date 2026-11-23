@@ -120,7 +120,14 @@ object TitleDimens {
     val ReviewAvatar = 28.dp
     val ReviewReaderAvatar = 40.dp
     val ReviewVoteTouch = 44.dp
+    val CommentIndent = 12.dp
+    val CommentLine = 2.dp
     val CommentAvatar = 24.dp
+    val ThreadCountIcon = 14.dp
+    val LinkedCoverWidth = 56.dp
+    const val LinkedCoverRatio = 0.68f
+    val ThreadAction = 32.dp
+    val ThreadActionIcon = 18.dp
     val ReviewVoteIcon = 22.dp
     const val ReviewLines = 3
     val ScoreBarHeight = 64.dp

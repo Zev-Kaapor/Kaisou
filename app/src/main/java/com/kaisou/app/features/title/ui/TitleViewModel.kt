@@ -56,6 +56,7 @@ import com.kaisou.app.features.title.data.ThemeClient
 import com.kaisou.app.features.title.data.TitleRelation
 import com.kaisou.app.features.title.data.EpisodeGroups
 import com.kaisou.app.features.title.data.EpisodeTranslator
+import com.kaisou.app.features.title.data.ThreadTitles
 import com.kaisou.app.features.title.data.TitleRepository
 import com.kaisou.app.features.title.data.upNext
 import com.kaisou.app.features.title.data.TitleStatus
@@ -429,6 +430,11 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         viewModelScope.launch {
             val community = repository.community(title.anilistId, title.manga)
             mutableState.update { it.copy(community = if (community == null) Load.Failed else Load.Done(community)) }
+            // The titles of the threads come in the language of the app a moment after the tab
+            if (community != null && community.threads.isNotEmpty()) {
+                val threads = ThreadTitles.translated(community.threads)
+                mutableState.update { state -> (state.community as? Load.Done)?.let { state.copy(community = Load.Done(it.value.copy(threads = threads))) } ?: state }
+            }
         }
     }
 

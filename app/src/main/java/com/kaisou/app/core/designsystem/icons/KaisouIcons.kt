@@ -211,6 +211,8 @@ object KaisouIcons {
         "HeartFilled",
         "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
     )
+    val Flag = strokeIcon("Flag", "M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z", "M4 22v-7")
+    val Reply = strokeIcon("Reply", "m9 17-5-5 5-5", "M20 18v-2a4 4 0 0 0-4-4H4")
     val ThumbsUp = strokeIcon(
         "ThumbsUp",
         "M7 10v12",

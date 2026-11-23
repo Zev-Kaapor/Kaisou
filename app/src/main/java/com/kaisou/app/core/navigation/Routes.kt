@@ -47,6 +47,15 @@ fun reviewsRoute(id: Int): String = "title/$id/reviews"
 
 fun reviewRoute(id: Int): String = "review/$id"
 
+// All the threads of the forum about a title, and one thread read whole, by its id on AniList
+const val ThreadsRoute = "title/{$TitleIdArg}/threads"
+const val ThreadIdArg = "threadId"
+const val ThreadRoute = "thread/{$ThreadIdArg}"
+
+fun threadsRoute(id: Int): String = "title/$id/threads"
+
+fun threadRoute(id: Int): String = "thread/$id"
+
 // All the covers of the volumes of a manga
 const val CoversRoute = "title/{$TitleIdArg}/covers"
 

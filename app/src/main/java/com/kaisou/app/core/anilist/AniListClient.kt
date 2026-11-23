@@ -245,9 +245,12 @@ class AniListClient {
 
     // Likes an activity, or takes the like back if it was already given, and says how it stands now. This changes the account of the
     // user, so it is only called when they touch the heart. Null when AniList did not do it
-    suspend fun toggleLike(id: Int, reply: Boolean, token: String?): AniLike? = withContext(Dispatchers.IO) {
+    suspend fun toggleLike(id: Int, reply: Boolean, token: String?): AniLike? = toggleLikeOf(id, if (reply) "ACTIVITY_REPLY" else "ACTIVITY", token)
+
+    // The same for what AniList calls a kind of thing that can be liked, as a thread or a comment of a thread
+    suspend fun toggleLikeOf(id: Int, type: String, token: String?): AniLike? = withContext(Dispatchers.IO) {
         try {
-            val variables = JSONObject().put("id", id).put("type", if (reply) "ACTIVITY_REPLY" else "ACTIVITY")
+            val variables = JSONObject().put("id", id).put("type", type)
             post(ToggleLikeQuery, variables, token)?.optJSONObject("ToggleLikeV2")
                 ?.let { AniLike(isLiked = it.optBoolean("isLiked"), likeCount = it.optInt("likeCount")) }
         } catch (_: Exception) {
@@ -481,7 +484,7 @@ class AniListClient {
         // Likes and comments on the activities
         const val ReplyFields = "id text(asHtml: false) createdAt likeCount isLiked user { id name avatar { large } }"
         const val ToggleLikeQuery = "mutation (${'$'}id: Int, ${'$'}type: LikeableType) { ToggleLikeV2(id: ${'$'}id, type: ${'$'}type) { " +
-            "... on ListActivity { isLiked likeCount } ... on TextActivity { isLiked likeCount } ... on ActivityReply { isLiked likeCount } } }"
+            "... on ListActivity { isLiked likeCount } ... on TextActivity { isLiked likeCount } ... on ActivityReply { isLiked likeCount } ... on Thread { isLiked likeCount } ... on ThreadComment { isLiked likeCount } } }"
         const val DeleteReplyQuery = "mutation (${'$'}id: Int) { DeleteActivityReply(id: ${'$'}id) { deleted } }"
         const val EditReplyQuery = "mutation (${'$'}id: Int, ${'$'}activity: Int, ${'$'}text: String) { " +
             "SaveActivityReply(id: ${'$'}id, activityId: ${'$'}activity, text: ${'$'}text) { $ReplyFields } }"

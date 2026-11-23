@@ -135,6 +135,20 @@
     <string name="title_stats_activity">Recent activity per day</string>
     <string name="title_stats_day">%1$s · %2$s</string>
     <string name="title_stats_status">On the lists</string>
+    <string name="comment_title">Reply</string>
+    <string name="comment_hint">Write a comment</string>
+    <string name="comment_confirm_text">This will be posted on the thread with your AniList account. Follow the rules of AniList.</string>
+    <string name="comment_failed">Could not post the comment</string>
+    <string name="thread_copied">Copied</string>
+    <string name="cd_thread_copy">Copy</string>
+    <string name="cd_thread_report">Report</string>
+    <string name="cd_thread_follow">Follow the thread</string>
+    <string name="cd_thread_unfollow">Stop following the thread</string>
+    <string name="cd_thread_reply">Reply</string>
+    <string name="title_thread_follow_failed">Could not follow the thread</string>
+    <string name="cd_thread_more">More</string>
+    <string name="thread_followed">Following this thread</string>
+    <string name="thread_unfollowed">Stopped following this thread</string>
     <string name="title_section_activity">Activity</string>
     <string name="activity_watched">Watched episode %1$s</string>
     <string name="activity_watched_range">Watched episodes %1$s</string>
@@ -149,6 +163,11 @@
     <string name="activity_completed">Completed</string>
     <string name="activity_paused">Paused</string>
     <string name="activity_dropped">Dropped</string>
+    <string name="title_thread">Thread</string>
+    <string name="title_thread_comments">Comments</string>
+    <string name="title_thread_no_comments">No comments yet</string>
+    <string name="cd_thread_like">Like</string>
+    <string name="title_thread_like_failed">Could not save your like</string>
     <string name="title_review">Review</string>
     <string name="title_review_votes">Useful: %1$d of %2$d</string>
     <string name="title_translate">Translate</string>
@@ -298,10 +317,6 @@
         <item>Paused</item>
         <item>Dropped</item>
     </string-array>
-    <plurals name="title_replies">
-        <item quantity="one">%d reply</item>
-        <item quantity="other">%d replies</item>
-    </plurals>
     <string name="title_season_year" translatable="false">%1$s %2$d</string>
     <string name="title_duration_minutes">%1$d min</string>
     <string name="title_status_releasing">Airing</string>

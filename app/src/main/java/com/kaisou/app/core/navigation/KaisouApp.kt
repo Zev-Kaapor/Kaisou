@@ -81,6 +81,8 @@ import com.kaisou.app.features.title.ui.CastScreen
 import com.kaisou.app.features.title.ui.NewsScreen
 import com.kaisou.app.features.title.ui.ReviewScreen
 import com.kaisou.app.features.title.ui.ReviewsScreen
+import com.kaisou.app.features.title.ui.ThreadScreen
+import com.kaisou.app.features.title.ui.ThreadsScreen
 import com.kaisou.app.features.title.ui.TitleScreen
 import com.kaisou.app.features.updates.data.UpdateState
 import com.kaisou.app.features.updates.data.UpdateWork
@@ -137,7 +139,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     // The pages that open over the tabs have the whole screen, with no bar and no rail, except the page of a title, which keeps the bar with
     // its own sections in place of the destinations
     val route = backStackEntry?.destination?.route
-    val fullScreen = route.let { it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute || it == ReviewsRoute || it == ReviewRoute }
+    val fullScreen = route.let { it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute || it == ReviewsRoute || it == ReviewRoute || it == ThreadsRoute || it == ThreadRoute }
     val titleSections by NavSectionsHost.sections.collectAsState()
     val sections = if (route == TitleRoute) titleSections else null
 
@@ -298,6 +300,8 @@ private fun MainNavHost(
                 onOpenCards = { id, order, manga -> navController.navigate(cardsRoute(id, order, manga)) },
                 onOpenCovers = { navController.navigate(coversRoute(it)) },
                 onOpenReviews = { navController.navigate(reviewsRoute(it)) },
+                onOpenThreads = { navController.navigate(threadsRoute(it)) },
+                onOpenThread = { navController.navigate(threadRoute(it)) },
                 onOpenReview = { navController.navigate(reviewRoute(it)) },
                 modifier = Modifier.fillMaxSize()
             )
@@ -374,6 +378,17 @@ private fun MainNavHost(
         }
         composable(route = ReviewRoute, arguments = listOf(navArgument(ReviewIdArg) { type = NavType.IntType })) {
             ReviewScreen(onBack = { navController.popBackStack() }, modifier = Modifier.fillMaxSize())
+        }
+        // All the threads of a title, and one of them read whole, open over it with no bar
+        composable(route = ThreadsRoute, arguments = listOf(navArgument(TitleIdArg) { type = NavType.IntType })) {
+            ThreadsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenThread = { navController.navigate(threadRoute(it)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        composable(route = ThreadRoute, arguments = listOf(navArgument(ThreadIdArg) { type = NavType.IntType })) {
+            ThreadScreen(onBack = { navController.popBackStack() }, onOpenTitle = { navController.navigate(titleRoute(it)) }, modifier = Modifier.fillMaxSize())
         }
         // All the covers of the volumes of a manga, open over it with no bar
         composable(route = CoversRoute, arguments = listOf(navArgument(TitleIdArg) { type = NavType.IntType })) {

@@ -130,6 +130,20 @@
     <string name="title_stats_activity">Atividade recente por dia</string>
     <string name="title_stats_day">%1$s · %2$s</string>
     <string name="title_stats_status">Nas listas</string>
+    <string name="comment_title">Responder</string>
+    <string name="comment_hint">Escreva um comentário</string>
+    <string name="comment_confirm_text">Isto será publicado no tópico com a sua conta do AniList. Siga as regras do AniList.</string>
+    <string name="comment_failed">Não foi possível publicar o comentário</string>
+    <string name="thread_copied">Copiado</string>
+    <string name="cd_thread_copy">Copiar</string>
+    <string name="cd_thread_report">Denunciar</string>
+    <string name="cd_thread_follow">Seguir o tópico</string>
+    <string name="cd_thread_unfollow">Deixar de seguir o tópico</string>
+    <string name="cd_thread_reply">Responder</string>
+    <string name="title_thread_follow_failed">Não foi possível seguir o tópico</string>
+    <string name="cd_thread_more">Mais</string>
+    <string name="thread_followed">Seguindo este tópico</string>
+    <string name="thread_unfollowed">Deixou de seguir este tópico</string>
     <string name="title_section_activity">Atividade</string>
     <string name="activity_watched">Assistiu ao episódio %1$s</string>
     <string name="activity_watched_range">Assistiu aos episódios %1$s</string>
@@ -144,6 +158,11 @@
     <string name="activity_completed">Completou</string>
     <string name="activity_paused">Pausou</string>
     <string name="activity_dropped">Abandonou</string>
+    <string name="title_thread">Tópico</string>
+    <string name="title_thread_comments">Comentários</string>
+    <string name="title_thread_no_comments">Nenhum comentário ainda</string>
+    <string name="cd_thread_like">Curtir</string>
+    <string name="title_thread_like_failed">Não foi possível salvar a sua curtida</string>
     <string name="title_review">Review</string>
     <string name="title_review_votes">Útil: %1$d de %2$d</string>
     <string name="title_translate">Traduzir</string>
@@ -255,11 +274,6 @@
         <item>Pausado</item>
         <item>Dropado</item>
     </string-array>
-    <plurals name="title_replies">
-        <item quantity="one">%d resposta</item>
-        <item quantity="many">%d respostas</item>
-        <item quantity="other">%d respostas</item>
-    </plurals>
     <string name="title_duration_minutes">%1$d min</string>
     <string name="title_status_releasing">Em exibição</string>
     <string name="title_status_finished">Finalizado</string>

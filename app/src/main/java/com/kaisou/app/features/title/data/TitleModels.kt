@@ -354,7 +354,48 @@ data class ReviewBody(val review: TitleReview, val text: String, val vote: Revie
 class ReviewTally(val helpful: Int, val votes: Int, val vote: ReviewVote)
 
 // A thread of the forum about the title
-data class TitleThread(val title: String, val replies: Int, val author: String, val url: String)
+data class TitleThread(
+    val id: Int,
+    val title: String,
+    val replies: Int,
+    val author: String,
+    val avatar: String?,
+    val likes: Int,
+    // The day it was written as seconds
+    val createdAt: Long,
+    val url: String
+)
+
+// A page of the threads of a title, and whether there are more
+class ThreadsPage(val threads: List<TitleThread>, val hasMore: Boolean)
+
+// A tag of a thread: its category or a title it is about, which opens the title
+data class ThreadTag(val label: String, val mediaId: Int? = null)
+
+// A thread with its whole text, whether the user liked it and follows it, whether it is locked and its tags
+data class ThreadBody(
+    val thread: TitleThread,
+    val text: String,
+    val liked: Boolean,
+    val subscribed: Boolean = false,
+    val locked: Boolean = false,
+    val tags: List<ThreadTag> = emptyList()
+)
+
+// A comment of a thread with the answers to it, and how many liked it
+data class ThreadComment(
+    val id: Int,
+    val author: String,
+    val avatar: String?,
+    val text: String,
+    val likes: Int,
+    val liked: Boolean,
+    val createdAt: Long,
+    val replies: List<ThreadComment> = emptyList()
+)
+
+// A page of the comments of a thread, and whether there are more
+class CommentsPage(val comments: List<ThreadComment>, val hasMore: Boolean)
 
 // How many people gave a score, and how many have the title in a state
 data class TitleScoreBar(val score: Int, val amount: Int)

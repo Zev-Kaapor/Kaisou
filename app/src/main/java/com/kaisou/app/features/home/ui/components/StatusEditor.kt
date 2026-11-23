@@ -61,6 +61,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 // Project resources
 import com.kaisou.app.R
+import androidx.annotation.StringRes
 import com.kaisou.app.core.browser.InAppBrowser
 import com.kaisou.app.core.designsystem.components.ConfirmDialog
 import com.kaisou.app.core.designsystem.components.ImmersiveDialogEffect
@@ -69,12 +70,19 @@ import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.data.ComposerUi
 import com.kaisou.app.features.home.ui.HomeDimens
 
+// The words of the screen of writing: its title, what it says while it is empty, what it asks before posting and what it says when it fails
+class EditorTexts(@StringRes val title: Int, @StringRes val hint: Int, @StringRes val confirmTitle: Int, @StringRes val confirmText: Int, @StringRes val failed: Int) {
+    companion object {
+        val Status = EditorTexts(R.string.status_title, R.string.status_hint, R.string.status_confirm_title, R.string.status_confirm_text, R.string.status_failed)
+    }
+}
+
 // The screen to write a status, over the Home. The bar on top has the way back, the preview of how the text will look and the button
 // that posts it, which first asks if the user is sure, since it goes to their account. The text shows its markers faint and what they
 // style already styled while it is typed, and the buttons of the formats stay over the keyboard. When AniList takes the status the
 // screen closes
 @Composable
-fun StatusEditor(composer: ComposerUi, onPost: (String) -> Unit, onClose: () -> Unit) {
+fun StatusEditor(composer: ComposerUi, onPost: (String) -> Unit, onClose: () -> Unit, texts: EditorTexts = EditorTexts.Status) {
     // Whether there is a text that would be lost, told by the screen, and whether the user is being asked about leaving
     var hasText by remember { mutableStateOf(false) }
     var discarding by rememberSaveable { mutableStateOf(false) }
@@ -86,7 +94,7 @@ fun StatusEditor(composer: ComposerUi, onPost: (String) -> Unit, onClose: () -> 
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
         ImmersiveDialogEffect()
-        StatusEditorContent(composer = composer, onPost = onPost, onBack = leave, onClose = onClose, onHasText = { hasText = it })
+        StatusEditorContent(composer = composer, texts = texts, onPost = onPost, onBack = leave, onClose = onClose, onHasText = { hasText = it })
     }
 
     if (discarding) {
@@ -107,6 +115,7 @@ fun StatusEditor(composer: ComposerUi, onPost: (String) -> Unit, onClose: () -> 
 @Composable
 private fun StatusEditorContent(
     composer: ComposerUi,
+    texts: EditorTexts,
     onPost: (String) -> Unit,
     onBack: () -> Unit,
     onClose: () -> Unit,
@@ -153,7 +162,7 @@ private fun StatusEditorContent(
                 modifier = Modifier.size(dimens.buttonHeight).clip(CircleShape).clickable(onClick = onBack).padding(dimens.spaceMedium)
             )
             Text(
-                text = stringResource(R.string.status_title),
+                text = stringResource(texts.title),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.weight(1f)
@@ -197,7 +206,7 @@ private fun StatusEditorContent(
                 )
             } else {
                 if (value.text.isEmpty()) {
-                    Text(text = stringResource(R.string.status_hint), style = MaterialTheme.typography.bodyLarge, color = faint)
+                    Text(text = stringResource(texts.hint), style = MaterialTheme.typography.bodyLarge, color = faint)
                 }
                 BasicTextField(
                     value = value,
@@ -214,7 +223,7 @@ private fun StatusEditorContent(
 
         if (composer.failed) {
             Text(
-                text = stringResource(R.string.status_failed),
+                text = stringResource(texts.failed),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(horizontal = dimens.screenPadding, vertical = dimens.spaceSmall)
@@ -252,8 +261,8 @@ private fun StatusEditorContent(
 
     if (confirming) {
         ConfirmDialog(
-            title = stringResource(R.string.status_confirm_title),
-            text = stringResource(R.string.status_confirm_text),
+            title = stringResource(texts.confirmTitle),
+            text = stringResource(texts.confirmText),
             confirmLabel = stringResource(R.string.status_post),
             cancelLabel = stringResource(R.string.action_cancel),
             onConfirm = {

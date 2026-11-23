@@ -30,9 +30,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -62,11 +62,12 @@ import com.kaisou.app.features.title.data.TitleStatusShare
 import com.kaisou.app.features.title.data.TitleThread
 import com.kaisou.app.features.title.data.TitleTrend
 import com.kaisou.app.features.title.ui.TitleDimens
+import com.kaisou.app.features.home.ui.components.SpoilerText
 import com.kaisou.app.features.home.ui.components.rememberScoreFormat
 
 // The tab of the community: the reviews, how the scores and the lists are spread, and the threads of the
 // forum. A block that has nothing is left out, and when all of them have nothing the tab says so
-fun LazyListScope.titleCommunityItems(community: Load<TitleCommunity>, onOpenReviews: () -> Unit, onOpenReview: (Int) -> Unit, onRetry: () -> Unit) {
+fun LazyListScope.titleCommunityItems(community: Load<TitleCommunity>, onOpenReviews: () -> Unit, onOpenReview: (Int) -> Unit, onOpenThreads: () -> Unit, onOpenThread: (Int) -> Unit, onRetry: () -> Unit) {
     when (community) {
         is Load.Done -> {
             val value = community.value
@@ -76,7 +77,7 @@ fun LazyListScope.titleCommunityItems(community: Load<TitleCommunity>, onOpenRev
             if (value.reviews.isNotEmpty()) item(key = "community-reviews") { ReviewsBlock(value.reviews, onOpenReviews, onOpenReview) }
             if (value.scores.isNotEmpty() || value.statuses.isNotEmpty() || value.trends.isNotEmpty()) item(key = "community-stats") { StatsBlock(value.trends, value.scores, value.statuses) }
             if (value.activity.isNotEmpty()) item(key = "community-activity") { ActivityBlock(value.activity) }
-            if (value.threads.isNotEmpty()) item(key = "community-threads") { ThreadsBlock(value.threads) }
+            if (value.threads.isNotEmpty()) item(key = "community-threads") { ThreadsBlock(value.threads, onOpenThreads, onOpenThread) }
         }
         is Load.Failed -> item(key = "community-error") { DetailsError(onRetry = onRetry) }
         else -> item(key = "community-loading") { DetailsSkeleton() }
@@ -349,29 +350,74 @@ private fun ActivityBlock(activity: List<TitleActivity>) {
     }
 }
 
-// The threads of the forum about the title, each opens on AniList
+// The first threads of the forum about the title, each opens to be read, and the arrow of the title opens all of them
 @Composable
-private fun ThreadsBlock(threads: List<TitleThread>) {
+private fun ThreadsBlock(threads: List<TitleThread>, onOpenThreads: () -> Unit, onOpenThread: (Int) -> Unit) {
     val dimens = KaisouTheme.dimens
-    val context = LocalContext.current
-    val separator = stringResource(R.string.home_card_separator)
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
-        BlockTitle(stringResource(R.string.title_section_threads))
-        threads.forEach { thread ->
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = dimens.spaceSmall)
-                    .clickable(role = Role.Button) { InAppBrowser.open(context, thread.url) }
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            BlockTitle(text = stringResource(R.string.title_section_threads), modifier = Modifier.weight(1f))
+            SeeAllArrow(onOpenThreads)
+        }
+        threads.forEach { thread -> ThreadRow(thread = thread, onClick = { onOpenThread(thread.id) }, modifier = Modifier.padding(top = dimens.spaceSmall)) }
+    }
+}
+
+// A thread in a card: the picture of who wrote it at the start, then its title, who wrote it and when, and how many answered and liked it
+@Composable
+internal fun ThreadRow(thread: TitleThread, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val dimens = KaisouTheme.dimens
+    val separator = stringResource(R.string.home_card_separator)
+    val day = relativeTime(thread.createdAt)
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(KaisouTheme.colors.elevated)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(start = dimens.spaceMedium, top = dimens.spaceMedium, end = dimens.spaceMedium, bottom = dimens.spaceSmall),
+        horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium),
+        verticalAlignment = Alignment.Top
+    ) {
+        RoundImage(url = thread.avatar, size = TitleDimens.ReviewReaderAvatar)
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)) {
+            SpoilerText(
+                text = thread.title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                linkColor = MaterialTheme.colorScheme.primary,
+                headingSize = MaterialTheme.typography.bodyMedium.fontSize,
+                maxLines = 2
+            )
+            Text(
+                text = listOf(thread.author, day).filter { it.isNotBlank() }.joinToString(separator),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            // The same room above the numbers as there is under them, to the edge of the card: the line of the numbers has room of its own under
+            // them, so the card has less padding at the bottom than at the top
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = dimens.spaceMedium - dimens.spaceExtraSmall / 2),
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = thread.title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(
-                    text = listOf(pluralStringResource(R.plurals.title_replies, thread.replies, thread.replies), thread.author).filter { it.isNotBlank() }.joinToString(separator),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                ThreadCount(KaisouIcons.Comment, thread.replies)
+                ThreadCount(KaisouIcons.Heart, thread.likes)
             }
         }
     }
 }
+
+// An icon with a number, small and faint
+@Composable
+private fun ThreadCount(icon: ImageVector, count: Int) {
+    Row(horizontalArrangement = Arrangement.spacedBy(KaisouTheme.dimens.spaceExtraSmall), verticalAlignment = Alignment.CenterVertically) {
+        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(TitleDimens.ThreadCountIcon))
+        Text(text = count.toString(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
