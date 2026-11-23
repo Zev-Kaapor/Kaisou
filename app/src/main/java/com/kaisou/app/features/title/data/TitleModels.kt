@@ -258,8 +258,62 @@ data class TitlePeople(
     val moreStaff: Boolean = false
 )
 
-// An episode of an anime: its number, its name, a picture of it, how long it is in minutes and the day it aired as the phone writes it
-data class TitleEpisode(val number: Int, val title: String?, val image: String?, val minutes: Int?, val aired: String?)
+// An episode of an anime: its number, its name, a picture of it, how long it is in minutes and the day it aired as the phone writes it,
+// what it tells, its score from 0 to 10, the season it is in and whether its texts are already in the language of the user
+data class TitleEpisode(
+    val number: Int,
+    val title: String?,
+    val image: String?,
+    val minutes: Int?,
+    val aired: String?,
+    val overview: String? = null,
+    val rating: Float? = null,
+    val season: Int? = null,
+    val localized: Boolean = false
+)
+
+// The episode that comes next, only for a title that the user is going through
+val TitleUi.upNext: Int?
+    get() = nextUnit.takeIf { listStatus == ListStatus.Current || listStatus == ListStatus.Repeating || listStatus == ListStatus.Paused }
+
+// The episodes of a title and the ids of the series on TMDB, which is where they can be had in the language of the user, and on IMDb, on
+// MyAnimeList and on TheTVDB, which are where their scores can be had
+data class EpisodeSet(val episodes: List<TitleEpisode>, val tmdbId: Int?, val imdbId: String? = null, val malId: Int? = null, val tvdbId: Int? = null)
+
+// A part of the list of episodes the user picks: a season, or a range of a series that is long and has no seasons
+data class EpisodeGroup(val season: Int?, val first: Int, val last: Int, val episodes: List<TitleEpisode>)
+
+object EpisodeGroups {
+    // How many episodes a range has when the series has no seasons, as Dantotsu cuts them: 25 up to 249 episodes, 50 up to 499 and 100 after
+    // that. A series that is not longer than a range is not cut
+    private fun rangeSize(total: Int): Int = when {
+        total < 250 -> 25
+        total < 500 -> 50
+        else -> 100
+    }
+
+    // The seasons when there are two or more, the ranges when there are more than a range, otherwise all of it in one. The ones with no
+    // season, which are the ones that did not air yet, go with the last
+    fun of(episodes: List<TitleEpisode>): List<EpisodeGroup> {
+        if (episodes.isEmpty()) return emptyList()
+        val seasons = episodes.mapNotNull { it.season?.takeIf { season -> season > 0 } }.distinct().sorted()
+        if (seasons.size > 1) {
+            return seasons.mapIndexed { index, season ->
+                val part = episodes.filter { (it.season ?: seasons.last()) == season || (it.season == 0 && index == 0) }
+                EpisodeGroup(season, part.first().number, part.last().number, part)
+            }
+        }
+        return episodes.chunked(rangeSize(episodes.size)).map { EpisodeGroup(null, it.first().number, it.last().number, it) }
+    }
+
+    // The group that is open: the one the user picked, otherwise the one with the episode that comes next, otherwise the first
+    fun open(groups: List<EpisodeGroup>, picked: Int?, next: Int?): Int =
+        (picked ?: indexOf(groups, next ?: groups.first().first)).coerceIn(groups.indices)
+
+    // The group that has the episode, the first when none has it
+    fun indexOf(groups: List<EpisodeGroup>, number: Int): Int =
+        groups.indexOfFirst { group -> group.episodes.any { it.number == number } }.coerceAtLeast(0)
+}
 
 // A friend that has the title on a list, with where it is, how far and the score on the scale of ten
 data class TitleFriend(

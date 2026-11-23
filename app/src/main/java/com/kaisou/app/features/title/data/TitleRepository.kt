@@ -400,12 +400,25 @@ class TitleRepository(context: Context) {
 
     // The episodes of an anime, with the ones that ani.zip does not have yet as numbers only, up to the last that aired. Null when ani.zip
     // could not be reached
-    suspend fun episodes(title: TitleUi): List<TitleEpisode>? {
+    suspend fun episodes(title: TitleUi): EpisodeSet? {
         val found = EpisodeClient.episodes(title.anilistId, AppLanguage.code, AppLanguage.region) ?: return null
-        val aired = title.episodes ?: title.nextAiring?.let { it.episode - 1 } ?: found.maxOfOrNull { it.number } ?: 0
-        val known = found.associateBy { it.number }
-        return (1..aired.coerceAtMost(MaxEpisodes)).map { known[it] ?: TitleEpisode(it, null, null, null, null) }
+        val aired = title.episodes ?: title.nextAiring?.let { it.episode - 1 } ?: found.episodes.maxOfOrNull { it.number } ?: 0
+        val known = found.episodes.associateBy { it.number }
+        return EpisodeSet(
+            episodes = (1..aired.coerceAtMost(MaxEpisodes)).map { known[it] ?: TitleEpisode(it, null, null, null, null) },
+            tmdbId = found.tmdbId,
+            imdbId = found.imdbId,
+            malId = found.malId,
+            tvdbId = found.tvdbId
+        )
     }
+
+    // What people score each episode, from 0 to 10 by the number of the episode: IMDb first, then MyAnimeList, then TVmaze, then TMDB. They are given
+    // as each source answers
+    suspend fun episodeRatings(found: EpisodeSet, onScores: suspend (Map<Int, Float>) -> Unit) = EpisodeRatings.rate(found, AppLanguage.code, AppLanguage.region, onScores)
+
+    // The same episodes with their names and what they tell in the language of the app
+    suspend fun translatedEpisodes(found: EpisodeSet): List<TitleEpisode> = EpisodeTranslator.translate(found, AppLanguage.code, AppLanguage.region)
 
     // AniList keeps its answer to a question for about a minute, for the same user, and gives it again to the same question, so the heart
     // and the list would show what they were a moment ago. A comment or a name does not make the question another, a value does: every

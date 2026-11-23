@@ -46,7 +46,7 @@
 > **Early version** - Kaisou is being built one screen at a time. Version 0.4.0 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, the page of each anime and manga with the editor of your list, the pages of the characters, the staff and the studios, and the pages with all the related titles, the order to watch and read and all the people of a title, and some tabs and buttons are still empty. It is a version to be tested, not a finished app.
 
 > [!NOTE]
-> **Your privacy** - Kaisou has no server of its own and does not track you. Your AniList access key is kept only on your phone and is left out of the Android backups. The app only talks to the services it needs: AniList for your account and your lists, TMDB, TheTVDB and ani.zip to find the posters, the logos, the ratings and the seasons of each title (the name and the id of the title are sent), MyAnimeList for the age rating (the id of the title is sent), Jikan, or one of its public mirrors, for the openings and the endings of an anime (the id of MyAnimeList is sent), YouTube when a trailer is played, in its own player (the id of the video is sent), MangaDex for the covers of a manga (the name and the id of AniList of the manga are sent), Kuroiru for the news of an anime (the id of MyAnimeList is sent), MangaBaka for the news of a manga (the id of AniList is sent), Google Translate when a synopsis is translated (only the text of the synopsis is sent), the site that hosts a picture when a status of AniList shows one, and GitHub to look for a new version. More in the [FAQ](#faq).
+> **Your privacy** - Kaisou has no server of its own and does not track you. Your AniList access key is kept only on your phone and is left out of the Android backups. The app only talks to the services it needs: AniList for your account and your lists, TMDB, TheTVDB and ani.zip to find the posters, the logos, the ratings and the seasons of each title (the name and the id of the title are sent), IMDb for the score of each episode (the id of IMDb is sent), Jikan, or one of its public mirrors, for the score of each episode on MyAnimeList (the id of MyAnimeList is sent), TVmaze for the score of each episode when the others have none (the id of IMDb or of TheTVDB is sent), MyAnimeList for the age rating (the id of the title is sent), Jikan, or one of its public mirrors, for the openings and the endings of an anime (the id of MyAnimeList is sent), YouTube when a trailer is played, in its own player (the id of the video is sent), MangaDex for the covers of a manga (the name and the id of AniList of the manga are sent), Kuroiru for the news of an anime (the id of MyAnimeList is sent), MangaBaka for the news of a manga (the id of AniList is sent), Google Translate when a synopsis is translated (only the text of the synopsis is sent), the site that hosts a picture when a status of AniList shows one, and GitHub to look for a new version. More in the [FAQ](#faq).
 
 ---
 
@@ -391,6 +391,13 @@ The workflow in `.github/workflows/release.yml` publishes a release when `appVer
   <summary><b>Why does a title show the cover instead of the poster?</b></summary>
   <br>
   The posters, the logos and the wide pictures come from TMDB and TheTVDB, and some titles, mostly the newest ones, are not there yet. When there is nothing sharp enough, Kaisou shows the cover of AniList and the name of the title in text.
+  <br>
+</details>
+
+<details>
+  <summary><b>Where do the scores of the episodes come from?</b></summary>
+  <br>
+  Each episode takes the first score that is found: the one of IMDb, then the one of MyAnimeList, then the one of TVmaze and then the one of TMDB. AniList has no score for episodes. IMDb does not have an open API for them, so Kaisou asks the same GraphQL door that its own site uses, which needs no key and gives all the episodes of a series in a page or a few. That door is not documented, so it can change, and then the other sources are used. The answer is kept for a week. An episode that none of them scored, or that too few people scored, shows no score.
   <br>
 </details>
 

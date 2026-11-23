@@ -80,6 +80,8 @@ object Gates {
     val AniZip = RateGate("ani.zip", maxAtOnce = 3)
     val Tmdb = RateGate("TMDB", maxAtOnce = 6)
     val Tvdb = RateGate("TheTVDB", maxAtOnce = 4)
+    val TvMaze = RateGate("TVmaze", maxAtOnce = 2)
+    val Imdb = RateGate("IMDb", maxAtOnce = 2)
     val Mal = RateGate("MyAnimeList", maxAtOnce = 3)
     val Google = RateGate("Google Translate", maxAtOnce = 2)
     val Jikan = RateGate("Jikan", maxAtOnce = 1)

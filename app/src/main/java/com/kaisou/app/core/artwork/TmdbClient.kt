@@ -17,6 +17,10 @@ import java.time.LocalDate
 // A result of a search by name: its id, the names it goes by, the year it started and how many people rated it
 class TmdbHit(val id: Int, val names: List<String>, val year: Int?, val votes: Int)
 
+// An episode of a season of a series on TMDB: its number in the season, the day it aired, its name and what it tells, in the language asked,
+// and what the people of TMDB scored it, from 0 to 10, with how many people did
+class TmdbEpisode(val number: Int, val airDate: String?, val name: String, val overview: String, val vote: Float, val votes: Int)
+
 // First source of posters and logos, the images and the search of TMDB. The token comes from local.properties
 object TmdbClient {
     private const val ApiUrl = "https://api.themoviedb.org/3"
@@ -64,6 +68,27 @@ object TmdbClient {
                 .filter { it.optString("site") == "YouTube" && it.optString("type") == "Trailer" }
                 .sortedWith(compareByDescending<JSONObject> { it.optBoolean("official") }.thenByDescending { it.optString("published_at") })
                 .firstOrNull()?.optString("key").orEmpty()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    // The episodes of a season of a series in a language, empty when TMDB does not have the season and null when the answer failed. Blocks on
+    // the network
+    fun season(id: Int, season: Int, language: String): List<TmdbEpisode>? {
+        if (!isSet) return null
+        return try {
+            val list = get("/tv/$id/season/$season?language=$language")?.optJSONArray("episodes") ?: return emptyList()
+            (0 until list.length()).map { list.getJSONObject(it) }.map { episode ->
+                TmdbEpisode(
+                    number = episode.optInt("episode_number"),
+                    airDate = if (episode.isNull("air_date")) null else episode.optString("air_date").takeIf { it.isNotBlank() },
+                    name = episode.optString("name"),
+                    overview = episode.optString("overview"),
+                    vote = episode.optDouble("vote_average", 0.0).toFloat(),
+                    votes = episode.optInt("vote_count")
+                )
+            }
         } catch (_: Exception) {
             null
         }

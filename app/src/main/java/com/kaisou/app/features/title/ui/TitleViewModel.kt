@@ -51,7 +51,10 @@ import com.kaisou.app.features.title.data.MangaCover
 import com.kaisou.app.features.title.data.NewsClient
 import com.kaisou.app.features.title.data.ThemeClient
 import com.kaisou.app.features.title.data.TitleRelation
+import com.kaisou.app.features.title.data.EpisodeGroups
+import com.kaisou.app.features.title.data.EpisodeTranslator
 import com.kaisou.app.features.title.data.TitleRepository
+import com.kaisou.app.features.title.data.upNext
 import com.kaisou.app.features.title.data.TitleStatus
 import com.kaisou.app.features.title.data.TitleUi
 import com.kaisou.app.features.title.data.TitleUiState
@@ -80,6 +83,35 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
     val scroll = ScrollPosition()
     var tab by mutableStateOf(TitleTab.Details)
     var newestFirst by mutableStateOf(false)
+    // The source of the episodes, which stays when the phone is turned. It is only the look for now
+    var episodeSource by mutableStateOf<String?>(null)
+
+    // The season or range of the episodes that is open, null while the user did not pick one
+    var episodeGroup by mutableStateOf<Int?>(null)
+        private set
+
+    // Opens a season or a range of the episodes, and puts its texts in the language of the app when TMDB had not
+    fun pickGroup(index: Int) {
+        episodeGroup = index
+        translateOpen()
+    }
+
+    // The texts of the open season that TMDB did not have in the language, in it by Google Translate. They show as they are while it works
+    private fun translateOpen() {
+        if (!AppLanguage.needsTranslation) return
+        val title = mutableState.value.title ?: return
+        val list = (mutableState.value.episodes as? Load.Done)?.value ?: return
+        val groups = EpisodeGroups.of(list).ifEmpty { return }
+        val open = groups[EpisodeGroups.open(groups, episodeGroup, title.upNext)].episodes
+        if (open.all { it.localized || (it.title == null && it.overview == null) }) return
+        viewModelScope.launch {
+            val filled = EpisodeTranslator.fill(open, AppLanguage.translationCode).associateBy { it.number }
+            mutableState.update { state ->
+                val current = (state.episodes as? Load.Done)?.value ?: return@update state
+                state.copy(episodes = Load.Done(current.map { episode -> filled[episode.number]?.copy(rating = episode.rating) ?: episode }))
+            }
+        }
+    }
 
     // Whether the favourite is going to AniList, so a second touch while the first is going is left out
     private var turningFavourite = false
@@ -311,8 +343,21 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
     private fun loadEpisodes(title: TitleUi) {
         mutableState.update { it.copy(episodes = Load.Loading) }
         viewModelScope.launch {
-            val episodes = repository.episodes(title)
-            mutableState.update { it.copy(episodes = if (episodes == null) Load.Failed else Load.Done(episodes)) }
+            val found = repository.episodes(title)
+            mutableState.update { it.copy(episodes = if (found == null) Load.Failed else Load.Done(found.episodes)) }
+            // The list shows at once as ani.zip has it and then comes again with the names and texts in the language of the app
+            if (found != null) {
+                val translated = repository.translatedEpisodes(found)
+                if (translated != found.episodes) mutableState.update { it.copy(episodes = Load.Done(translated)) }
+                translateOpen()
+                // The scores come last, each time a source answers, and go on whatever the list has by then
+                repository.episodeRatings(found) { rated ->
+                    mutableState.update { state ->
+                        val current = (state.episodes as? Load.Done)?.value ?: return@update state
+                        state.copy(episodes = Load.Done(current.map { it.copy(rating = rated[it.number]) }))
+                    }
+                }
+            }
         }
     }
 
