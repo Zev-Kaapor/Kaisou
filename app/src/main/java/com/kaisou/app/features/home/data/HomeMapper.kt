@@ -118,6 +118,7 @@ class HomeMapper(private val resources: Resources) {
             text = activity.text?.trim(),
             coverUrl = activity.card?.cover,
             backdropUrl = activity.card?.banner,
+            mediaId = activity.card?.id,
             likeCount = activity.likeCount,
             replyCount = activity.replyCount,
             isLiked = activity.isLiked

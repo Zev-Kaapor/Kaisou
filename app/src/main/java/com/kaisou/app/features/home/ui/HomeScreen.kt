@@ -21,9 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 // UI styling and utilities
 import androidx.compose.ui.Alignment
@@ -102,7 +100,7 @@ fun HomeScreen(
         // The user and the friends that have something to show, in the order the stories play, and the person whose story is open
         val own = remember(viewer, state.ownStory) { StoryUi(viewer.id, viewer.name, viewer.avatar, state.ownStory) }
         val playable = remember(own, state.friends) { (listOf(own) + state.friends).filter { it.items.isNotEmpty() } }
-        var openStory by rememberSaveable { mutableStateOf<Int?>(null) }
+        var openStory by viewModel::openStory
 
 
         when (state.status) {
@@ -181,6 +179,11 @@ fun HomeScreen(
                 StoryViewer(
                     stories = playable,
                     startUser = start,
+                    startItem = viewModel.storyItem,
+                    onPosition = { userId, itemId ->
+                        openStory = userId
+                        viewModel.storyItem = itemId
+                    },
                     ownUserId = viewer.id,
                     seen = state.seen,
                     replies = state.replies,
@@ -194,9 +197,16 @@ fun HomeScreen(
                     onCancelEdit = viewModel::cancelEditingReply,
                     onSendReply = viewModel::sendReply,
                     onCloseReplies = viewModel::closeReplies,
+                    onOpenTitle = { id ->
+                        viewModel.closeReplies()
+                        openStory = null
+                        viewModel.storyItem = null
+                        onOpenTitle(id)
+                    },
                     onClose = {
                         viewModel.closeReplies()
                         openStory = null
+                        viewModel.storyItem = null
                     }
                 )
             }

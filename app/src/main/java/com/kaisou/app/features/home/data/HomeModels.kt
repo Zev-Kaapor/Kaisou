@@ -122,6 +122,8 @@ data class StoryItemUi(
     val text: String?,
     val coverUrl: String?,
     val backdropUrl: String?,
+    // The title the activity is about, which its cover opens, null for what a person wrote without one
+    val mediaId: Int?,
     val likeCount: Int,
     val replyCount: Int,
     val isLiked: Boolean

@@ -146,6 +146,13 @@ object HomeDimens {
     const val StoryItemMillis = 5000
     const val StoryTextMillis = 9000
     const val StoryTapFraction = 0.33f
+    // The turn of the cube from a person to another: how long it takes, how far the camera is so the sides are not cut, how dark the side that
+    // is turned away gets and how long an activity takes to fade into the next
+    const val StoryTurnMillis = 380
+    const val StoryCubeCamera = 12f
+    const val StoryCubeShade = 0.55f
+    const val StoryFadeMillis = 220
+    val StoryRise = 16.dp
     val StoryBackdropBlur = 28.dp
     const val StoryBackdropAlpha = 0.65f
     const val StoryCoverFraction = 0.6f

@@ -24,7 +24,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,7 +58,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 // UI styling and utilities
 import androidx.compose.ui.Alignment
@@ -68,6 +66,8 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -82,7 +82,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 // Image loading
+import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import androidx.compose.animation.core.animate
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.TransformOrigin
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlin.math.abs
 // Project resources
 import com.kaisou.app.R
 import com.kaisou.app.core.browser.InAppBrowser
@@ -103,12 +113,14 @@ import com.kaisou.app.features.home.data.StoryUi
 import com.kaisou.app.features.home.ui.HomeDimens
 
 // The stories of the people, full screen: one activity at a time over its picture, with a bar for each of them on top that fills as
-// time goes. A tap on the right goes forward and on the left goes back, holding stops the time. When the last one of a person ends
+// time goes. A tap on the right goes forward and on the left goes back, in the middle it opens the title, holding stops the time. When the last one of a person ends
 // the next person starts, and after the last person it closes. Each activity shown is marked as seen
 @Composable
 fun StoryViewer(
     stories: List<StoryUi>,
     startUser: Int,
+    startItem: Int?,
+    onPosition: (Int, Int) -> Unit,
     ownUserId: Int,
     seen: Set<Int>,
     replies: RepliesUi?,
@@ -122,6 +134,7 @@ fun StoryViewer(
     onCancelEdit: () -> Unit,
     onSendReply: (String) -> Unit,
     onCloseReplies: () -> Unit,
+    onOpenTitle: (Int) -> Unit,
     onClose: () -> Unit
 ) {
     Dialog(
@@ -132,6 +145,8 @@ fun StoryViewer(
         StoryPlayer(
             stories = stories,
             startUser = startUser,
+            startItem = startItem,
+            onPosition = onPosition,
             ownUserId = ownUserId,
             seen = seen,
             replies = replies,
@@ -145,6 +160,7 @@ fun StoryViewer(
             onCancelEdit = onCancelEdit,
             onSendReply = onSendReply,
             onCloseReplies = onCloseReplies,
+            onOpenTitle = onOpenTitle,
             onClose = onClose
         )
     }
@@ -154,6 +170,8 @@ fun StoryViewer(
 private fun StoryPlayer(
     stories: List<StoryUi>,
     startUser: Int,
+    startItem: Int?,
+    onPosition: (Int, Int) -> Unit,
     ownUserId: Int,
     seen: Set<Int>,
     replies: RepliesUi?,
@@ -167,6 +185,7 @@ private fun StoryPlayer(
     onCancelEdit: () -> Unit,
     onSendReply: (String) -> Unit,
     onCloseReplies: () -> Unit,
+    onOpenTitle: (Int) -> Unit,
     onClose: () -> Unit
 ) {
     val dimens = KaisouTheme.dimens
@@ -174,12 +193,16 @@ private fun StoryPlayer(
     // Lying down the window is wider than it is tall
     val landscape = LocalWindowInfo.current.containerSize.let { it.width > it.height }
 
-    // Turning the phone keeps the person and the activity that are on
-    var userIndex by rememberSaveable { mutableIntStateOf(startUser) }
+    // The person and the activity that are on are told to the screen as they change, which keeps them when the phone is turned, and the next
+    // time this is made it starts from them
+    var userIndex by remember { mutableIntStateOf(startUser) }
     val user = stories[userIndex]
-    // A person starts at the first activity not seen yet, or at the first one if all were seen
-    var itemIndex by rememberSaveable(userIndex) { mutableIntStateOf(user.items.indexOfFirst { it.id !in seen }.coerceAtLeast(0)) }
+    // A person starts at the first activity not seen yet, or at the first one if all were seen, or at the one the screen says when it is there
+    fun firstOf(person: StoryUi) = person.items.indexOfFirst { it.id !in seen }.coerceAtLeast(0)
+    fun startOf(person: StoryUi) = person.items.indexOfFirst { it.id == startItem }.takeIf { it >= 0 } ?: firstOf(person)
+    var itemIndex by remember(userIndex) { mutableIntStateOf(startOf(user)) }
     val item = user.items[itemIndex]
+    LaunchedEffect(userIndex, itemIndex) { onPosition(user.userId, item.id) }
     var held by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     var confirmingDelete by remember { mutableStateOf(false) }
@@ -187,26 +210,70 @@ private fun StoryPlayer(
     var replyMenu by remember { mutableStateOf<ReplyUi?>(null) }
     var replyToDelete by remember { mutableStateOf<ReplyUi?>(null) }
     val context = LocalContext.current
-    // The time also stops while the comments or the menu are open, and while the user is asked whether to delete
-    val paused = held || replies != null || menuOpen || confirmingDelete
+    val scope = rememberCoroutineScope()
+    // The cube that turns from a person to another: where it goes and which way, how far it has turned from nothing to all, and the movement
+    // that takes it to its end
+    var turn by remember { mutableStateOf<StoryTurn?>(null) }
+    var turned by remember { mutableFloatStateOf(0f) }
+    var turning by remember { mutableStateOf<Job?>(null) }
+    // The time also stops while the comments or the menu are open, while the user is asked whether to delete and while the cube turns
+    val paused = held || replies != null || menuOpen || confirmingDelete || turn != null
     val isOwn = user.userId == ownUserId
     var restarts by remember { mutableIntStateOf(0) }
     val progress = remember(userIndex, itemIndex, restarts) { Animatable(0f) }
     val duration = if (item.text != null) HomeDimens.StoryTextMillis else HomeDimens.StoryItemMillis
 
+    // The pictures of what comes next, the next activity of the person or the first of the next person, are asked for before they are needed, so
+    // the change finds them and shows them at once
+    LaunchedEffect(userIndex, itemIndex) {
+        val following = user.items.getOrNull(itemIndex + 1) ?: stories.getOrNull(userIndex + 1)?.let { it.items[firstOf(it)] }
+        val loader = SingletonImageLoader.get(context)
+        listOfNotNull(following?.backdropUrl, following?.coverUrl).forEach { loader.enqueue(ImageRequest.Builder(context).data(it).build()) }
+    }
+
+    // Takes the cube from where it is to its end: all the way turned to the other person, or back to the one it came from
+    fun settleTurn(commit: Boolean) {
+        val current = turn ?: return
+        turning?.cancel()
+        turning = scope.launch {
+            animate(turned, if (commit) 1f else 0f, animationSpec = tween(HomeDimens.StoryTurnMillis)) { value, _ -> turned = value }
+            if (commit) userIndex = current.to
+            turn = null
+            turned = 0f
+        }
+    }
+
+    fun startTurn(to: Int, forward: Boolean) {
+        if (turn != null) return
+        turned = 0f
+        turn = StoryTurn(to, forward)
+        settleTurn(commit = true)
+    }
+
+    // A turn that is left with nothing taking it to its end, which a drag that was cut could do, is undone, so it never holds the touches
+    fun clearStaleTurn(): Boolean {
+        if (turn == null) return false
+        if (turning?.isActive == true) return true
+        turn = null
+        turned = 0f
+        return false
+    }
+
     fun next() {
+        if (clearStaleTurn()) return
         when {
             itemIndex < stories[userIndex].items.lastIndex -> itemIndex++
-            userIndex < stories.lastIndex -> userIndex++
+            userIndex < stories.lastIndex -> startTurn(userIndex + 1, forward = true)
             else -> onClose()
         }
     }
 
     // Going back from the first activity of the first person starts it again
     fun previous() {
+        if (clearStaleTurn()) return
         when {
             itemIndex > 0 -> itemIndex--
-            userIndex > 0 -> userIndex--
+            userIndex > 0 -> startTurn(userIndex - 1, forward = false)
             else -> restarts++
         }
     }
@@ -224,140 +291,132 @@ private fun StoryPlayer(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.veil)
-            .pointerInput(Unit) {
-                // The time stops while a finger is down. A short touch goes forward on the right and back on the left, a long one only
-                // held the time, so letting go goes on where it was and does not change the activity
+            .pointerInput(userIndex) {
+                // One gesture for the whole screen, so a touch is only ever taken by it: the time stops while a finger is down. A short touch
+                // that stayed where it was goes back on the left third, forward on the right third and, in the middle, to the title of the
+                // activity when it has one, forward when it has none. A long one only held the time, so letting go goes on where it was and does
+                // not change the activity. Any drag to the side goes to another person, however short: going left to the next one, or closing
+                // when there is none, and going right to the one before, or starting again when there is none. The cube turns with the finger
+                // and then goes on by itself. It is made again for each person, since the activity of each one is a state of its own, and a
+                // gesture that was made for the one before it would change that one's
                 awaitEachGesture {
                     val down = awaitFirstDown()
                     held = true
-                    val up = waitForUpOrCancellation()
+                    val slop = viewConfiguration.touchSlop
+                    var dragging = false
+                    var cancelled = false
+                    var moved = 0f
+                    var lifted: PointerInputChange? = null
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull { it.id == down.id }
+                        if (change == null) {
+                            cancelled = true
+                            break
+                        }
+                        if (change.changedToUpIgnoreConsumed()) {
+                            lifted = change
+                            break
+                        }
+                        // Something else took the touch, as a button does
+                        if (!dragging && change.isConsumed) {
+                            cancelled = true
+                            break
+                        }
+                        moved = change.position.x - down.position.x
+                        if (!dragging && abs(moved) > slop) {
+                            dragging = true
+                            turning?.cancel()
+                        }
+                        if (dragging) {
+                            change.consume()
+                            val forward = moved < 0f
+                            val to = userIndex + if (forward) 1 else -1
+                            if (to in stories.indices) {
+                                if (turn?.forward != forward) turn = StoryTurn(to, forward)
+                                turned = (abs(moved) / size.width).coerceIn(0f, 1f)
+                            } else if (turn != null) {
+                                turn = null
+                                turned = 0f
+                            }
+                        }
+                    }
                     held = false
-                    if (up != null && up.uptimeMillis - down.uptimeMillis < HoldMillis) {
-                        if (down.position.x < size.width * HomeDimens.StoryTapFraction) previous() else next()
+                    if (dragging) {
+                        val forward = moved < 0f
+                        val to = userIndex + if (forward) 1 else -1
+                        when {
+                            cancelled -> if (turn != null) settleTurn(commit = false)
+                            to in stories.indices -> {
+                                if (turn?.forward != forward) turn = StoryTurn(to, forward)
+                                settleTurn(commit = true)
+                            }
+                            forward -> onClose()
+                            else -> {
+                                // The first person has nobody before, so it starts again from its first activity
+                                turn = null
+                                turned = 0f
+                                itemIndex = 0
+                                restarts++
+                            }
+                        }
+                    } else if (lifted != null && lifted.uptimeMillis - down.uptimeMillis < HoldMillis) {
+                        val place = down.position.x / size.width
+                        val title = stories[userIndex].items[itemIndex].mediaId
+                        when {
+                            place < HomeDimens.StoryTapFraction -> previous()
+                            place > 1f - HomeDimens.StoryTapFraction || title == null -> next()
+                            else -> onOpenTitle(title)
+                        }
                     }
                 }
             }
     ) {
-        // The picture of the title, blurred and dark, behind everything
-        AsyncImage(
-            model = item.backdropUrl ?: item.coverUrl,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize().blur(HomeDimens.StoryBackdropBlur)
-        )
-        Box(modifier = Modifier.fillMaxSize().background(colors.veil.copy(alpha = HomeDimens.StoryBackdropAlpha)))
-
-        Column(
-            // The keyboard is left out of the room the story keeps clear, it is the sheet of the comments that makes way for it, so the cover
-            // does not shrink when the keyboard comes and grow when it goes
-            modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.exclude(WindowInsets.ime)).padding(horizontal = dimens.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = dimens.spaceSmall),
-                horizontalArrangement = Arrangement.spacedBy(HomeDimens.StoryBarGap)
-            ) {
-                user.items.forEachIndexed { index, _ ->
-                    val fill = when {
-                        index < itemIndex -> 1f
-                        index == itemIndex -> progress.value
-                        else -> 0f
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(HomeDimens.StoryBarHeight)
-                            .clip(CircleShape)
-                            .background(colors.onMedia.copy(alpha = HomeDimens.StoryBarTrackAlpha))
-                    ) {
-                        Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fill).background(colors.onMedia))
-                    }
-                }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium)) {
-                AsyncImage(
-                    model = user.avatarUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(HomeDimens.StoryHeaderAvatar).clip(CircleShape).background(colors.skeleton)
-                )
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = user.name,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = colors.onMedia,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = DateUtils.getRelativeTimeSpanString(item.createdAt * MillisPerSecond, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString(),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                // The three dots, with the options for the activity that is on, and the X, close to each other
-                Row(horizontalArrangement = Arrangement.spacedBy(HomeDimens.StoryHeaderActionsGap), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = KaisouIcons.More,
-                        contentDescription = stringResource(R.string.story_more),
-                        tint = colors.onMedia,
-                        modifier = Modifier.size(dimens.buttonHeight).clip(CircleShape).clickable { menuOpen = true }.padding(dimens.spaceMedium)
-                    )
-                    Icon(
-                        imageVector = KaisouIcons.Close,
-                        contentDescription = stringResource(R.string.action_close),
-                        tint = colors.onMedia,
-                        modifier = Modifier.size(dimens.buttonHeight).clip(CircleShape).clickable(onClick = onClose).padding(dimens.spaceMedium)
-                    )
-                }
-            }
-            if (landscape && item.text == null) {
-                // Lying down the cover goes on the left, as tall as the room is, and the line and the buttons go on the right
-                Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(dimens.spaceLarge)) {
-                    AsyncImage(
-                        model = item.coverUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .aspectRatio(HomeDimens.PosterRatio)
-                            .clip(MaterialTheme.shapes.large)
-                            .background(colors.skeleton)
-                    )
-                    Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
-                            StoryLine(item = item, textAlign = TextAlign.Start)
-                        }
-                        StoryActions(item = item, onOpenReplies = onOpenReplies, onLike = onLike)
-                    }
-                }
-            } else {
-                Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    if (item.text != null) {
-                        MarkdownContent(
-                            text = item.text,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = colors.onMedia,
-                            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
-                        )
-                    } else {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(dimens.spaceLarge)) {
-                            AsyncImage(
-                                model = item.coverUrl,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxWidth(HomeDimens.StoryCoverFraction)
-                                    .aspectRatio(HomeDimens.PosterRatio)
-                                    .clip(MaterialTheme.shapes.large)
-                                    .background(colors.skeleton)
-                            )
-                            StoryLine(item = item, textAlign = TextAlign.Center)
-                        }
-                    }
-                }
-                StoryActions(item = item, onOpenReplies = onOpenReplies, onLike = onLike)
-            }
+        val moving = turn
+        if (moving == null) {
+            StoryFace(
+                user = user,
+                item = item,
+                itemIndex = itemIndex,
+                progress = { progress.value },
+                landscape = landscape,
+                onMenu = { menuOpen = true },
+                onClose = onClose,
+                onOpenReplies = onOpenReplies,
+                onLike = onLike,
+                onOpenProfile = { InAppBrowser.open(context, UserUrl + user.name) }
+            )
+        } else {
+            // While the cube turns the person that goes out and the one that comes in are both drawn, each on its side of the corner, and
+            // nothing on them answers to a touch
+            val coming = stories[moving.to]
+            val comingIndex = firstOf(coming)
+            StoryFace(
+                user = user,
+                item = item,
+                itemIndex = itemIndex,
+                progress = { progress.value },
+                landscape = landscape,
+                onMenu = {},
+                onClose = {},
+                onOpenReplies = {},
+                onLike = {},
+                onOpenProfile = {},
+                modifier = Modifier.cube(outgoing = true, forward = moving.forward) { turned }
+            )
+            StoryFace(
+                user = coming,
+                item = coming.items[comingIndex],
+                itemIndex = comingIndex,
+                progress = { 0f },
+                landscape = landscape,
+                onMenu = {},
+                onClose = {},
+                onOpenReplies = {},
+                onLike = {},
+                onOpenProfile = {},
+                modifier = Modifier.cube(outgoing = false, forward = moving.forward) { turned }
+            )
         }
 
         // The options of the activity: sharing it, opening it on AniList, copying its text and, when it is the user's own, deleting it
@@ -425,6 +484,199 @@ private fun StoryPlayer(
         }
     }
 }
+
+// Where the cube goes: the person it turns to and whether it is forward, to the one after
+private class StoryTurn(val to: Int, val forward: Boolean)
+
+// What a person shows at a moment: the picture of the title blurred behind, the bars of their activities with the one that is on filling, who
+// they are with the time since they did it, and the activity. The picture and the name open the person. A new activity comes in with a fade
+// and a rise
+@Composable
+private fun StoryFace(
+    user: StoryUi,
+    item: StoryItemUi,
+    itemIndex: Int,
+    progress: () -> Float,
+    landscape: Boolean,
+    onMenu: () -> Unit,
+    onClose: () -> Unit,
+    onOpenReplies: (Int) -> Unit,
+    onLike: (Int) -> Unit,
+    onOpenProfile: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = KaisouTheme.dimens
+    val colors = KaisouTheme.colors
+    // What the activity shows comes in with a short fade and a rise each time it changes, in one copy and not over the old one, so nothing
+    // blinks while a picture loads. The one the face starts with is already there
+    val firstId = remember { item.id }
+    val enter = remember(item.id) { Animatable(if (item.id == firstId) 1f else 0f) }
+    LaunchedEffect(item.id) { if (enter.value < 1f) enter.animateTo(1f, tween(HomeDimens.StoryFadeMillis)) }
+    val entering = Modifier.graphicsLayer {
+        alpha = enter.value
+        translationY = (1f - enter.value) * HomeDimens.StoryRise.toPx()
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        // The picture of the title, blurred and dark, behind everything
+        AsyncImage(
+            model = item.backdropUrl ?: item.coverUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize().blur(HomeDimens.StoryBackdropBlur)
+        )
+        Box(modifier = Modifier.fillMaxSize().background(colors.veil.copy(alpha = HomeDimens.StoryBackdropAlpha)))
+
+        Column(
+            // The keyboard is left out of the room the story keeps clear, it is the sheet of the comments that makes way for it, so the cover
+            // does not shrink when the keyboard comes and grow when it goes
+            modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.exclude(WindowInsets.ime)).padding(horizontal = dimens.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = dimens.spaceSmall),
+                horizontalArrangement = Arrangement.spacedBy(HomeDimens.StoryBarGap)
+            ) {
+                user.items.forEachIndexed { index, _ ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(HomeDimens.StoryBarHeight)
+                            .clip(CircleShape)
+                            .background(colors.onMedia.copy(alpha = HomeDimens.StoryBarTrackAlpha))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    scaleX = when {
+                                        index < itemIndex -> 1f
+                                        index == itemIndex -> progress()
+                                        else -> 0f
+                                    }
+                                    transformOrigin = TransformOrigin(0f, 0.5f)
+                                }
+                                .background(colors.onMedia)
+                        )
+                    }
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium)) {
+                // The picture and the name of the person, which open their page
+                Row(
+                    modifier = Modifier.weight(1f).clip(MaterialTheme.shapes.large).clickable(onClick = onOpenProfile),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
+                ) {
+                    AsyncImage(
+                        model = user.avatarUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(HomeDimens.StoryHeaderAvatar).clip(CircleShape).background(colors.skeleton)
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = user.name,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = colors.onMedia,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = DateUtils.getRelativeTimeSpanString(item.createdAt * MillisPerSecond, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString(),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                // The three dots, with the options for the activity that is on, and the X, close to each other
+                Row(horizontalArrangement = Arrangement.spacedBy(HomeDimens.StoryHeaderActionsGap), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = KaisouIcons.More,
+                        contentDescription = stringResource(R.string.story_more),
+                        tint = colors.onMedia,
+                        modifier = Modifier.size(dimens.buttonHeight).clip(CircleShape).clickable(onClick = onMenu).padding(dimens.spaceMedium)
+                    )
+                    Icon(
+                        imageVector = KaisouIcons.Close,
+                        contentDescription = stringResource(R.string.action_close),
+                        tint = colors.onMedia,
+                        modifier = Modifier.size(dimens.buttonHeight).clip(CircleShape).clickable(onClick = onClose).padding(dimens.spaceMedium)
+                    )
+                }
+            }
+            if (landscape && item.text == null) {
+                // Lying down the cover goes on the left, as tall as the room is, and the line and the buttons go on the right
+                Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(dimens.spaceLarge)) {
+                    AsyncImage(
+                        model = item.coverUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .aspectRatio(HomeDimens.PosterRatio)
+                            .then(entering)
+                            .clip(MaterialTheme.shapes.large)
+                            .background(colors.skeleton)
+                    )
+                    Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                            Box(modifier = entering) { StoryLine(item = item, textAlign = TextAlign.Start) }
+                        }
+                        StoryActions(item = item, onOpenReplies = onOpenReplies, onLike = onLike)
+                    }
+                }
+            } else {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth().then(entering), contentAlignment = Alignment.Center) {
+                    if (item.text != null) {
+                        MarkdownContent(
+                            text = item.text,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = colors.onMedia,
+                            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                        )
+                    } else {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(dimens.spaceLarge)) {
+                            AsyncImage(
+                                model = item.coverUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth(HomeDimens.StoryCoverFraction)
+                                    .aspectRatio(HomeDimens.PosterRatio)
+                                    .clip(MaterialTheme.shapes.large)
+                                    .background(colors.skeleton)
+                            )
+                            StoryLine(item = item, textAlign = TextAlign.Center)
+                        }
+                    }
+                }
+                StoryActions(item = item, onOpenReplies = onOpenReplies, onLike = onLike)
+            }
+        }
+    }
+}
+
+// A face of the cube while it turns, from nothing to all: the one that goes out turns on its edge toward the side it leaves by, and the one that
+// comes in turns from the side it comes from, so both meet in a corner. The one that is turned away gets dark
+private fun Modifier.cube(outgoing: Boolean, forward: Boolean, turned: () -> Float): Modifier =
+    graphicsLayer {
+        val amount = turned()
+        val side = if (forward) 1f else -1f
+        cameraDistance = HomeDimens.StoryCubeCamera * density
+        if (outgoing) {
+            transformOrigin = TransformOrigin(if (forward) 1f else 0f, 0.5f)
+            rotationY = -90f * side * amount
+            translationX = -side * size.width * amount
+        } else {
+            transformOrigin = TransformOrigin(if (forward) 0f else 1f, 0.5f)
+            rotationY = 90f * side * (1f - amount)
+            translationX = side * size.width * (1f - amount)
+        }
+    }.drawWithContent {
+        drawContent()
+        drawRect(Color.Black.copy(alpha = HomeDimens.StoryCubeShade * if (outgoing) turned() else 1f - turned()))
+    }
 
 // What the person did, with the episodes or the chapters in the violet of the app
 @Composable

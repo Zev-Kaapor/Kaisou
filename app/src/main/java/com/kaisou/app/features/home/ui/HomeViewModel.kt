@@ -1,6 +1,9 @@
 package com.kaisou.app.features.home.ui
 
 // Android application and view model
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import android.app.Application
 import android.content.res.Configuration
 import android.os.SystemClock
@@ -62,6 +65,11 @@ import com.kaisou.app.features.home.data.ShelfUi
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
     // Where the Home was left, which stays when the phone is turned
     val scroll = ScrollPosition()
+
+    // The story that is open, the person and the activity that is on, kept here and not in the screen, so it stays where it was when the phone
+    // is turned and the screen is made again
+    var openStory by mutableStateOf<Int?>(null)
+    var storyItem by mutableStateOf<Int?>(null)
 
     private val repository = HomeRepository(application)
     // The list of the user is the one of the page of the title, so the editor is the same
