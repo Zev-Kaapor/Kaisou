@@ -58,6 +58,7 @@ private val SpecialThanks = listOf(
     Thanks(R.string.thanks_crunchyroll, R.string.thanks_crunchyroll_subtitle, R.string.thanks_crunchyroll_address, R.drawable.thanks_crunchyroll),
     Thanks(R.string.thanks_dantotsu, R.string.thanks_dantotsu_subtitle, R.string.thanks_dantotsu_address, R.drawable.thanks_dantotsu),
     Thanks(R.string.thanks_google_translate, R.string.thanks_google_translate_subtitle, R.string.thanks_google_translate_address, R.drawable.thanks_google_translate),
+    Thanks(R.string.thanks_imdb, R.string.thanks_imdb_subtitle, R.string.thanks_imdb_address, R.drawable.thanks_imdb),
     Thanks(R.string.thanks_jikan, R.string.thanks_jikan_subtitle, R.string.thanks_jikan_address, R.drawable.thanks_jikan),
     Thanks(R.string.thanks_kuroiru, R.string.thanks_kuroiru_subtitle, R.string.thanks_kuroiru_address, R.drawable.thanks_kuroiru),
     Thanks(R.string.thanks_mangabaka, R.string.thanks_mangabaka_subtitle, R.string.thanks_mangabaka_address, R.drawable.thanks_mangabaka),
@@ -66,6 +67,7 @@ private val SpecialThanks = listOf(
     Thanks(R.string.thanks_thetvdb, R.string.thanks_thetvdb_subtitle, R.string.thanks_thetvdb_address, R.drawable.thanks_thetvdb),
     Thanks(R.string.thanks_tmdb, R.string.thanks_tmdb_subtitle, R.string.thanks_tmdb_address, R.drawable.thanks_tmdb),
     Thanks(R.string.thanks_tomato, R.string.thanks_tomato_subtitle, R.string.thanks_tomato_address, R.drawable.thanks_tomato),
+    Thanks(R.string.thanks_tvmaze, R.string.thanks_tvmaze_subtitle, R.string.thanks_tvmaze_address, R.drawable.thanks_tvmaze),
     Thanks(R.string.thanks_wavvy, R.string.thanks_wavvy_subtitle, R.string.thanks_wavvy_address, iconRes = R.string.thanks_wavvy_icon, inset = true)
 )
 

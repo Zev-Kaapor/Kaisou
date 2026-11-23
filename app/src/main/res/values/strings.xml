@@ -821,8 +821,11 @@
     <string name="thanks_crunchyroll">Crunchyroll</string>
     <string name="thanks_crunchyroll_subtitle">Inspiration for the look of the Home and of the title</string>
     <string name="thanks_crunchyroll_address" translatable="false">https://www.crunchyroll.com</string>
+    <string name="thanks_imdb">IMDb</string>
+    <string name="thanks_imdb_subtitle">The score people gave each episode, which comes first. Information courtesy of IMDb</string>
+    <string name="thanks_imdb_address" translatable="false">https://www.imdb.com</string>
     <string name="thanks_jikan">Jikan</string>
-    <string name="thanks_jikan_subtitle">The openings and the endings of the anime, from MyAnimeList, and the public mirrors of the community that answer when it is out of reach</string>
+    <string name="thanks_jikan_subtitle">The openings and the endings of the anime and the score of their episodes, from MyAnimeList, and the public mirrors of the community that answer when it is out of reach</string>
     <string name="thanks_jikan_address" translatable="false">https://jikan.moe</string>
     <string name="thanks_kuroiru">Kuroiru</string>
     <string name="thanks_kuroiru_subtitle">The news of the anime, with the headlines of Anime News Network</string>
@@ -838,23 +841,26 @@
     <string name="thanks_mangadex_subtitle">The covers of the volumes of the manga</string>
     <string name="thanks_mangadex_address" translatable="false">https://mangadex.org</string>
     <string name="thanks_dantotsu">Dantotsu</string>
-    <string name="thanks_dantotsu_subtitle">Inspiration for the header and for a client of AniList</string>
+    <string name="thanks_dantotsu_subtitle">Inspiration for the header, for a client of AniList and for how the progress of the list follows the episodes</string>
     <string name="thanks_dantotsu_address" translatable="false">https://github.com/itsmechinmoy/Dantotsu</string>
     <string name="thanks_google_translate">Google Translate</string>
-    <string name="thanks_google_translate_subtitle">The translation of the synopses</string>
+    <string name="thanks_google_translate_subtitle">The translation of the synopses and of the names and texts of the episodes</string>
     <string name="thanks_google_translate_address" translatable="false">https://translate.google.com</string>
     <string name="thanks_myanimelist">MyAnimeList</string>
-    <string name="thanks_myanimelist_subtitle">The age rating of the anime</string>
+    <string name="thanks_myanimelist_subtitle">The age rating of the anime and the score of their episodes</string>
     <string name="thanks_myanimelist_address" translatable="false">https://myanimelist.net</string>
     <string name="thanks_thetvdb">TheTVDB</string>
-    <string name="thanks_thetvdb_subtitle">The posters, the backdrops, the logos and the seasons of the series. Metadata provided by TheTVDB</string>
+    <string name="thanks_thetvdb_subtitle">The posters, the backdrops, the logos, the seasons of the series and the picture of each season. Metadata provided by TheTVDB</string>
     <string name="thanks_thetvdb_address" translatable="false">https://www.thetvdb.com</string>
     <string name="thanks_tmdb">TMDB</string>
-    <string name="thanks_tmdb_subtitle">The posters, the backdrops, the logos, the ratings and the trailers. This product uses the TMDB API but is not endorsed or certified by TMDB</string>
+    <string name="thanks_tmdb_subtitle">The posters, the backdrops, the logos, the ratings, the trailers and the names, the texts and the scores of the episodes. This product uses the TMDB API but is not endorsed or certified by TMDB</string>
     <string name="thanks_tmdb_address" translatable="false">https://www.themoviedb.org</string>
     <string name="thanks_tomato">Tomato</string>
     <string name="thanks_tomato_subtitle">Inspiration for the details of the title and for the tag of the weekly release</string>
     <string name="thanks_tomato_address" translatable="false">https://tomatoanimes.com/d/latest</string>
+    <string name="thanks_tvmaze">TVmaze</string>
+    <string name="thanks_tvmaze_subtitle">The score of the episodes when the other sources have none</string>
+    <string name="thanks_tvmaze_address" translatable="false">https://www.tvmaze.com</string>
     <string name="thanks_wavvy">Wavvy</string>
     <string name="thanks_wavvy_subtitle">The structure, the identity and the way of building the screens</string>
     <string name="thanks_wavvy_address" translatable="false">https://github.com/Zev-Kaapor/Wavvy</string>

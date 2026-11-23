@@ -528,13 +528,13 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
       <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_dantotsu.webp" width="32" height="32" alt="Dantotsu"></td>
       <td><strong><a href="https://github.com/itsmechinmoy/Dantotsu">Dantotsu</a></strong></td>
       <td><a href="https://github.com/rebelonion">rebelonion</a></td>
-      <td>Inspiration for the header and for a client of AniList</td>
+      <td>Inspiration for the header, for a client of AniList and for how the progress of the list follows the episodes</td>
     </tr>
     <tr>
       <td align="center"><img src="https://www.google.com/s2/favicons?domain=translate.google.com&sz=128" width="32" height="32" alt="Google Translate"></td>
       <td><strong>Google Translate</strong></td>
       <td><a href="https://translate.google.com">Google LLC</a></td>
-      <td>The translation of the synopses, through its public endpoint</td>
+      <td>The translation of the synopses and of the names and texts of the episodes, through its public endpoint</td>
     </tr>
     <tr>
       <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_kuroiru.webp" width="32" height="32" alt="Kuroiru"></td>
@@ -543,10 +543,16 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
       <td>The news of the anime, with the headlines of Anime News Network</td>
     </tr>
     <tr>
+      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_imdb.webp" width="32" height="32" alt="IMDb"></td>
+      <td><strong>IMDb</strong></td>
+      <td><a href="https://www.imdb.com">IMDb</a></td>
+      <td>The score people gave each episode, which comes first</td>
+    </tr>
+    <tr>
       <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_jikan.webp" width="32" height="32" alt="Jikan"></td>
       <td><strong>Jikan</strong></td>
       <td><a href="https://jikan.moe">Jikan</a></td>
-      <td>The openings and the endings of the anime, from MyAnimeList</td>
+      <td>The openings and the endings of the anime and the score of their episodes, from MyAnimeList</td>
     </tr>
     <tr>
       <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_mangabaka.webp" width="32" height="32" alt="MangaBaka"></td>
@@ -564,19 +570,25 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
       <td align="center"><img src="https://www.google.com/s2/favicons?domain=myanimelist.net&sz=128" width="32" height="32" alt="MyAnimeList"></td>
       <td><strong>MyAnimeList</strong></td>
       <td><a href="https://myanimelist.net">MyAnimeList</a></td>
-      <td>The age rating of the anime</td>
+      <td>The age rating of the anime and the score of their episodes</td>
+    </tr>
+    <tr>
+      <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_tvmaze.webp" width="32" height="32" alt="TVmaze"></td>
+      <td><strong>TVmaze</strong></td>
+      <td><a href="https://www.tvmaze.com">TVmaze</a></td>
+      <td>The score of the episodes when the other sources have none</td>
     </tr>
     <tr>
       <td align="center"><img src="https://www.google.com/s2/favicons?domain=thetvdb.com&sz=128" width="32" height="32" alt="TheTVDB"></td>
       <td><strong>TheTVDB</strong></td>
       <td><a href="https://www.thetvdb.com">TheTVDB</a></td>
-      <td>The posters, the backdrops, the logos and the seasons of the series</td>
+      <td>The posters, the backdrops, the logos, the seasons of the series and the picture of each season</td>
     </tr>
     <tr>
       <td align="center"><img src="https://www.google.com/s2/favicons?domain=themoviedb.org&sz=128" width="32" height="32" alt="TMDB"></td>
       <td><strong>TMDB</strong></td>
       <td><a href="https://www.themoviedb.org">TMDB</a></td>
-      <td>The posters, the backdrops, the logos and the age ratings</td>
+      <td>The posters, the backdrops, the logos, the age ratings and the names, the texts and the scores of the episodes</td>
     </tr>
     <tr>
       <td align="center"><img src="app/src/main/res/drawable-nodpi/thanks_tomato.webp" width="32" height="32" alt="Tomato"></td>
@@ -598,8 +610,8 @@ Found a text that is not right? [Open an issue](https://github.com/Zev-Kaapor/Ka
 
 <h3>Thanks to the Services</h3>
 
-<p>Thank you to <strong>AniList</strong>, which gives the catalog, the lists and the sign in, to <strong>TMDB</strong>, to <strong>TheTVDB</strong> and to <strong>MyAnimeList</strong>, which give the pictures, the seasons, the ratings and the trailers, to <strong>Jikan</strong> and to the public mirrors of the community, which give the openings and the endings, to <strong>Chiaki</strong>, which gives the order to watch the anime, to <strong>Kuroiru</strong> and <strong>MangaBaka</strong>, which give the news, to <strong>MangaDex</strong>, which gives the covers of the volumes of the manga, to <strong>Google Translate</strong>, which translates the texts, and to <strong>GitHub</strong>, which holds the releases that the updates look for.<br>
-<em>This product uses the TMDB API but is not endorsed or certified by TMDB. Metadata provided by <a href="https://www.thetvdb.com">TheTVDB</a>. Kaisou is independent and is not affiliated with or endorsed by any of them.</em></p>
+<p>Thank you to <strong>AniList</strong>, which gives the catalog, the lists and the sign in, to <strong>TMDB</strong>, to <strong>TheTVDB</strong> and to <strong>MyAnimeList</strong>, which give the pictures, the seasons, the ratings, the trailers and the episodes, to <strong>IMDb</strong> and to <strong>TVmaze</strong>, which give the score of the episodes, to <strong>Jikan</strong> and to the public mirrors of the community, which give the openings, the endings and the score of the episodes from MyAnimeList, to <strong>Chiaki</strong>, which gives the order to watch the anime, to <strong>Kuroiru</strong> and <strong>MangaBaka</strong>, which give the news, to <strong>MangaDex</strong>, which gives the covers of the volumes of the manga, to <strong>Google Translate</strong>, which translates the texts, and to <strong>GitHub</strong>, which holds the releases that the updates look for.<br>
+<em>This product uses the TMDB API but is not endorsed or certified by TMDB. Metadata provided by <a href="https://www.thetvdb.com">TheTVDB</a>. Information courtesy of <a href="https://www.imdb.com">IMDb</a>. Kaisou is independent and is not affiliated with or endorsed by any of them.</em></p>
 
 <h3>Development Helpers</h3>
 
@@ -711,9 +723,9 @@ Kaisou is licensed under the **GNU General Public License v3.0**, see the [LICEN
 
 <h1><a id="disclaimer"></a>Disclaimer</h1>
 
-Kaisou is an open-source, non-commercial project developed for educational and personal use. This project is **not affiliated with, funded, authorized, endorsed by, or associated** with AniList, TMDB, TheTVDB, MyAnimeList, Crunchyroll, Google LLC, or any of their affiliates and subsidiaries.
+Kaisou is an open-source, non-commercial project developed for educational and personal use. This project is **not affiliated with, funded, authorized, endorsed by, or associated** with AniList, TMDB, TheTVDB, MyAnimeList, IMDb, TVmaze, Crunchyroll, Google LLC, or any of their affiliates and subsidiaries.
 
-The names, the logos, the posters and the data of the titles belong to their owners and come from AniList, TMDB, TheTVDB, MyAnimeList, Jikan, Kuroiru, MangaBaka and MangaDex, with which Kaisou has no agreement. If you own any of them and want it out of the app, open an issue and it will be taken out.
+The names, the logos, the posters and the data of the titles belong to their owners and come from AniList, TMDB, TheTVDB, MyAnimeList, IMDb, TVmaze, Jikan, Kuroiru, MangaBaka and MangaDex, with which Kaisou has no agreement. If you own any of them and want it out of the app, open an issue and it will be taken out.
 
 All trademarks, service marks, and intellectual property rights referenced in this project belong to their respective owners. Kaisou does not host, store, or distribute any copyrighted media; it functions strictly as a client interface for publicly available content provided via third-party APIs.
 
