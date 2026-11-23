@@ -254,6 +254,9 @@
     <string name="title_data_popularity">Popularity</string>
     <string name="title_data_favourites">Favourites</string>
     <string name="title_tab_details">Details</string>
+    <string name="title_season">Season %1$d</string>
+    <string name="title_part">Part %1$d</string>
+    <string name="title_season_part">Season %1$d · Part %2$d</string>
     <string name="title_tab_episodes">Episodes</string>
     <string name="title_tab_chapters">Chapters</string>
     <string name="title_tab_community">Community</string>

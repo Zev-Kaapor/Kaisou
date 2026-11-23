@@ -63,6 +63,9 @@ class HeroArt(
     // The same, with the season that was found after it
     fun withSeason(season: Int?) = HeroArt(posterUrl, backdropUrl, logoUrl, synopsis, rating, season)
 
+    // The same, with the pictures of the season of the title, which were found after it
+    fun withPictures(posterUrl: String?, backdropUrl: String?) = HeroArt(posterUrl, backdropUrl, logoUrl, synopsis, rating, season)
+
     // The same, with the rating that was worked out after it
     fun withRating(rating: ContentRating?) = HeroArt(posterUrl, backdropUrl, logoUrl, synopsis, rating, season)
 }

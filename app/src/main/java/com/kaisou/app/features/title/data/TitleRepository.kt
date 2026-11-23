@@ -438,6 +438,7 @@ class TitleRepository(context: Context) {
             malId = number(media, "idMal"),
             adult = media.optBoolean("isAdult"),
             seasonMarker = SeasonNumber.marker(names),
+            partMarker = SeasonNumber.part(names),
             isContinuation = SeasonNumber.isContinuation(names),
             hasPrequel = media.optJSONObject("relations")?.optJSONArray("edges")?.let { edges ->
                 (0 until edges.length()).any { edges.getJSONObject(it).optString("relationType") == PrequelRelation }

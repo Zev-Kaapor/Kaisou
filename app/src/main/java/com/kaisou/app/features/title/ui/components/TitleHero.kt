@@ -2,9 +2,14 @@ package com.kaisou.app.features.title.ui.components
 
 // Compose animation
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 // Compose layouts and foundations
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -59,6 +64,7 @@ import coil3.size.Size
 // Java utilities
 import kotlin.math.roundToInt
 // Project resources
+import androidx.compose.ui.text.font.FontWeight
 import com.kaisou.app.R
 import com.kaisou.app.core.artwork.artRequest
 import com.kaisou.app.core.artwork.logoRequest
@@ -164,6 +170,28 @@ fun TitleHero(
                 maxHeight = if (landscape) HomeDimens.HeroLandscapeTitleHeight else ComponentDimens.TitleLogoMaxHeight,
                 modifier = Modifier.fillMaxWidth()
             )
+            // Which season or part of the series this is, under the logo, since the logo hides the name that says it and the pictures are the
+            // same for all of them. Only a title that is not the first of its series has it, and it comes in when the season is known
+            val season = art?.season
+            val part = title.partMarker
+            val where = when {
+                season != null && part != null -> stringResource(R.string.title_season_part, season, part)
+                season != null && (season > 1 || title.hasPrequel) -> stringResource(R.string.title_season, season)
+                part != null -> stringResource(R.string.title_part, part)
+                else -> null
+            }
+            AnimatedVisibility(
+                visible = where != null,
+                enter = fadeIn(tween(KaisouMotion.ExpandMillis)) + expandVertically(tween(KaisouMotion.ExpandMillis)),
+                exit = fadeOut(tween(KaisouMotion.ExpandMillis)) + shrinkVertically(tween(KaisouMotion.ExpandMillis))
+            ) {
+                Text(
+                    text = where.orEmpty(),
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = dimens.spaceSmall)
+                )
+            }
             Row(
                 modifier = Modifier.padding(top = if (landscape) dimens.spaceSmall else dimens.spaceMedium),
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),

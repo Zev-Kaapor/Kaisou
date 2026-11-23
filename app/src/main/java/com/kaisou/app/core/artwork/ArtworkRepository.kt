@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 // Java time
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 // Project resources
 import com.kaisou.app.core.anilist.AniListClient
 import com.kaisou.app.core.cache.AppStore
@@ -104,6 +105,46 @@ class ArtworkRepository {
             withContext(Dispatchers.IO) { AppStore.put(StoreSpace, key, TitleArtJson.write(found.art)) }
         }
         return found.art
+    }
+
+    // The poster and the backdrop of a season of the series of a title, so the seasons after the first do not all show the picture of the series.
+    // TMDB has a poster for each season, which is used when its season began about when the title did, since the two sites do not always number
+    // the seasons the same, and TheTVDB has a poster and sometimes a backdrop for each, of the numbering the season was worked out with. Each is
+    // null when neither site has one. What was found is kept for a week, and a question that failed is not kept
+    suspend fun seasonArt(anilistId: Int, query: ArtQuery, season: Int, start: LocalDate?, language: String): SeasonPictures {
+        val key = "$anilistId $season $language"
+        withContext(Dispatchers.IO) { AppStore.get(SeasonArtSpace, key, SeasonArtStoreMillis) }?.let(::readSeasonPictures)?.let { return it }
+        val resolved = try {
+            idsOf(anilistId, query)
+        } catch (_: Exception) {
+            null
+        }
+        if (resolved == null || resolved.kind != "tv") return SeasonPictures.None
+        val (tmdb, tvdb) = coroutineScope {
+            val first = async(Dispatchers.IO) { resolved.tmdbId?.let { TmdbClient.seasonArt(it, season) } ?: SeasonArtwork.None }
+            val second = async(Dispatchers.IO) { resolved.tvdbId?.let { TvdbClient.seasonArt(it, season) } ?: SeasonArtwork.None }
+            first.await() to second.await()
+        }
+        val fromTmdb = tmdb.takeIf { began(it.airDate, start) }?.let { PosterPicker.pick(it.posters.list, language, PosterPicker.SeasonMinWidth) }
+        val fromTvdb = PosterPicker.pick(tvdb.posters.list, language, PosterPicker.SeasonMinWidth)
+        val pictures = SeasonPictures((fromTmdb ?: fromTvdb)?.url, BackdropPicker.pick(tvdb.backdrops.list, language)?.url)
+        if (!(tmdb.failed && tvdb.failed)) {
+            withContext(Dispatchers.IO) { AppStore.put(SeasonArtSpace, key, "${pictures.posterUrl.orEmpty()}\n${pictures.backdropUrl.orEmpty()}") }
+        }
+        return pictures
+    }
+
+    // Whether a season began about when the title did: up to a little after it, or up to a year and a bit before it, which is how far a second
+    // part of a season can be from where the season began
+    private fun began(airDate: LocalDate?, start: LocalDate?): Boolean {
+        if (airDate == null || start == null) return false
+        return ChronoUnit.DAYS.between(airDate, start) in -SeasonLateDays..SeasonEarlyDays
+    }
+
+    private fun readSeasonPictures(text: String): SeasonPictures? {
+        val parts = text.split("\n")
+        if (parts.size != 2) return null
+        return SeasonPictures(parts[0].ifEmpty { null }, parts[1].ifEmpty { null })
     }
 
     // The id on YouTube of the trailer TMDB has for a title, for the ones AniList has none for: one question to TMDB, once for a title, with the
@@ -214,6 +255,11 @@ class ArtworkRepository {
         private const val SeasonAttempts = 3
         private const val SeasonRetryMillis = 1_500L
         // Where the trailers are kept, and for how long: a week, a title seldom gets one
+        private const val SeasonArtSpace = "seasonart1"
+        private const val SeasonArtStoreMillis = 7L * 24L * 60L * 60L * 1000L
+        private const val SeasonLateDays = 60L
+        private const val SeasonEarlyDays = 450L
+
         private const val TrailerSpace = "trailer1"
         private const val TrailerStoreMillis = 7L * 24L * 60L * 60L * 1000L
         private const val StoreMillis = 24L * 60L * 60L * 1000L

@@ -20,6 +20,7 @@ object SeasonNumber {
     private val Words = listOf("second", "third", "fourth", "fifth", "sixth")
     // The first season is the second word of the list, the one after the first
     private const val FirstWordSeason = 2
+    private const val FirstWordPart = 2
 
     // The season a name says, null when none of the names does. Parts and arcs are not seasons
     fun marker(names: List<String>): Int? =
@@ -39,6 +40,21 @@ object SeasonNumber {
     )
 
     fun isContinuation(names: List<String>): Boolean = names.any { Continuation.containsMatchIn(it) }
+
+    private val NumberedPart = Regex("\\b(?:part|cour)\\s*([2-9]|iii|ii)\\b|\\b([2-9])(?:nd|rd|th)\\s+(?:part|cour)\\b|\\b(second|third|fourth)\\s+(?:part|cour)\\b", RegexOption.IGNORE_CASE)
+    private val PartWords = listOf("second", "third", "fourth")
+    private val PartRomans = mapOf("ii" to 2, "iii" to 3)
+
+    // The part of a season or of a series a name says, as 2 for Part 2, 2nd Cour or Second Part, null when none of the names says one. The first
+    // part is never said, so it is never found
+    fun part(names: List<String>): Int? =
+        names.firstNotNullOfOrNull { name ->
+            NumberedPart.find(name)?.groupValues?.let { groups ->
+                groups[1].takeIf { it.isNotEmpty() }?.let { it.toIntOrNull() ?: PartRomans[it.lowercase()] }
+                    ?: groups[2].toIntOrNull()
+                    ?: groups[3].takeIf { it.isNotEmpty() }?.let { PartWords.indexOf(it.lowercase()) + FirstWordPart }
+            }
+        }
 
     // The last season of the series that had already started when the title started, which is where a second part goes on. Null when the day is
     // not known or none had started

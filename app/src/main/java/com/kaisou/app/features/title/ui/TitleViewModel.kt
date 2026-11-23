@@ -28,6 +28,7 @@ import kotlin.math.roundToInt
 import com.kaisou.app.R
 import com.kaisou.app.core.anilist.SeasonNumber
 import com.kaisou.app.core.artwork.ArtworkRepository
+import com.kaisou.app.core.artwork.SeasonPictures
 import com.kaisou.app.core.artwork.LogoCheck
 import com.kaisou.app.core.artwork.artRequest
 import com.kaisou.app.core.artwork.logoRequest
@@ -332,6 +333,8 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         var synopsis: String? = null
         var rating: ContentRating? = null
         var covers = emptyList<MangaCover>()
+        // Whether the pictures of the season were already put in the page with the others, so they are not asked for again
+        var usedSeasonArt = false
         // The season does not wait for the pictures, nor is it lost when one of the sites is slow: it goes on after the time of the pictures
         // ends and is put in the title when it comes
         val seasonJob = if (title.manga) null else viewModelScope.async {
@@ -352,36 +355,57 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
                         rating = RatingRepository.forCard(AppLanguage.region, RatingQuery(title.anilistId, title.malId, title.adult, true, title.query))
                     }
                     // The art of a manga is its covers on MangaDex, one for each volume, and the first volume stands for it. It is
-                    // downloaded now, so it comes up whole, and the cover of AniList stays when there is none
+                    // downloaded now, so it comes up whole, and the cover of AniList stays when there is none. A manga that goes on from another
+                    // keeps the cover of AniList, which is its own, since the first volume on MangaDex is the one of the one before it
                     launch {
                         val found = MangaArtClient.covers(title.anilistId, title.query.names, AppLanguage.code, AppLanguage.region).orEmpty()
                         covers = found
-                        MangaArtClient.poster(found)?.original?.let { url ->
+                        MangaArtClient.poster(found)?.original?.takeIf { !title.hasPrequel }?.let { url ->
                             if (loader.execute(artRequest(context, url, mutableState.value.posterSize)) is SuccessResult) posterUrl = url
                         }
                     }
                     return@coroutineScope
                 }
                 launch {
+                    // The pictures of the season are asked at the same time as the ones of the series, for a title that says it is not the first
+                    // of its series, so each season shows its own from the start and not after the ones of the series
+                    val own = if (title.hasPrequel || title.seasonMarker != null || title.isContinuation) {
+                        async {
+                            val season = seasonJob?.await()
+                            if (season != null && season > 1) {
+                                ArtworkRepository.Shared.seasonArt(title.anilistId, title.query, season, title.startDate, AppLanguage.code)
+                            } else {
+                                SeasonPictures.None
+                            }
+                        }
+                    } else {
+                        null
+                    }
                     val found = ArtworkRepository.Shared.art(title.anilistId, title.query, AppLanguage.code)
-                    posterUrl = found.posterUrl
-                    backdropUrl = found.backdropUrl
+                    val mine = own?.await() ?: SeasonPictures.None
+                    usedSeasonArt = mine.posterUrl != null || mine.backdropUrl != null
+                    posterUrl = mine.posterUrl ?: found.posterUrl
+                    backdropUrl = mine.backdropUrl ?: found.backdropUrl
+                    // A picture that could not be downloaded is left for the one of the series
+                    suspend fun loaded(url: String?, size: Size): String? = url?.takeIf { loader.execute(artRequest(context, it, size)) is SuccessResult }
                     coroutineScope {
                         launch { rating = RatingRepository.find(AppLanguage.region, title.malId, title.adult, found.certifications) }
                         launch {
                             // The picture of the way the screen is in is downloaded now, so it comes up whole
+                            val backdropSize = mutableState.value.backdropSize
+                            val posterSize = mutableState.value.posterSize
                             if (landscape) {
-                                backdropUrl = found.backdropUrl?.takeIf { loader.execute(artRequest(context, it, mutableState.value.backdropSize)) is SuccessResult }
-                                if (backdropUrl == null) posterUrl = found.posterUrl?.takeIf { loader.execute(artRequest(context, it, mutableState.value.posterSize)) is SuccessResult }
+                                backdropUrl = loaded(mine.backdropUrl, backdropSize) ?: loaded(found.backdropUrl, backdropSize)
+                                if (backdropUrl == null) posterUrl = loaded(mine.posterUrl, posterSize) ?: loaded(found.posterUrl, posterSize)
                             } else {
-                                posterUrl = found.posterUrl?.takeIf { loader.execute(artRequest(context, it, mutableState.value.posterSize)) is SuccessResult }
+                                posterUrl = loaded(mine.posterUrl, posterSize) ?: loaded(found.posterUrl, posterSize)
                             }
                         }
                         launch {
                             // The first logo that can be seen on the dark page, the black ones are turned down
                             for (url in found.logos) {
-                                val loaded = loader.execute(logoRequest(context, url, mutableState.value.logoSize))
-                                if (loaded is SuccessResult && LogoCheck.isVisibleOnDark(loaded.image.toBitmap())) {
+                                val loadedLogo = loader.execute(logoRequest(context, url, mutableState.value.logoSize))
+                                if (loadedLogo is SuccessResult && LogoCheck.isVisibleOnDark(loadedLogo.image.toBitmap())) {
                                     logoUrl = url
                                     break
                                 }
@@ -393,15 +417,32 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
         mutableState.update { it.copy(covers = covers) }
         val season = if (seasonJob?.isCompleted == true) seasonJob.await() else null
-        if (seasonJob != null && !seasonJob.isCompleted) {
+        if (seasonJob != null) {
             viewModelScope.launch {
-                val late = seasonJob.await() ?: return@launch
-                // The page puts the pictures in when this ends, so the season is put in after them
-                val shown = mutableState.first { it.art != null }
-                mutableState.update { state -> state.art?.let { state.copy(art = it.withSeason(late)) } ?: shown }
+                val found = season ?: seasonJob.await()
+                if (season == null && found != null) {
+                    // The page puts the pictures in when this ends, so the season is put in after them
+                    val shown = mutableState.first { it.art != null }
+                    mutableState.update { state -> state.art?.let { state.copy(art = it.withSeason(found)) } ?: shown }
+                }
+                if (found != null && !usedSeasonArt) showSeasonArt(title, found)
             }
         }
         return HeroArt(posterUrl, backdropUrl, logoUrl, synopsis, rating, season)
+    }
+
+    // A season after the first has its own poster and backdrop when the sites have them, so it is not taken for the others of its series. They are
+    // downloaded first, so the picture changes at once, and the ones of the series stay when there are none
+    private suspend fun showSeasonArt(title: TitleUi, season: Int) {
+        if (season <= 1) return
+        val pictures = ArtworkRepository.Shared.seasonArt(title.anilistId, title.query, season, title.startDate, AppLanguage.code)
+        val context = getApplication<Application>()
+        val loader = SingletonImageLoader.get(context)
+        val poster = pictures.posterUrl?.takeIf { loader.execute(artRequest(context, it, mutableState.value.posterSize)) is SuccessResult }
+        val backdrop = pictures.backdropUrl?.takeIf { loader.execute(artRequest(context, it, mutableState.value.backdropSize)) is SuccessResult }
+        if (poster == null && backdrop == null) return
+        mutableState.first { it.art != null }
+        mutableState.update { state -> state.art?.let { state.copy(art = it.withPictures(poster ?: it.posterUrl, backdrop ?: it.backdropUrl)) } ?: state }
     }
 
     private companion object {

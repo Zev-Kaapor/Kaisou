@@ -27,6 +27,9 @@ object TvdbClient {
     private const val SeriesLogo = 23
     private const val MovieLogo = 25
     private const val SeriesBackground = 3
+    private const val SeasonPoster = 7
+    private const val SeasonBackground = 8
+    private const val OfficialOrder = "official"
     private const val MovieBackground = 15
 
     private const val SeriesKind = "series"
@@ -97,6 +100,35 @@ object TvdbClient {
         } catch (_: Exception) {
             Artworks.Failed
         }
+    }
+
+    // The posters and the backdrops of a season of a series, from the season in the official order. None when the series has no such season.
+    // Blocks on the network
+    fun seasonArt(tvdbId: Int, season: Int): SeasonArtwork {
+        if (!isSet) return SeasonArtwork.None
+        return try {
+            val seasons = call("/series/$tvdbId/extended")?.optJSONObject("data")?.optJSONArray("seasons") ?: return SeasonArtwork.None
+            val id = (0 until seasons.length()).map { seasons.getJSONObject(it) }
+                .firstOrNull { it.optInt("number") == season && it.optJSONObject("type")?.optString("type") == OfficialOrder }
+                ?.optInt("id") ?: return SeasonArtwork.None
+            val list = call("/seasons/$id/extended")?.optJSONObject("data")?.optJSONArray("artwork") ?: return SeasonArtwork.None
+            val all = (0 until list.length()).map { list.getJSONObject(it) }
+            SeasonArtwork(null, Artworks(all.mapNotNull { seasonPicture(it, SeasonPoster) }, failed = false), Artworks(all.mapNotNull { seasonPicture(it, SeasonBackground) }, failed = false), failed = false)
+        } catch (_: Exception) {
+            SeasonArtwork.Failed
+        }
+    }
+
+    private fun seasonPicture(json: JSONObject, type: Int): Artwork? {
+        val image = if (json.isNull("image")) null else json.getString("image")
+        if (image == null || json.optInt("type") != type) return null
+        return Artwork(
+            url = image,
+            width = json.optInt("width"),
+            height = json.optInt("height"),
+            language = if (json.isNull("language")) null else json.getString("language").let { code -> twoLetters[code] ?: code },
+            score = json.optDouble("score", 0.0)
+        )
     }
 
     // The day each season of a series first aired, from its episodes in the official order. Specials, which are season 0, are left

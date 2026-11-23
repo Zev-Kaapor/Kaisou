@@ -89,4 +89,20 @@ class SeasonNumberTest {
         assertEquals(1, SeasonNumber.of(LocalDate.of(2021, 6, 1), series, null, hasPrequel = true, continuation = false))
         assertNull(SeasonNumber.of(LocalDate.of(2025, 6, 1), series, null, hasPrequel = true, continuation = false))
     }
+
+    @Test
+    fun theNumberOfThePartIsTheOneTheNameSays() {
+        assertEquals(2, SeasonNumber.part(listOf("Spy x Family Part 2")))
+        assertEquals(2, SeasonNumber.part(listOf("Chitose 2nd Cour")))
+        assertEquals(2, SeasonNumber.part(listOf("Mushoku Tensei Season 2 Part II")))
+        assertEquals(3, SeasonNumber.part(listOf("Something Part 3")))
+        assertEquals(2, SeasonNumber.part(listOf("Another Second Part")))
+    }
+
+    @Test
+    fun aNameThatSaysNoPartHasNone() {
+        assertNull(SeasonNumber.part(listOf("Shingeki no Kyojin Season 3")))
+        assertNull(SeasonNumber.part(listOf("Cowboy Bebop")))
+        assertNull(SeasonNumber.part(listOf("Partner Hunt")))
+    }
 }

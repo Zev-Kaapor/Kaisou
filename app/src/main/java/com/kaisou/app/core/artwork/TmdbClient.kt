@@ -12,6 +12,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.time.LocalDate
 
 // A result of a search by name: its id, the names it goes by, the year it started and how many people rated it
 class TmdbHit(val id: Int, val names: List<String>, val year: Int?, val votes: Int)
@@ -37,6 +38,19 @@ object TmdbClient {
             SiteImages(artworks(json.optJSONArray("posters")), artworks(json.optJSONArray("logos")), artworks(json.optJSONArray("backdrops")))
         } catch (_: Exception) {
             SiteImages.Failed
+        }
+    }
+
+    // The poster of a season of a series and the day the season first aired, none when TMDB does not have the season. Blocks on the network
+    fun seasonArt(id: Int, season: Int): SeasonArtwork {
+        if (!isSet) return SeasonArtwork.None
+        return try {
+            val details = get("/tv/$id/season/$season") ?: return SeasonArtwork.None
+            val airDate = details.optString("air_date").takeIf { it.isNotBlank() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            val posters = artworks(get("/tv/$id/season/$season/images")?.optJSONArray("posters"))
+            SeasonArtwork(airDate, posters, Artworks.None, failed = false)
+        } catch (_: Exception) {
+            SeasonArtwork.Failed
         }
     }
 

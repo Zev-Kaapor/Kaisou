@@ -47,6 +47,22 @@ class SeasonStarts(val byNumber: Map<Int, LocalDate>, val failed: Boolean) {
     }
 }
 
+// What a site has of one season of a series: the day the season first aired when the site says it, its posters and its backdrops, and whether
+// the answer failed
+class SeasonArtwork(val airDate: LocalDate?, val posters: Artworks, val backdrops: Artworks, val failed: Boolean) {
+    companion object {
+        val None = SeasonArtwork(null, Artworks.None, Artworks.None, failed = false)
+        val Failed = SeasonArtwork(null, Artworks.None, Artworks.None, failed = true)
+    }
+}
+
+// The picture of a season of a series that is its own, the poster and the backdrop, each null when there is none
+class SeasonPictures(val posterUrl: String?, val backdropUrl: String?) {
+    companion object {
+        val None = SeasonPictures(null, null)
+    }
+}
+
 // What is known of a title: the address of its best poster and of its best backdrop, the addresses of its logos in the order they
 // are worth trying, the ratings of the countries and where it is on TMDB, which is what its trailer is asked by
 class TitleArt(
