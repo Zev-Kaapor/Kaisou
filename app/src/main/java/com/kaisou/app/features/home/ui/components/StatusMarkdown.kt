@@ -99,7 +99,8 @@ object StatusMarkdown {
     }
 
     // The text cut where a picture or a video is, each one a part of its own. The text between them keeps its lines
-    fun blocks(text: String): List<MarkdownBlock> {
+    fun blocks(whole: String): List<MarkdownBlock> {
+        val text = apartMedia(whole)
         val result = mutableListOf<MarkdownBlock>()
         var cursor = 0
         MediaMarkup.findAll(text).forEach { match ->
@@ -113,16 +114,36 @@ object StatusMarkdown {
         return result
     }
 
+    // A centered part that has a picture or a video in it, as ~~~img(address)~~~, is cut so the media stands alone, which a part of its own centers
+    // by itself, and what is around it in the part stays centered, each in its own ~~~, so no ~~~ is left without its pair when the text is cut
+    private fun apartMedia(text: String): String = CenterBlock.replace(text) { center ->
+        val inner = center.groupValues[1]
+        if (!MediaMarkup.containsMatchIn(inner)) {
+            center.value
+        } else {
+            buildString {
+                var cursor = 0
+                MediaMarkup.findAll(inner).forEach { media ->
+                    inner.substring(cursor, media.range.first).trim().takeIf { it.isNotEmpty() }?.let { append("~~~").append(it).append("~~~\n") }
+                    append(media.value).append('\n')
+                    cursor = media.range.last + 1
+                }
+                inner.substring(cursor).trim().takeIf { it.isNotEmpty() }?.let { append("~~~").append(it).append("~~~") }
+            }.trimEnd('\n')
+        }
+    }
+
     // A part of text as the site shows it: the markers are gone and what they asked for is applied, the links open when touched, and only
     // what is between ~~~ and ~~~ is centered, over one line or several. The rest stays at the start, as in the site
     fun render(text: String, link: Color, heading: TextUnit): AnnotatedString = buildAnnotatedString {
         var cursor = 0
         CenterBlock.findAll(text).forEach { match ->
-            lines(text.substring(cursor, match.range.first).trimEnd('\n'), link, heading)
-            // A paragraph already starts on a line of its own, so the line breaks around it are not added again
+            // A paragraph already starts on a line of its own, so of the line breaks around it only the one that ends the line is not added, the
+            // others are the empty lines the text has between its parts
+            lines(text.substring(cursor, match.range.first).removeSuffix("\n"), link, heading)
             withStyle(ParagraphStyle(textAlign = TextAlign.Center)) { lines(match.groupValues[1].trim('\n'), link, heading) }
             cursor = match.range.last + 1
-            while (cursor < text.length && text[cursor] == '\n') cursor++
+            if (cursor < text.length && text[cursor] == '\n') cursor++
         }
         lines(text.substring(cursor), link, heading)
     }
