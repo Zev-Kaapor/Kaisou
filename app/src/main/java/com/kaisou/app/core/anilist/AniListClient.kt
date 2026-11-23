@@ -385,6 +385,11 @@ class AniListClient {
     private fun parseMedia(json: JSONObject): AniMedia {
         val title = json.getJSONObject("title")
         val next = json.optJSONObject("nextAiringEpisode")
+            // AniList says how much of its limit is left, which is 30 a minute when it is slow and 90 when it is not. When little is left the next
+            // requests wait for it to come back, so a burst of screens does not get turned away
+            val left = connection.getHeaderField("X-RateLimit-Remaining")?.trim()?.toIntOrNull()
+            val reset = connection.getHeaderField("X-RateLimit-Reset")?.trim()?.toLongOrNull()
+            if (left != null && reset != null && left <= RateReserve) Gates.AniList.restUntil(reset * MillisPerSecond)
         val entry = json.optJSONObject("mediaListEntry")
         val cover = json.optJSONObject("coverImage")
         val english = stringOrNull(title, "english")
@@ -449,6 +454,8 @@ class AniListClient {
             query (${'$'}season: MediaSeason, ${'$'}seasonYear: Int) {
               Page(perPage: $PoolSize) {
                 media(type: ANIME, season: ${'$'}season, seasonYear: ${'$'}seasonYear, status_in: [RELEASING, FINISHED], sort: TRENDING_DESC, isAdult: false) {
+        // How many requests of the limit are kept for what comes after, when the limit says how many are left
+        const val RateReserve = 2
                   id
                   idMal
                   isAdult

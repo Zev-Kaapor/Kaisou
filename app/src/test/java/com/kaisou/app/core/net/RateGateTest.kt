@@ -16,6 +16,17 @@ class RateGateTest {
     }
 
     @Test
+    fun aRestTheServiceAsksForEarlyMakesTheNextRequestWaitWithoutTellingTheScreen() {
+        val told = mutableListOf<Long>()
+        val gate = gate().also { it.onRest = { wait -> told += wait } }
+        gate.restUntil(System.currentTimeMillis() + 80)
+        val started = System.currentTimeMillis()
+        assertEquals("ok", gate.run { "ok" })
+        assertTrue(System.currentTimeMillis() - started >= 60)
+        assertTrue(told.isEmpty())
+    }
+
+    @Test
     fun aRequestThatWasTurnedAwayGoesAgainAfterTheWait() {
         var calls = 0
         val started = System.currentTimeMillis()

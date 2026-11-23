@@ -41,6 +41,13 @@ class RateGate(
     @Volatile
     var onRest: ((Long) -> Unit)? = null
 
+    // Rests the gate until the moment a service says its limit comes back, which the service tells while it still answers, when little is left
+    // of the limit. The requests that come meanwhile wait for it instead of being turned away. It is not told to the screen, nothing failed
+    fun restUntil(reopenMillis: Long) {
+        val capped = reopenMillis.coerceAtMost(System.currentTimeMillis() + MaxEarlyWaitMillis)
+        if (capped > openAtMillis) openAtMillis = capped
+    }
+
     // Makes the request when the gate is open, and again when it was turned away, up to a few times. What the request throws
     // that is not a turn away goes up as it is
     fun <T> run(request: () -> T): T {
@@ -70,6 +77,8 @@ class RateGate(
         const val Tag = "RateGate"
         // The longest a request waits for a service to rest, and how many times it goes again
         const val MaxWaitMillis = 20_000L
+        // The longest the gate rests before it is turned away, for a limit that the service says is nearly used
+        const val MaxEarlyWaitMillis = 60_000L
         const val MaxRetries = 2
     }
 }
