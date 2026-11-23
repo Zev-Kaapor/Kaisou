@@ -1,6 +1,8 @@
 package com.kaisou.app.features.title.ui
 
 // Android application and view model
+import com.kaisou.app.core.designsystem.icons.KaisouIcons
+import androidx.compose.ui.graphics.vector.ImageVector
 import android.app.Application
 import android.content.res.Configuration
 import androidx.compose.runtime.getValue
@@ -45,6 +47,7 @@ import com.kaisou.app.features.home.data.HeroArt
 import com.kaisou.app.features.home.ui.HomeDimens
 import com.kaisou.app.features.title.data.ListDraft
 import com.kaisou.app.features.title.data.ListEntry
+import com.kaisou.app.features.title.data.ListStatus
 import com.kaisou.app.features.title.data.Load
 import com.kaisou.app.features.title.data.MangaArtClient
 import com.kaisou.app.features.title.data.MangaCover
@@ -65,6 +68,8 @@ import com.kaisou.app.features.title.data.TitleTrailer
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import com.kaisou.app.core.rating.AgeGroup
+// Java time
+import java.time.LocalDate
 
 // Loads the title of the page as soon as it is opened and keeps it while the page is on the stack
 class TitleViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
@@ -146,7 +151,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
 
     // Puts the title on the list or changes its entry, which shows at once and goes back if AniList does not take it. The island says what
     // happened
-    fun saveEntry(draft: ListDraft) {
+    fun saveEntry(draft: ListDraft, notice: ProgressNotice? = null) {
         val before = mutableState.value.title ?: return
         if (savingEntry) return
         savingEntry = true
@@ -164,12 +169,70 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
             if (saved != null) {
                 setEntry(saved)
                 ListChanges.changed()
-                Toasts.show(application.getString(R.string.title_list_saved))
+                // What the island says is what was done when it was a mark of the progress, otherwise that the list was saved
+                if (notice != null) Toasts.show(notice.message, notice.subtitle, icon = notice.icon) else Toasts.show(application.getString(R.string.title_list_saved))
             } else {
                 setEntry(before.entry)
                 Toasts.show(application.getString(R.string.title_list_failed), isError = true)
             }
             savingEntry = false
+        }
+    }
+
+    // Marks how far the user is on the title, up to an episode, keeping all else of the entry as it is, or takes it back to the one before when
+    // it was done. The status follows what the user is doing, as Dantotsu does: going forward it is watching, or watching again when it
+    // already was, and the last episode finishes the title. Going back it stays what it was, and only a title that was finished goes back to
+    // watching, since it has episodes left. It never goes to planned, which is a status the user chooses. The island says what happened
+    fun markEpisode(number: Int) {
+        val title = mutableState.value.title ?: return
+        val entry = title.entry ?: return
+        val total = title.episodes
+        // How far the user was, which for a finished title is all of it
+        val done = if (entry.status == ListStatus.Completed) total ?: entry.progress else entry.progress
+        val goingBack = number < done
+        val status = when {
+            entry.status == ListStatus.Repeating -> ListStatus.Repeating
+            goingBack -> if (entry.status == ListStatus.Completed) ListStatus.Current else entry.status
+            total != null && number >= total -> ListStatus.Completed
+            else -> ListStatus.Current
+        }
+        // The day it was finished goes with the status
+        val completedAt = if (status == ListStatus.Completed) entry.completedAt ?: LocalDate.now() else null
+        saveEntry(
+            ListDraft(
+                status, number, entry.progressVolumes, entry.score, entry.repeat, entry.notes, entry.isPrivate, entry.hidden,
+                entry.startedAt, completedAt
+            ),
+            progressNotice(entry.status, status, number, total, goingBack)
+        )
+    }
+
+    // What the island says about a mark of the progress, for each thing that can happen: going back from a title that was finished, to the
+    // start or to an episode, going forward to finish it, while watching it again, to start it, to take it up again after a pause or a
+    // drop, or only to go on
+    private fun progressNotice(before: ListStatus, after: ListStatus, number: Int, total: Int?, goingBack: Boolean): ProgressNotice {
+        val application = getApplication<Application>()
+        fun text(id: Int, vararg args: Any) = application.getString(id, *args)
+        val upTo = text(R.string.title_progress_up_to, number)
+        return if (goingBack) {
+            when {
+                before == ListStatus.Completed -> ProgressNotice(
+                    text(R.string.title_progress_not_finished),
+                    if (number > 0) text(R.string.title_progress_back_at, number) else text(R.string.title_progress_back_start),
+                    KaisouIcons.Back
+                )
+                number == 0 -> ProgressNotice(text(R.string.title_progress_cleared), text(R.string.title_progress_cleared_note), KaisouIcons.Back)
+                else -> ProgressNotice(text(R.string.title_progress_undone), text(R.string.title_progress_undone_note, number), KaisouIcons.Back)
+            }
+        } else {
+            when {
+                after == ListStatus.Completed && total != null ->
+                    ProgressNotice(text(R.string.title_progress_finished), application.resources.getQuantityString(R.plurals.title_progress_finished_note, total, total), KaisouIcons.ListChecks)
+                after == ListStatus.Repeating -> ProgressNotice(text(R.string.title_progress_rewatching), upTo, KaisouIcons.Repeat)
+                before == ListStatus.Planning -> ProgressNotice(text(R.string.title_progress_started), upTo, KaisouIcons.ListVideo)
+                before == ListStatus.Paused || before == ListStatus.Dropped -> ProgressNotice(text(R.string.title_progress_resumed), upTo, KaisouIcons.ListVideo)
+                else -> ProgressNotice(text(R.string.title_progress_updated), upTo, KaisouIcons.Check)
+            }
         }
     }
 
@@ -524,3 +587,6 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 }
+
+// What the island says when the progress is marked: the line, what is under it and its icon
+class ProgressNotice(val message: String, val subtitle: String, val icon: ImageVector)

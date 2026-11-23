@@ -81,12 +81,36 @@ object TitleDimens {
     val PersonWidth = 96.dp
     const val PersonRatio = 0.72f
     // An episode: how wide its picture is and its shape, the room above it, how faint it is when it was done and the mark on it
-    val EpisodeThumb = 148.dp
+    val EpisodeThumb = 136.dp
     const val EpisodeRatio = 16f / 9f
-    val EpisodeTop = 12.dp
+    val EpisodeTop = 16.dp
     const val WatchedAlpha = 0.45f
-    val WatchedMark = 28.dp
-    val WatchedMarkIcon = 16.dp
+    // The more of an episode: the star of its score, the ring of the one that comes next, the arrow that opens it and how far it turns
+    val EpisodeStar = 12.dp
+    val EpisodeNextBorder = 2.dp
+    val EpisodeChevron = 18.dp
+    // The block of the source: the button by its field, how tall the field is and the room of a line of the options
+    val SourceAction = 40.dp
+    val SourceFieldHeight = 56.dp
+    val OptionIcon = 20.dp
+    // How much of its color the pill of the order has, so it does not weigh over the list
+    const val PillFill = 0.2f
+    val SourceActionIcon = 18.dp
+    // The icon in the field of the source and the card to go on: how tall the card is, how dark its picture is at the start and at the
+    // end, the bar of how far the user is and its track, and the round with the play
+    val SourceFieldIcon = 20.dp
+    val ContinueHeight = 80.dp
+    const val ContinueScrim = 0.92f
+    const val ContinueScrimEnd = 0.3f
+    val ContinueProgress = 2.dp
+    const val ContinueTrack = 0.25f
+    val ContinuePlay = 36.dp
+    val ContinuePlayIcon = 18.dp
+    // The tab with the number on the corner of the picture: how round its inner corner is and the room above and under the number
+    val EpisodeTabCorner = 16.dp
+    val EpisodeTabVertical = 2.dp
+    const val ChevronOpen = 180f
+    const val EpisodeSkeletonRows = 6
     // The community: a friend on the row, how wide it is, the picture, the ring of the user and how far the score sticks out under the
     // picture, then the picture of who wrote a review, the lines of a review, the bars of the scores and of the lists
     val FriendWidth = 84.dp

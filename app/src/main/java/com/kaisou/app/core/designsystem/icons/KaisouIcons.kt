@@ -235,6 +235,10 @@ object KaisouIcons {
     val Download = strokeIcon("Download", "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", "m7 10 5 5 5-5", "M12 15V3")
     val ChevronDown = strokeIcon("ChevronDown", "m6 9 6 6 6-6")
     val ArrowUpDown = strokeIcon("ArrowUpDown", "m21 16-4 4-4-4", "M17 20V4", "m3 8 4-4 4 4", "M7 4v16")
+    val Shield = strokeIcon("Shield", "M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z", "m9 12 2 2 4-4")
+    val Magnet = strokeIcon("Magnet", "M5 3h4v8a3 3 0 0 0 6 0V3h4v8a7 7 0 0 1-14 0z", "M5 7h4", "M15 7h4")
+    val SortAscending = strokeIcon("SortAscending", "M3 7h8", "M3 12h11", "M3 17h14", "M18 13V5", "m15 8 3-3 3 3")
+    val SortDescending = strokeIcon("SortDescending", "M3 7h14", "M3 12h11", "M3 17h8", "M18 11v8", "m15 16 3 3 3-3")
     val ChevronRight = strokeIcon("ChevronRight", "m9 18 6-6-6-6")
     val Check = strokeIcon("Check", "M20 6 9 17l-5-5")
     val Info = strokeIcon(

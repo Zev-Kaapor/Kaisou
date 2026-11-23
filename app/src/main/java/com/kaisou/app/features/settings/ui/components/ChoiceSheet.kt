@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,11 +39,13 @@ import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.settings.ui.SettingsDimens
 
-// One way to choose, the words, if it is the one in use, if it is the one the app starts with and what it does when it is chosen
+// One way to choose, the words, if it is the one in use, if it is the one the app starts with, the icon before its name when it has one and
+// what it does when it is chosen
 class Choice(
     val title: String,
     val isSelected: Boolean,
     val isDefault: Boolean = false,
+    val icon: ImageVector? = null,
     val onSelect: () -> Unit
 )
 
@@ -95,6 +98,14 @@ fun ChoiceSheet(title: String, choices: List<Choice>, onDismiss: () -> Unit) {
                             horizontalArrangement = Arrangement.spacedBy(SettingsDimens.ChoiceTagGap),
                             modifier = Modifier.weight(1f)
                         ) {
+                            choice.icon?.let {
+                                Icon(
+                                    imageVector = it,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(SettingsDimens.ChoiceIcon)
+                                )
+                            }
                             Text(
                                 text = choice.title,
                                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = if (choice.isSelected) FontWeight.Bold else FontWeight.Medium),

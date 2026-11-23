@@ -136,8 +136,59 @@
     <string name="title_episodes_sort_old">Oldest first</string>
     <string name="title_episodes_sort_new">Newest first</string>
     <string name="title_episodes_empty">No episodes yet</string>
+    <string name="title_episodes_season">Season %1$d</string>
+    <string name="title_episodes_range" translatable="false">%1$d – %2$d</string>
+    <string name="title_episodes_next">Up next</string>
+    <string name="title_source">Source</string>
+    <string name="title_continue">Continue watching</string>
+    <string name="title_continue_named" translatable="false">%1$d · %2$s</string>
+    <string name="title_play_soon">Playing will come with the sources.</string>
+    <string name="title_source_none">None</string>
+    <string name="title_source_empty">No source installed</string>
+    <string name="title_wrong_title">Wrong title?</string>
+    <string name="title_wrong_title_note">If the source found another anime, search for it by name and pick the right one.</string>
+    <string name="title_wrong_title_search">Search in the source</string>
+    <string name="title_wrong_title_search_note">Search by name and pick the right title</string>
+    <string name="title_wrong_title_search_need">Pick a source first</string>
+    <string name="title_source_title_none">No title selected</string>
+    <string name="title_needs_extensions">This will come with the extensions.</string>
+    <string name="title_option_source">Source settings</string>
+    <string name="title_option_source_note">The settings of the extension itself</string>
+    <string name="title_option_cloudflare">Bypass Cloudflare</string>
+    <string name="title_option_cloudflare_note">Pass the check of the site in the browser</string>
+    <string name="title_option_torrent">Torrent / Magnet</string>
+    <string name="title_option_torrent_note">Play from a magnet link or a torrent file</string>
+    <string name="title_option_website">Open website</string>
+    <string name="title_option_website_note">Open the site of the source</string>
+    <string name="title_option_download">Download</string>
+    <string name="title_option_download_note">Pick many episodes to download</string>
+    <string name="title_option_reset">Reset data</string>
+    <string name="title_option_reset_note">Delete what was kept of the episodes of this title</string>
+    <string name="title_options">Options</string>
+    <plurals name="title_episodes_progress">
+        <item quantity="one">%1$d of %2$d watched</item>
+        <item quantity="other">%1$d of %2$d watched</item>
+    </plurals>
+    <string name="title_progress_up_to">Marked up to episode %1$d</string>
+    <string name="title_progress_updated">Progress updated</string>
+    <string name="title_progress_started">Started watching</string>
+    <string name="title_progress_resumed">Back to watching</string>
+    <string name="title_progress_rewatching">Watching again</string>
+    <string name="title_progress_finished">Finished</string>
+    <plurals name="title_progress_finished_note">
+        <item quantity="one">You watched the only episode</item>
+        <item quantity="other">You watched all %1$d episodes</item>
+    </plurals>
+    <string name="title_progress_undone">Progress undone</string>
+    <string name="title_progress_undone_note">You are now at episode %1$d</string>
+    <string name="title_progress_cleared">Progress cleared</string>
+    <string name="title_progress_cleared_note">No episode watched</string>
+    <string name="title_progress_not_finished">No longer finished</string>
+    <string name="title_progress_back_at">Back at episode %1$d</string>
+    <string name="title_progress_back_start">Back at the start</string>
+    <string name="title_episode_mark">Mark as watched up to here</string>
+    <string name="title_episode_unmark">Mark as not watched from here</string>
     <string name="title_episode_untitled">Episode %1$d</string>
-    <string name="title_episode_row" translatable="false">%1$d. %2$s</string>
     <string name="title_chapters_soon">The list of chapters comes with the sources of reading.</string>
     <string-array name="title_relation_keys" translatable="false">
         <item>PREQUEL</item>

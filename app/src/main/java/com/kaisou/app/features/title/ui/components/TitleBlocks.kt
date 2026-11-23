@@ -66,6 +66,7 @@ import com.kaisou.app.features.title.data.TitleUi
 import com.kaisou.app.core.language.DubLanguage
 import com.kaisou.app.core.designsystem.components.shine
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
@@ -223,13 +224,13 @@ private const val PersonLines = 2
 
 // The button that opens a sheet to pick one of some: a capsule with its fill, the icon of what it picks when it has one, the one in use and the arrow
 @Composable
-fun PickerPill(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null) {
+fun PickerPill(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null, fill: Color = KaisouTheme.colors.elevated) {
     val dimens = KaisouTheme.dimens
 
     Row(
         modifier = modifier
             .clip(CircleShape)
-            .background(KaisouTheme.colors.elevated)
+            .background(fill)
             .clickable(role = Role.DropdownList, onClick = onClick)
             .padding(start = dimens.spaceMedium, end = dimens.spaceSmall, top = dimens.spaceExtraSmall, bottom = dimens.spaceExtraSmall),
         horizontalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall),

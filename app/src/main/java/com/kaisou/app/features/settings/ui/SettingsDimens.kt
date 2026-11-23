@@ -54,5 +54,6 @@ object SettingsDimens {
     val ChoiceRowVertical = 16.dp
     val ChoiceTagGap = 8.dp
     val ChoiceCheck = 24.dp
+    val ChoiceIcon = 20.dp
     const val ChoiceLandscapeTitleWeight = 0.35f
 }

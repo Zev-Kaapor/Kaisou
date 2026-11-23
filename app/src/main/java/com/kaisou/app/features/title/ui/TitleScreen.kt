@@ -237,8 +237,13 @@ fun TitleScreen(
                         TitleTab.Episodes -> titleEpisodesItems(
                             title = title,
                             episodes = state.episodes,
+                            group = viewModel.episodeGroup,
                             newestFirst = newestFirst,
-                            onToggleOrder = { newestFirst = !newestFirst },
+                            onGroup = viewModel::pickGroup,
+                            onSort = { newestFirst = it },
+                            onMark = viewModel::markEpisode,
+                            sourceId = viewModel.episodeSource,
+                            onSource = { viewModel.episodeSource = it },
                             onRetry = viewModel::retryEpisodes
                         )
                         TitleTab.Community -> titleCommunityItems(state.community, onRetry = viewModel::retryCommunity)
