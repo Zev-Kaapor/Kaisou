@@ -1,6 +1,9 @@
 package com.kaisou.app.features.home.ui.components
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.input.TextFieldValue
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -12,7 +15,7 @@ class StatusMarkdownTest {
         assertEquals(
             listOf(
                 MarkdownBlock.Text("before"),
-                MarkdownBlock.Image("https://x/a.png"),
+                MarkdownBlock.Image("https://x/a.png", width = 220),
                 MarkdownBlock.Text("middle"),
                 MarkdownBlock.Video("https://y/b", youtube = true),
                 MarkdownBlock.Video("https://z/c.webm", youtube = false),
@@ -25,6 +28,14 @@ class StatusMarkdownTest {
     @Test
     fun aTextWithNoPictureIsOnePartWithItsLinesKept() {
         assertEquals(listOf<MarkdownBlock>(MarkdownBlock.Text("one\ntwo")), StatusMarkdown.blocks("one\ntwo"))
+    }
+
+    @Test
+    fun anItalicThatBeginsInALineAndEndsInTheNextOneIsResolved() {
+        val rendered = StatusMarkdown.render("_first line\nsecond line_\n\nplain _one_", Color.Blue, 16.sp)
+        assertEquals("first line\nsecond line\n\nplain one", rendered.text)
+        val italic = rendered.spanStyles.filter { it.item.fontStyle == FontStyle.Italic }.map { it.start to it.end }
+        assertEquals(listOf(0 to 22, 30 to 33), italic.sortedBy { it.first })
     }
 
     @Test

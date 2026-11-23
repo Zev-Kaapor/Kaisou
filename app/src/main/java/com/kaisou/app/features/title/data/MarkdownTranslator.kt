@@ -21,7 +21,7 @@ object MarkdownTranslator {
     private val lead = Regex("""^\s*(?:#{1,6}\s+|>\s*|[-*+]\s+|\d+[.)]\s+)*""")
     // The marks inside a line: pictures and videos, the address of a link, bare addresses, the center, the spoiler, the strike, the bold, the
     // italic and the tags
-    private val marks = Regex("""(?i)(?:img\d*|youtube|webm)\([^)]*\)|!\[[^\]]*]\([^)]*\)|]\([^)]*\)|https?://\S+|~~~|~!|!~|~~|__|\*\*|\*|(?<![\p{L}\p{N}])_|_(?![\p{L}\p{N}])|</?[a-z][^>]*>""")
+    private val marks = Regex("""(?i)(?:img\d*%?|youtube|webm)\([^)]*\)|!\[[^\]]*]\([^)]*\)|]\([^)]*\)|https?://\S+|~~~|~!|!~|~~|__|\*\*|\*|(?<![\p{L}\p{N}])_|_(?![\p{L}\p{N}])|</?[a-z][^>]*>""")
     private val signs = Regex("""$SignOpen\s*(\d+)\s*$SignClose""")
     private val letters = Regex("""\p{L}""")
 

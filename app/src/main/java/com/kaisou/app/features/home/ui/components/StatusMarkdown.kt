@@ -38,10 +38,12 @@ enum class MarkdownFormat(val syntax: String, val offset: Int, val asksAddress: 
     Video("webm(%s)", 0, asksAddress = true)
 }
 
-// A text of AniList cut in the parts that are shown each in its way: the text, a picture, and a video that opens outside the app
+// A text of AniList cut in the parts that are shown each in its way: the text, a picture, and a video that opens outside the app. A picture
+// can have the width it was asked, as img220(address) for 220 or img50%(address) for half of the line, and says whether it stood in a
+// centered part
 sealed interface MarkdownBlock {
     data class Text(val text: String) : MarkdownBlock
-    data class Image(val url: String) : MarkdownBlock
+    data class Image(val url: String, val width: Int? = null, val percent: Boolean = false, val centered: Boolean = false) : MarkdownBlock
     data class Video(val url: String, val youtube: Boolean) : MarkdownBlock
 }
 
@@ -104,10 +106,17 @@ object StatusMarkdown {
         val result = mutableListOf<MarkdownBlock>()
         var cursor = 0
         MediaMarkup.findAll(text).forEach { match ->
-            text.substring(cursor, match.range.first).trim().takeIf { it.isNotEmpty() }?.let { result += MarkdownBlock.Text(it) }
+            // A picture that stood in a centered part has the mark of it right before, which is not part of the text
+            val centered = match.range.first > 0 && text[match.range.first - 1] == CenterMark
+            text.substring(cursor, match.range.first - if (centered) 1 else 0).trim().takeIf { it.isNotEmpty() }?.let { result += MarkdownBlock.Text(it) }
             val kind = match.groupValues[1].lowercase()
-            val url = match.groupValues[2].trim()
-            result += if (kind == "img") MarkdownBlock.Image(url) else MarkdownBlock.Video(url, youtube = kind == "youtube")
+            val size = match.groupValues[2]
+            val url = match.groupValues[3].trim()
+            result += if (kind == "img") {
+                MarkdownBlock.Image(url, size.trimEnd('%').toIntOrNull()?.takeIf { it > 0 }, size.endsWith("%"), centered)
+            } else {
+                MarkdownBlock.Video(url, youtube = kind == "youtube")
+            }
             cursor = match.range.last + 1
         }
         text.substring(cursor).trim().takeIf { it.isNotEmpty() }?.let { result += MarkdownBlock.Text(it) }
@@ -125,7 +134,7 @@ object StatusMarkdown {
                 var cursor = 0
                 MediaMarkup.findAll(inner).forEach { media ->
                     inner.substring(cursor, media.range.first).trim().takeIf { it.isNotEmpty() }?.let { append("~~~").append(it).append("~~~\n") }
-                    append(media.value).append('\n')
+                    append(CenterMark).append(media.value).append('\n')
                     cursor = media.range.last + 1
                 }
                 inner.substring(cursor).trim().takeIf { it.isNotEmpty() }?.let { append("~~~").append(it).append("~~~") }
@@ -150,20 +159,46 @@ object StatusMarkdown {
 
     // The lines of a text, each one as what it is: a quote, a title, an item of a list or a line of text
     private fun AnnotatedString.Builder.lines(text: String, link: Color, heading: TextUnit) {
-        text.lines().forEachIndexed { index, line ->
-            if (index > 0) append("\n")
+        // The lines of text that follow one another are a paragraph, which has its marks resolved together, since an italic or a bold can
+        // begin in a line and end in the next one
+        val paragraph = mutableListOf<String>()
+        var first = true
+        fun lineBreak() {
+            if (!first) append("\n")
+            first = false
+        }
+        fun flush() {
+            if (paragraph.isEmpty()) return
+            lineBreak()
+            inline(paragraph.joinToString("\n"), link)
+            paragraph.clear()
+        }
+        text.lines().forEach { line ->
             when {
-                line.startsWith("> ") -> withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { inline(line.removePrefix("> "), link) }
-                HeadingLine.matches(line) -> withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = heading)) {
-                    inline(line.replace(HeadingMark, ""), link)
+                line.startsWith("> ") -> {
+                    flush()
+                    lineBreak()
+                    withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { inline(line.removePrefix("> "), link) }
+                }
+                HeadingLine.matches(line) -> {
+                    flush()
+                    lineBreak()
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = heading)) { inline(line.replace(HeadingMark, ""), link) }
                 }
                 line.startsWith("- ") -> {
+                    flush()
+                    lineBreak()
                     append("\u2022 ")
                     inline(line.removePrefix("- "), link)
                 }
-                else -> inline(line, link)
+                line.isEmpty() -> {
+                    flush()
+                    lineBreak()
+                }
+                else -> paragraph += line
             }
         }
+        flush()
     }
 
     // A line with its markers resolved, the nearest one first and what is inside it resolved the same way
@@ -197,17 +232,20 @@ object StatusMarkdown {
     private val Inlines = listOf(
         Inline(Regex("~~~([^~]+)~~~"), Kind.Emphasis, null),
         Inline(Regex("~!([^!]+)!~"), Kind.Emphasis, SpanStyle(background = Color(0x40FFFFFF))),
-        Inline(Regex("~~([^~\\n]+)~~"), Kind.Emphasis, SpanStyle(textDecoration = TextDecoration.LineThrough)),
-        Inline(Regex("\\*\\*([^*\\n]+)\\*\\*"), Kind.Emphasis, SpanStyle(fontWeight = FontWeight.Bold)),
-        Inline(Regex("(?<!\\*)\\*([^*\\n]+)\\*(?!\\*)"), Kind.Emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
-        Inline(Regex("__([^_\\n]+)__"), Kind.Emphasis, SpanStyle(fontWeight = FontWeight.Bold)),
-        Inline(Regex("(?<![\\w_])_([^_\\n]+)_(?![\\w_])"), Kind.Emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
+        // What is inside a mark can go over a line break, but not over an empty line, which ends the paragraph
+        Inline(Regex("~~((?:[^~\\n]|\\n(?!\\n))+)~~"), Kind.Emphasis, SpanStyle(textDecoration = TextDecoration.LineThrough)),
+        Inline(Regex("\\*\\*((?:[^*\\n]|\\n(?!\\n))+)\\*\\*"), Kind.Emphasis, SpanStyle(fontWeight = FontWeight.Bold)),
+        Inline(Regex("(?<!\\*)\\*((?:[^*\\n]|\\n(?!\\n))+)\\*(?!\\*)"), Kind.Emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
+        Inline(Regex("__((?:[^_\\n]|\\n(?!\\n))+)__"), Kind.Emphasis, SpanStyle(fontWeight = FontWeight.Bold)),
+        Inline(Regex("(?<![\\w_])_((?:[^_\\n]|\\n(?!\\n))+)_(?![\\w_])"), Kind.Emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
         Inline(Regex("`([^`\\n]+)`"), Kind.Emphasis, SpanStyle(background = Color(0x30FFFFFF), fontFamily = FontFamily.Monospace)),
         Inline(Regex("\\[([^\\]\\n]+)]\\(([^)\\n]*)\\)"), Kind.Link, null),
-        Inline(Regex("(?i)(img|webm|youtube)\\d*\\(([^)\\n]*)\\)"), Kind.Media, null),
+        Inline(Regex("(?i)(img|webm|youtube)\\d*%?\\(([^)\\n]*)\\)"), Kind.Media, null),
         Inline(Regex("(https?://[^\\s)\\]]+)"), Kind.Url, null)
     )
-    private val MediaMarkup = Regex("(?i)(img|webm|youtube)\\d*\\(([^)\\n]*)\\)")
+    // The kind, the width that was asked and the address of a picture or a video, and the mark that goes before one that stood in a centered part
+    private val MediaMarkup = Regex("(?i)(img|webm|youtube)(\\d*%?)\\(([^)\\n]*)\\)")
+    private const val CenterMark = '\u0001'
     private val QuoteLine = Regex("(?m)^> .*$")
     private val HeadingLine = Regex("(?m)^#{1,3} .*$")
     private val HeadingMark = Regex("^#{1,3} ")

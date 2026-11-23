@@ -10,7 +10,7 @@ class StatusMarkdownBlocksTest {
         assertEquals(
             listOf(
                 MarkdownBlock.Text("intro"),
-                MarkdownBlock.Image("https://a.test/b.jpg"),
+                MarkdownBlock.Image("https://a.test/b.jpg", width = 440, centered = true),
                 MarkdownBlock.Text("~~~*caption*~~~\n\nnext")
             ),
             StatusMarkdown.blocks(text)
@@ -23,10 +23,18 @@ class StatusMarkdownBlocksTest {
         assertEquals(
             listOf(
                 MarkdownBlock.Text("~~~before~~~"),
-                MarkdownBlock.Image("https://a.test/b.jpg"),
+                MarkdownBlock.Image("https://a.test/b.jpg", centered = true),
                 MarkdownBlock.Text("~~~after~~~")
             ),
             StatusMarkdown.blocks(text)
+        )
+    }
+
+    @Test
+    fun theWidthOfAPictureIsKeptInPixelsOrInPercent() {
+        assertEquals(
+            listOf(MarkdownBlock.Image("https://a.test/b.jpg", width = 50, percent = true), MarkdownBlock.Image("https://a.test/c.jpg", width = 220)),
+            StatusMarkdown.blocks("img50%(https://a.test/b.jpg)\n\nimg220(https://a.test/c.jpg)")
         )
     }
 
