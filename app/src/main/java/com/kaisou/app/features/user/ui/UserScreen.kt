@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -27,6 +29,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 // Material 3 components
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 // Compose state and runtime
@@ -47,6 +50,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 // View model and images
@@ -54,7 +59,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 // Project resources
 import com.kaisou.app.R
-import com.kaisou.app.core.designsystem.components.ButtonIcon
 import com.kaisou.app.core.designsystem.theme.KaisouMotion
 import com.kaisou.app.core.navigation.NavSections
 import com.kaisou.app.core.navigation.NavSectionsHost
@@ -70,8 +74,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import com.kaisou.app.core.language.AppLanguage
-import com.kaisou.app.core.designsystem.components.OutlineButton
-import com.kaisou.app.core.designsystem.components.PrimaryButton
 import com.kaisou.app.core.designsystem.components.rememberKeptListState
 import com.kaisou.app.core.designsystem.components.scrollIndicator
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
@@ -254,20 +256,26 @@ private fun UserHeader(user: UserUi, counts: Pair<Int, Int>?, bannerTop: Dp, onF
                     user.avatar?.let { AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
                 }
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)) {
-                    // Held, the name says the ones the person had before, as AniList does
-                    val name = @Composable {
-                        Text(
-                            text = user.name,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    if (user.previousNames.isEmpty()) {
-                        name()
-                    } else {
-                        TagTip(stringResource(R.string.user_previous_names, user.previousNames.joinToString(", ")), content = name, translate = false)
+                    // Held, the name says the ones the person had before, as AniList does. The button to follow is at the end of the same line
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            val name = @Composable {
+                                Text(
+                                    text = user.name,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Clip,
+                                    modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
+                                )
+                            }
+                            if (user.previousNames.isEmpty()) {
+                                name()
+                            } else {
+                                TagTip(stringResource(R.string.user_previous_names, user.previousNames.joinToString(", ")), content = name, translate = false)
+                            }
+                        }
+                        if (!user.isSelf) FollowButton(following = user.isFollowing, onClick = onFollow)
                     }
                     // The year they joined, and what else is known of them in the same line
                     val facts = listOfNotNull(
@@ -297,32 +305,32 @@ private fun UserHeader(user: UserUi, counts: Pair<Int, Int>?, bannerTop: Dp, onF
                 }
             }
         }
-        // The button to follow, in the style of the main buttons of the app at the end of the line: filled when they are not followed, in an
-        // outline when they are
-        if (!user.isSelf) {
-            val following = user.isFollowing
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = dimens.spaceMedium),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Box(modifier = Modifier.fillMaxWidth(UserDimens.FollowWidth)) {
-                if (following) {
-                    OutlineButton(
-                        text = stringResource(R.string.user_following),
-                        onClick = onFollow,
-                        leading = { ButtonIcon(icon = KaisouIcons.Check, tint = MaterialTheme.colorScheme.primary) },
-                        grouped = true
-                    )
-                } else {
-                    PrimaryButton(
-                        text = stringResource(R.string.user_follow),
-                        onClick = onFollow,
-                        leading = { ButtonIcon(icon = KaisouIcons.Plus, tint = KaisouTheme.colors.onAccentFill) },
-                        grouped = true
-                    )
-                }
-                }
-            }
-        }
+    }
+}
+
+// The button to follow, in the line of the name: a rounded rectangle in the color of the follow buttons of the social apps, with the person that has a
+// plus when they are not followed and a tick when they are, and the words beside it
+@Composable
+private fun FollowButton(following: Boolean, onClick: () -> Unit) {
+    val dimens = KaisouTheme.dimens
+    val content = KaisouTheme.colors.onAccentFill
+
+    Row(
+        modifier = Modifier
+            .height(UserDimens.FollowSize)
+            .clip(MaterialTheme.shapes.small)
+            .background(KaisouTheme.colors.follow)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = dimens.spaceSmall),
+        horizontalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(imageVector = if (following) KaisouIcons.UserCheck else KaisouIcons.UserPlus, contentDescription = null, tint = content, modifier = Modifier.size(UserDimens.FollowIcon))
+        Text(
+            text = stringResource(if (following) R.string.user_following else R.string.user_follow),
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+            color = content,
+            maxLines = 1
+        )
     }
 }

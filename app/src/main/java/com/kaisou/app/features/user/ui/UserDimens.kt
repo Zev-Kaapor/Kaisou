@@ -28,8 +28,10 @@ object UserDimens {
     val ScaleTickHeight = 6.dp
     const val TotalsBarReach = 5f / 6f
 
-    // The share of the width the button to follow takes, at the end of the line
-    const val FollowWidth = 0.375f
+    // The button to follow, in the line of the name: its height, its icon, and the width of its placeholder
+    val FollowSize = 26.dp
+    val FollowIcon = 14.dp
+    val FollowSkeletonWidth = 78.dp
 
     // How many genres are named over the bar, and how many have a piece of it
     const val GenreNamed = 4

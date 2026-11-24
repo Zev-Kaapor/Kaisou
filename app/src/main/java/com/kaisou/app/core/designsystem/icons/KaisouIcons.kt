@@ -44,6 +44,13 @@ private fun fillIcon(name: String, path: String, grid: Float = IconGrid): ImageV
         addPath(pathData = PathParser().parsePathString(path).toNodes(), fill = SolidColor(Color.Black))
     }.build()
 
+// The person and the round badge of the icons to follow: the head, the shoulders with the room of the badge cut out of them, and the badge. What
+// is cut out of the badge goes the other way round, so it is empty
+private const val UserBadgePath =
+    "M7.7 4.3A4.3 4.3 0 1 1 16.3 4.3A4.3 4.3 0 1 1 7.7 4.3Z" +
+        "M3.5 17.8A8.5 8.5 0 0 1 20.5 17.8V18.4Q20.5 19.2 19.7 19.2H17.035A5.06 5.06 0 0 0 6.965 19.2H4.3Q3.5 19.2 3.5 18.4Z" +
+        "M7.7 19.7A4.3 4.3 0 1 1 16.3 19.7A4.3 4.3 0 1 1 7.7 19.7Z"
+
 // The bell that rings: a filled body with its clapper, and two waves of line on each side
 private const val BellRingingBodyPath =
     "M12,4.4 C10.9,4.4 10,5.2 9.9,6.2 C7.6,7 6.1,9.2 6.1,12 V15.5 L4.7,18.4 C4.5,18.8 4.8,19.2 5.2,19.2 H18.8 C19.2,19.2 19.5,18.8 19.3,18.4 L17.9,15.5 V12 C17.9,9.2 16.4,7 14.1,6.2 C14,5.2 13.1,4.4 12,4.4 Z" +
@@ -253,6 +260,9 @@ object KaisouIcons {
     val SortDescending = strokeIcon("SortDescending", "M3 7h14", "M3 12h11", "M3 17h8", "M18 11v8", "m15 16 3 3 3-3")
     val ChevronRight = strokeIcon("ChevronRight", "m9 18 6-6-6-6")
     val Check = strokeIcon("Check", "M20 6 9 17l-5-5")
+    // A person, filled, with a round badge at its foot that has a plus or a tick cut out of it, to follow someone and to say they are followed
+    val UserPlus = fillIcon("UserPlus", UserBadgePath + "M11.45 16.8V19.15H8.9V20.25H11.45V22.6H12.55V20.25H15.1V19.15H12.55V16.8Z")
+    val UserCheck = fillIcon("UserCheck", UserBadgePath + "M8.911 20.189L11.321 22.598L15.309 18.168L14.491 17.432L11.279 21.002L9.689 19.411Z")
     val Info = strokeIcon(
         "Info",
         "M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0",

@@ -32,6 +32,8 @@ data class KaisouColors(
     val onWeeklyBadge: Color,
     // Text and icons over the filled accent controls
     val onAccentFill: Color,
+    // The button to follow a person, with onAccentFill drawn over it
+    val follow: Color,
     // Surface for bars and sheets that sit above the background
     val elevated: Color,
     // Background of the bottom navigation bar
@@ -71,6 +73,7 @@ val KaisouPalette = KaisouColors(
     weeklyBadge = Color(0xFF1578C8),
     onWeeklyBadge = OnFilled,
     onAccentFill = OnFilled,
+    follow = Color(0xFFFE2C55),
     elevated = ContainerHigh,
     navBar = Color(0xFF09090D),
     navUnselected = Color(0xFF676D75),

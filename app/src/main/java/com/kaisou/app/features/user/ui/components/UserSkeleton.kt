@@ -31,8 +31,8 @@ import com.kaisou.app.features.home.ui.HomeDimens
 import com.kaisou.app.features.title.ui.TitleDimens
 import com.kaisou.app.features.user.ui.UserDimens
 
-// The placeholder of the page of a person, only in the places of what comes: the banner with the picture and the name, the button to follow
-// when the page is of someone else, some lines of what they say and a card for the totals, one for the genres and one for the days
+// The placeholder of the page of a person, only in the places of what comes: the banner with the picture and the name, with the button to follow
+// at its end when the page is of someone else, some lines of what they say and a card for the totals, one for the genres and one for the days
 @Composable
 internal fun UserSkeleton(bannerTop: Dp, showFollow: Boolean) {
     val dimens = KaisouTheme.dimens
@@ -47,15 +47,15 @@ internal fun UserSkeleton(bannerTop: Dp, showFollow: Boolean) {
                 Box(modifier = Modifier.size(UserDimens.Avatar).background(KaisouTheme.colors.skeletonHighlight, CircleShape))
                 // The name, the year they joined and how many follow them and are followed, in the places of the lines of the real header
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
-                    Box(modifier = Modifier.fillMaxWidth(UserDimens.SkeletonName).height(dimens.spaceLarge).background(KaisouTheme.colors.skeletonHighlight, MaterialTheme.shapes.extraSmall))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            Box(modifier = Modifier.fillMaxWidth(UserDimens.SkeletonName).height(dimens.spaceLarge).background(KaisouTheme.colors.skeletonHighlight, MaterialTheme.shapes.extraSmall))
+                        }
+                        if (showFollow) Box(modifier = Modifier.size(UserDimens.FollowSkeletonWidth, UserDimens.FollowSize).background(KaisouTheme.colors.skeletonHighlight, MaterialTheme.shapes.small))
+                    }
                     Box(modifier = Modifier.fillMaxWidth(UserDimens.SkeletonSince).height(ComponentDimens.SkeletonLineHeight).background(KaisouTheme.colors.skeletonHighlight, MaterialTheme.shapes.extraSmall))
                     Box(modifier = Modifier.fillMaxWidth(UserDimens.SkeletonCounts).height(ComponentDimens.SkeletonLineHeight).background(KaisouTheme.colors.skeletonHighlight, MaterialTheme.shapes.extraSmall))
                 }
-            }
-        }
-        if (showFollow) {
-            Box(modifier = Modifier.padding(horizontal = dimens.screenPadding).padding(top = dimens.spaceMedium).fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                Box(modifier = Modifier.fillMaxWidth(UserDimens.FollowWidth).height(dimens.buttonHeight).skeleton(CircleShape))
             }
         }
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop), verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
