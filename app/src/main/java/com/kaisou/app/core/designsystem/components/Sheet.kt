@@ -80,6 +80,8 @@ private val SheetTopGap = 48.dp
 private val HandleWidth = 32.dp
 private val HandleHeight = 4.dp
 private val HandleVertical = 12.dp
+
+// How strong the handle of the sheet is
 private const val HandleAlpha = 0.4f
 
 // Darkness behind the sheet when it is fully open
@@ -116,10 +118,7 @@ fun SheetCloseButton(modifier: Modifier = Modifier) {
     }
 }
 
-// Sheet that rises from the bottom over the screen, drawn in the same window so it keeps the immersive mode, which a
-// dialog would break by bringing the system bars back. It has to be placed over a box that fills the whole window.
-// The content always scrolls first, the sheet only moves when the content is pulled down from its top or dragged by its handle,
-// so quick flings while it opens or at the end of the list never close it or make it jump
+// Sheet that rises from the bottom in the same window, moving only when its content is pulled down from the top or by its handle
 @Composable
 fun KaisouSheet(
     onDismiss: () -> Unit,
@@ -178,6 +177,7 @@ fun KaisouSheet(
     // Takes from the content only what it leaves, and only downwards from its top
     val connection = remember {
         object : NestedScrollConnection {
+            // Takes back a sheet that was pulled down before the content scrolls again
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 // A sheet pulled down goes back up before the content scrolls again
                 if (available.y < 0 && offset > 0f && source == NestedScrollSource.UserInput) {
@@ -189,10 +189,11 @@ fun KaisouSheet(
                 return Offset.Zero
             }
 
+            // Notes that the content was scrolled by a finger
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                 if (source == NestedScrollSource.UserInput && consumed.y != 0f) hasScrolledContent = true
 
-                // Only a finger that started at the top pulls the sheet down, a drag that scrolled the list up to its top and a fling never do
+                // Only a finger that started at the top pulls the sheet down, not a drag that reached the top or a fling
                 if (available.y > 0 && source == NestedScrollSource.UserInput && !hasScrolledContent) {
                     animation?.cancel()
                     offset += available.y
@@ -201,6 +202,7 @@ fun KaisouSheet(
                 return Offset.Zero
             }
 
+            // Lets the sheet settle open or closed when a fling ends
             override suspend fun onPreFling(available: Velocity): Velocity {
                 hasScrolledContent = false
                 if (offset <= 0f) return Velocity.Zero
@@ -231,6 +233,7 @@ fun KaisouSheet(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+
                 // The keyboard lifts the whole sheet, so the fields it opens for stay in sight
                 .imePadding()
                 .heightIn(max = maxSheetHeight)
@@ -240,11 +243,12 @@ fun KaisouSheet(
                     translationY = if (isReady) offset else size.height
                     alpha = if (isReady) 1f else 0f
                 }
+
                 // The handle, the title and the parts that do not scroll drag the sheet itself
                 .draggable(
                     orientation = Orientation.Vertical,
                     state = rememberDraggableState { delta ->
-                        // The finger travel is kept whole, so pulling up past the open place and back down only moves the sheet once the finger is back
+                        // The finger travel is kept whole, so the sheet moves again only once the finger is back
                         fingerOffset += delta
                         offset = fingerOffset.coerceAtLeast(0f)
                     },

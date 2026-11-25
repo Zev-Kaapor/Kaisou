@@ -53,8 +53,7 @@ import com.kaisou.app.features.user.ui.components.UserActivitySkeleton
 import com.kaisou.app.features.user.ui.components.ActivityActions
 import com.kaisou.app.features.user.ui.components.UserActivityCard
 
-// Everything a person did lately, a page at a time: the next one is asked for when the list gets near its end. A title opens its page, and
-// each activity has the bell, the menu, the comments and the heart
+// Everything a person did lately a page at a time, the next asked near the end, each activity with its bell, menu, comments and heart
 @Composable
 fun UserActivityScreen(onBack: () -> Unit, onOpenTitle: (Int) -> Unit, modifier: Modifier = Modifier, viewModel: UserActivityViewModel = viewModel()) {
     val dimens = KaisouTheme.dimens
@@ -103,8 +102,8 @@ fun UserActivityScreen(onBack: () -> Unit, onOpenTitle: (Int) -> Unit, modifier:
                 verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
             ) {
                 items(state.items, key = { it.id }) { item -> UserActivityCard(item, onOpenTitle, actions = actions) }
-                // The placeholder of the first page and the one of the next pages have different keys, so what comes in before the
-                // second does not carry the list down with it
+
+                // The placeholders of the first page and of the next have different keys, so the list is not carried down
                 when {
                     state.failed -> item(key = "error") { DetailsError(onRetry = viewModel::loadMore) }
                     state.loading || state.hasMore -> item(key = if (state.items.isEmpty()) "loading-first" else "loading-more") {
@@ -166,7 +165,7 @@ fun UserActivityScreen(onBack: () -> Unit, onOpenTitle: (Int) -> Unit, modifier:
     }
 }
 
-// How many rows before the end of the list the next page is asked for, and how many placeholders stand in for the first page and for the next ones
+// How many rows before the end the next page is asked, and how many placeholders stand in for the first page and the next
 private const val LoadAhead = 4
 private const val SkeletonFirst = 6
 private const val SkeletonMore = 2

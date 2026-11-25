@@ -66,14 +66,14 @@ class UserRepository(context: Context) {
         return built
     }
 
-    // The last things the person did, the newest first: the titles they moved on their list, said in the language of the app, and the
-    // texts they wrote, cut to their beginning with no pictures or videos. Empty when AniList could not be reached
+    // The last things the person did, newest first, titles moved on their list and texts cut to their start, empty on failure
     suspend fun tail(id: Int): UserTail {
         val root = client.query(TailQuery, JSONObject().put("id", id).put("size", RecentShown), AniListSession.token)
         val items = root?.optJSONObject("activity")?.let { activities(it) }.orEmpty()
         return UserTail(items, total(root?.optJSONObject("followers")), total(root?.optJSONObject("following")))
     }
 
+    // Reads the total of a block from its page info
     private fun total(block: JSONObject?): Int = block?.optJSONObject("pageInfo")?.optInt("total") ?: 0
 
     // A page of what the person did, the newest first, null when AniList could not be reached
@@ -125,6 +125,7 @@ class UserRepository(context: Context) {
     // Follows the person or stops following them, and says what it is now, null when AniList did not take it
     suspend fun toggleFollow(name: String, id: Int): Boolean? {
         val root = client.query(FollowQuery, JSONObject().put("id", id), AniListSession.token) ?: return null
+
         // What was kept of the page no longer says whether the user follows them
         pages.remove(name.lowercase().hashCode())
         return root.optJSONObject("ToggleFollow")?.optBoolean("isFollowing")
@@ -138,6 +139,7 @@ class UserRepository(context: Context) {
     private fun genres(json: JSONObject?): List<UserGenre> =
         objects(json?.optJSONArray("genres")).mapNotNull { genre -> text(genre, "genre")?.let { UserGenre(genreNames[it] ?: it, genre.optInt("count")) } }
 
+    // Reads the studios of a favourites block
     private fun studios(block: JSONObject?): List<UserStudio> =
         nodes(block).mapNotNull { studio ->
             val studioId = studio.optInt("id").takeIf { it > 0 } ?: return@mapNotNull null
@@ -154,6 +156,7 @@ class UserRepository(context: Context) {
     private fun cards(block: JSONObject?): List<CardUi> =
         nodes(block).mapNotNull { AniShelvesParser.card(it) }.distinctBy { it.id }.map { card -> mapper.card(card, details = mapper.size(card)) }
 
+    // Reads the people of a favourites block
     private fun people(block: JSONObject?, kind: ProfileKind): List<TitlePerson> =
         nodes(block).mapNotNull { person ->
             val id = person.optInt("id").takeIf { it > 0 } ?: return@mapNotNull null
@@ -161,33 +164,46 @@ class UserRepository(context: Context) {
             TitlePerson(name, person.optJSONObject("image")?.let { text(it, "large") }, null, null, "https://anilist.co/${kind.path}/$id", ProfileRef(kind, id))
         }
 
+    // Reads the nodes of a block
     private fun nodes(block: JSONObject?): List<JSONObject> = objects(block?.optJSONArray("nodes"))
 
+    // Reads a JSON array as objects
     private fun objects(list: JSONArray?): List<JSONObject> = if (list == null) emptyList() else (0 until list.length()).map { list.getJSONObject(it) }
 
+    // Reads a text, null when it is missing or empty
     private fun text(json: JSONObject, key: String): String? = if (json.isNull(key)) null else json.optString(key).takeIf { it.isNotBlank() && it != "null" }
 
+    // Constants of the repository
     private companion object {
         // The minutes of a day, which is what the days watched are counted from
         const val MinutesPerDay = 1_440.0
+
         // The pages that were opened, kept for two minutes, so going to a title or to a person and back does not ask again
         private const val PagesMillis = 2L * 60L * 1000L
         private const val MaxPages = 10
         private val pages = TimedCache<UserUi>(PagesMillis, MaxPages)
+
         // How many of each kind of favourite come with the page, the rest is in the page of its kind, and how many genres
         const val FavouritesShown = 10
         const val GenresShown = 8
+
         // How many of the last things the person did come, and the pictures and videos of a text, which are left out of its beginning
         const val RecentShown = 6
         val Media = Regex("(?:img|webm|youtube)\\d*%?\\([^)]*\\)|!\\[[^\\]]*]\\([^)]*\\)", RegexOption.IGNORE_CASE)
+
+        // How many items a page has
         const val PageSize = 25
+
         // A title needs less here than on the shelves: the cover that is not the biggest, which arrives sooner, and no wide picture
         val UserCardFields = AniShelvesParser.CardFields.replace("bannerImage ", "").replace("coverImage { extraLarge large }", "coverImage { large }")
+
+        // The fields of a person and the query of what they did lately
         const val PersonFields = "id name { userPreferred } image { large }"
         const val RecentQuery = "query (\$id: Int, \$page: Int, \$size: Int) { Page(page: \$page, perPage: \$size) { pageInfo { hasNextPage } activities(userId: \$id, sort: ID_DESC) { __typename " +
             "... on ListActivity { id createdAt likeCount replyCount isLiked isSubscribed status progress user { id name } media { ${AniShelvesParser.CardFields} } } " +
             "... on TextActivity { id createdAt likeCount replyCount isLiked isSubscribed text(asHtml: false) user { id name } } } } }"
-        // What comes after the page: the last things they did, and how many follow them and are followed by them, which AniList only says by its total
+
+        // What comes after the page: the last things they did, and how many follow them and are followed, from the totals
         val TailQuery = "query (\$id: Int!, \$size: Int) { activity: Page(page: 1, perPage: \$size) { activities(userId: \$id, sort: ID_DESC) { __typename " +
             "... on ListActivity { id createdAt likeCount replyCount isLiked isSubscribed status progress user { id name } media { ${AniShelvesParser.CardFields} } } " +
             "... on TextActivity { id createdAt likeCount replyCount isLiked isSubscribed text(asHtml: false) user { id name } } } } " +
@@ -202,6 +218,8 @@ class UserRepository(context: Context) {
             "characters(perPage: $FavouritesShown) { pageInfo { hasNextPage } nodes { $PersonFields } } " +
             "staff(perPage: $FavouritesShown) { pageInfo { hasNextPage } nodes { $PersonFields } } " +
             "studios(perPage: $FavouritesShown) { pageInfo { hasNextPage } nodes { id name } } } } }"
+
+        // The mutation that follows or unfollows a person
         const val FollowQuery = "mutation (\$id: Int) { ToggleFollow(userId: \$id) { id isFollowing } }"
     }
 }

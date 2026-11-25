@@ -14,23 +14,25 @@ import com.kaisou.app.core.artwork.TmdbEpisode
 import com.kaisou.app.core.cache.AppStore
 import com.kaisou.app.core.translation.GoogleTranslator
 
-// Puts the name and what each episode tells in the language of the app, from TMDB. ani.zip only has them in English, and its seasons are not the
-// ones of TMDB, so an episode is matched to the one of TMDB that aired the same day, or the day before or after it for the time zones. An
-// episode with no match keeps what it has. What the people of TMDB scored each episode is had from the same answer
+// Puts the name and text of each episode in the language of the app from TMDB, matched by the day it aired, unmatched ones kept
 object EpisodeTranslator {
+    // Where the texts are kept, how long, how many seasons are read, and the first season
     private const val StoreSpace = "episode-texts2"
     private const val StoreMillis = 7L * 24L * 60L * 60L * 1000L
     private const val MaxSeasons = 30
     private const val FirstSeason = 1
+
     // How many descriptions go in one request of the translator, which are longer than a name
     private const val OverviewsPerRequest = 5
     private const val EnglishCode = "en"
+
     // How few people can have scored an episode for the score to be left out, since two votes are not what people think of it
     private const val MinVotes = 3
+
     // The name TMDB gives an episode it has no name for, which says less than the number does
     private val GenericName = Regex("^\\D*\\d+$")
 
-    // The episodes with their texts in the language, the same ones when the language is English, when TMDB is not set or when it cannot be reached
+    // The episodes with their texts in the language, unchanged when it is English, TMDB is not set or it fails
     suspend fun translate(found: EpisodeSet, language: String, region: String): List<TitleEpisode> {
         if (found.tmdbId == null || language == EnglishCode) return found.episodes
         val pairs = paired(found, tagOf(language, region))
@@ -42,7 +44,7 @@ object EpisodeTranslator {
         }
     }
 
-    // What the people of TMDB scored each episode, from 0 to 10, by the number of the episode. The episodes that too few people scored are left out
+    // What the people of TMDB scored each episode, from 0 to 10, leaving out the ones too few people scored
     suspend fun votes(found: EpisodeSet, language: String, region: String): Map<Int, Float> =
         if (found.tmdbId == null) {
             emptyMap()
@@ -50,9 +52,7 @@ object EpisodeTranslator {
             paired(found, tagOf(language, region)).filterValues { it.votes >= MinVotes && it.vote > 0f }.mapValues { it.value.vote }
         }
 
-    // The ones of the episodes that TMDB did not give in the language, which are the ones of a series it does not have or has only in part,
-    // put in it by Google Translate. It is only for the episodes that are asked for, the ones of the season that is open, so a long series
-    // does not send hundreds of texts
+    // Fills the episodes TMDB did not give in the language with Google Translate, only the ones asked for, the open season
     suspend fun fill(episodes: List<TitleEpisode>, language: String): List<TitleEpisode> {
         val targets = episodes.filter { !it.localized && (it.title != null || it.overview != null) }
         if (targets.isEmpty()) return emptyList()
@@ -71,11 +71,10 @@ object EpisodeTranslator {
         }
     }
 
+    // Builds the tag of a language and a region
     private fun tagOf(language: String, region: String): String = if (region.isEmpty()) language else "$language-$region"
 
-    // The episode of TMDB for each episode of ani.zip, by number, from the seasons of the series that ani.zip says and, when too many are left
-    // without one, from the first season too, since the seasons of TMDB are not always the ones of TheTVDB and a series may have all of them
-    // in the first
+    // The episode of TMDB for each one of ani.zip, from its seasons and, when many are left, from the first season too
     private suspend fun paired(found: EpisodeSet, tag: String): Map<Int, TmdbEpisode> {
         val tmdbId = found.tmdbId ?: return emptyMap()
         val wanted = found.episodes.mapNotNull { it.season?.takeIf { season -> season > 0 } }.distinct().sorted().take(MaxSeasons).ifEmpty { listOf(FirstSeason) }
@@ -88,9 +87,11 @@ object EpisodeTranslator {
         return pairs
     }
 
+    // Pairs the episodes with the texts of TMDB by the day they aired
     private fun pair(episodes: List<TitleEpisode>, texts: List<TmdbEpisode>): Map<Int, TmdbEpisode> =
         DayMatcher.pair(episodes, texts, day = { it.airDate }, order = { it.number })
 
+    // Loads the seasons of a series of TMDB at once
     private suspend fun load(tmdbId: Int, seasons: List<Int>, tag: String): Map<Int, List<TmdbEpisode>> = coroutineScope {
         seasons.map { season -> async { season to season(tmdbId, season, tag) } }.awaitAll().toMap()
     }
@@ -104,10 +105,12 @@ object EpisodeTranslator {
         found
     }
 
+    // Writes the TMDB episodes as text to keep them
     private fun write(list: List<TmdbEpisode>): String = JSONArray().apply {
         list.forEach { put(JSONArray().put(it.number).put(it.airDate ?: "").put(it.name).put(it.overview).put(it.vote.toDouble()).put(it.votes)) }
     }.toString()
 
+    // Reads the TMDB episodes that were kept
     private fun read(text: String): List<TmdbEpisode>? =
         try {
             val list = JSONArray(text)

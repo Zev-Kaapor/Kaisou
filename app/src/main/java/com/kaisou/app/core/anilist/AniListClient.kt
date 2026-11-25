@@ -56,8 +56,13 @@ data class AniMedia(
 
 // What came of asking AniList who the token belongs to: the user, the token being refused, or no answer at all
 sealed interface ViewerResult {
+    // A viewer that was found
     data class Found(val viewer: AniViewer) : ViewerResult
+
+    // The token was refused
     data object Rejected : ViewerResult
+
+    // AniList could not be reached
     data object Unreachable : ViewerResult
 }
 
@@ -73,6 +78,7 @@ class AniListClient {
         }
     }
 
+    // Asks AniList once who the token belongs to
     private fun viewerOnce(token: String): ViewerResult {
         val connection = URL(ApiUrl).openConnection() as HttpURLConnection
         try {
@@ -90,6 +96,7 @@ class AniListClient {
                     val json = JSONObject(body).optJSONObject("data")?.optJSONObject("Viewer")
                     if (json == null) ViewerResult.Rejected else ViewerResult.Found(parseViewer(json))
                 }
+
                 // AniList answers a token that is not valid with a bad request
                 HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_UNAUTHORIZED -> ViewerResult.Rejected
                 TooManyRequests.Code -> throw TooManyRequests.of(connection)
@@ -100,9 +107,7 @@ class AniListClient {
         }
     }
 
-    // The most trending titles of the current season, where the featured ones are drawn from. The token is optional, with it
-    // each title says whether the user is in the middle of it. The pool is kept for a while, so opening the app again does not ask
-    // for it again, and when AniList does not answer the last one kept is used, however old. Null when there is none
+    // The most trending titles of the season for the featured ones, kept for a while, null when there is none
     suspend fun heroPool(token: String?, refresh: Boolean = false): List<AniMedia>? = withContext(Dispatchers.IO) {
         val season = AniSeason.of(LocalDate.now())
         val key = "${season.name} ${season.year} ${if (token != null) "user" else "guest"}"
@@ -120,6 +125,7 @@ class AniListClient {
         AppStore.getAny(PoolSpace, key)?.let(::parsePool)
     }
 
+    // Reads a kept pool of titles, null when it is broken
     private fun parsePool(text: String): List<AniMedia>? =
         try {
             val media = JSONArray(text)
@@ -131,14 +137,11 @@ class AniListClient {
             null
         }
 
-    // The shelves of the Home come in two parts. The top has what the page waits for, what the friends did and the lists of what the user is
-    // in the middle of. It is always asked for, since the friends do things all the time, and kept only for when AniList does not
-    // answer, then the last one kept is used, however old. Null when there is none
+    // The top of the Home, friends and lists in progress, always asked and kept for when AniList fails
     suspend fun topShelves(userId: Int, token: String?): AniShelves? =
         fetchShelves(TopSpace, userId.toString(), TopQuery, JSONObject().put("userId", userId), token)
 
-    // The part under the top: the episodes that aired, the lists of what the user plans and the shelves of discovery. What was kept of it
-    // is shown while the new one comes, see keptBelow
+    // The part under the top of the Home, shown from what was kept while the new one comes
     suspend fun belowShelves(userId: Int, token: String?): AniShelves? {
         val now = System.currentTimeMillis() / MillisPerSecond
         val season = AniSeason.of(LocalDate.now())
@@ -149,6 +152,7 @@ class AniListClient {
         return fetchShelves(BelowSpace, userId.toString(), BelowQuery, variables, token)
     }
 
+    // Asks for shelves, keeps the answer and falls back to the one kept when AniList does not answer
     private suspend fun fetchShelves(space: String, key: String, query: String, variables: JSONObject, token: String?): AniShelves? =
         withContext(Dispatchers.IO) {
             val fresh = try {
@@ -163,18 +167,18 @@ class AniListClient {
             AppStore.getAny(space, key)?.let(::parseShelves)
         }
 
-    // What was kept of what is lower on the page, however old, so the page can show it at once while the new one comes. Null when nothing
-    // was kept
+    // What was kept of the lower part, however old, so the page can show it at once
     suspend fun keptBelow(userId: Int): AniShelves? = withContext(Dispatchers.IO) { AppStore.getAny(BelowSpace, userId.toString())?.let(::parseShelves) }
 
+    // What was kept of the recommendations, however old
     suspend fun keptRecommended(userId: Int): AniRecommended? =
         withContext(Dispatchers.IO) { AppStore.getAny(RecommendedSpace, userId.toString())?.let(::parseRecommended) }
 
+    // What was kept of the missing sequels, however old
     suspend fun keptSequels(userId: Int): List<AniCard>? =
         withContext(Dispatchers.IO) { AppStore.getAny(SequelsSpace, userId.toString())?.let(::parseSequels) }
 
-    // What is recommended for the user, asked for every time and kept like the shelves. It is asked apart because it is a heavy question, and if it fails the
-    // shelves still come
+    // What is recommended after the list of the user, asked apart because it is heavy
     suspend fun recommended(userId: Int, token: String?): AniRecommended? = withContext(Dispatchers.IO) {
         val key = userId.toString()
         val fresh = try {
@@ -189,9 +193,7 @@ class AniListClient {
         AppStore.getAny(RecommendedSpace, key)?.let(::parseRecommended)
     }
 
-    // The sequels of what the user finished that they do not have on their list and that already came out. The titles to look for are
-    // found among everything they finished, which is kept for hours, and are asked for in one question with a part for each batch, and the
-    // answer is kept like the shelves. Asked apart, so if it fails the shelves still come
+    // The sequels of what the user finished and does not have, asked in batches and kept like the shelves
     suspend fun missingSequels(userId: Int, token: String?): List<AniCard>? = withContext(Dispatchers.IO) {
         val key = userId.toString()
         val fresh = try {
@@ -202,7 +204,8 @@ class AniListClient {
                 val batches = ids.chunked(SequelBatch).take(MaxSequelBatches)
                 val media = JSONArray()
                 val data = if (batches.isEmpty()) null else post(sequelsQuery(batches), JSONObject(), token)
-                // Each batch is a part of the answer, one that failed is only a part left out, and none that came means nothing to show
+
+                // Each batch is a part of the answer, so one that failed is only left out
                 data?.keys()?.forEach { alias ->
                     val items = data.optJSONObject(alias)?.optJSONArray("media") ?: return@forEach
                     for (index in 0 until items.length()) media.put(items.getJSONObject(index))
@@ -219,8 +222,7 @@ class AniListClient {
         AppStore.getAny(SequelsSpace, key)?.let(::parseSequels)
     }
 
-    // The ids of the sequels of what the user finished. They change only when the user finishes something, so they are kept for hours and
-    // the long question about everything they finished is not asked at every start
+    // The ids of the sequels of what the user finished, kept for hours since they change only on finishing
     private fun sequelIds(key: String, userId: Int, token: String?): List<Int>? {
         AppStore.get(SequelIdsSpace, key, SequelIdsMillis)?.let { kept -> parseIds(kept)?.let { return it } }
         val completed = post(CompletedRelationsQuery, JSONObject().put("userId", userId), token) ?: return null
@@ -229,6 +231,7 @@ class AniListClient {
         return ids
     }
 
+    // Reads kept ids
     private fun parseIds(text: String): List<Int>? =
         try {
             JSONArray(text).let { array -> (0 until array.length()).map { array.getInt(it) } }
@@ -236,6 +239,7 @@ class AniListClient {
             null
         }
 
+    // Reads kept sequels
     private fun parseSequels(text: String): List<AniCard>? =
         try {
             AniShelvesParser.parseSequels(JSONObject(text))
@@ -243,8 +247,7 @@ class AniListClient {
             null
         }
 
-    // Likes an activity, or takes the like back if it was already given, and says how it stands now. This changes the account of the
-    // user, so it is only called when they touch the heart. Null when AniList did not do it
+    // Likes an activity or takes the like back, and says how it stands, null when AniList did not do it
     suspend fun toggleLike(id: Int, reply: Boolean, token: String?): AniLike? = toggleLikeOf(id, if (reply) "ACTIVITY_REPLY" else "ACTIVITY", token)
 
     // The same for what AniList calls a kind of thing that can be liked, as a thread or a comment of a thread
@@ -258,7 +261,7 @@ class AniListClient {
         }
     }
 
-    // Follows an activity to know of its new comments, or stops following it, and says whether it is followed now, null when AniList did not do it
+    // Follows an activity for its new comments or stops following it, null when AniList did not do it
     suspend fun toggleSubscription(activityId: Int, subscribe: Boolean, token: String?): Boolean? = withContext(Dispatchers.IO) {
         try {
             post(SubscribeActivityQuery, JSONObject().put("id", activityId).put("subscribe", subscribe), token)?.optJSONObject("ToggleActivitySubscription")
@@ -277,8 +280,7 @@ class AniListClient {
         }
     }
 
-    // Posts a status, a text on the activity of the user, as the user. This changes their account, so it is only called when they
-    // press the button to post. True when AniList took it
+    // Posts a status as the user, only when they press the button, true when AniList took it
     suspend fun postStatus(text: String, token: String?): Boolean = withContext(Dispatchers.IO) {
         try {
             post(SaveStatusQuery, JSONObject().put("text", text), token)?.optJSONObject("SaveTextActivity")?.has("id") == true
@@ -326,6 +328,7 @@ class AniListClient {
         }
     }
 
+    // Reads kept recommendations
     private fun parseRecommended(text: String): AniRecommended? =
         try {
             AniShelvesParser.parseRecommended(JSONObject(text))
@@ -333,6 +336,7 @@ class AniListClient {
             null
         }
 
+    // Reads kept shelves
     private fun parseShelves(text: String): AniShelves? =
         try {
             AniShelvesParser.parse(JSONObject(text))
@@ -340,8 +344,7 @@ class AniListClient {
             null
         }
 
-    // The season that comes before a title, null when it has none or AniList cannot be reached. Blocks on the network, so it
-    // is called from a background thread
+    // The season before a title, null when it has none or AniList fails, blocks so call it off the main thread
     fun prequelOf(id: Int): Int? =
         try {
             val data = post(PrequelQuery, JSONObject().put("id", id), token = null)
@@ -368,6 +371,7 @@ class AniListClient {
     // Asks AniList and gives the data of the answer, null when there was none. When AniList asks for rest the request waits for it
     private fun post(query: String, variables: JSONObject, token: String?): JSONObject? = Gates.AniList.run { postOnce(query, variables, token) }
 
+    // Sends a question to AniList once and reads the answer
     private fun postOnce(query: String, variables: JSONObject, token: String?): JSONObject? {
         val connection = URL(ApiUrl).openConnection() as HttpURLConnection
         return try {
@@ -377,6 +381,7 @@ class AniListClient {
             connection.doOutput = true
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Accept", "application/json")
+
             // What AniList says is always asked again from it, never taken from a copy on the way
             connection.setRequestProperty("Cache-Control", "no-cache")
             if (token != null) connection.setRequestProperty("Authorization", "Bearer $token")
@@ -385,8 +390,8 @@ class AniListClient {
             }
             if (connection.responseCode == TooManyRequests.Code) throw TooManyRequests.of(connection)
             if (connection.responseCode != HttpURLConnection.HTTP_OK) return null
-            // AniList says how much of its limit is left, which is 30 a minute when it is slow and 90 when it is not. When little is left the next
-            // requests wait for it to come back, so a burst of screens does not get turned away
+
+            // Reads how much of the limit is left and makes the next requests wait when little is left
             val left = connection.getHeaderField("X-RateLimit-Remaining")?.trim()?.toIntOrNull()
             val reset = connection.getHeaderField("X-RateLimit-Reset")?.trim()?.toLongOrNull()
             if (left != null && reset != null && left <= RateReserve) Gates.AniList.restUntil(reset * MillisPerSecond)
@@ -397,6 +402,7 @@ class AniListClient {
         }
     }
 
+    // Reads a title
     private fun parseMedia(json: JSONObject): AniMedia {
         val title = json.getJSONObject("title")
         val next = json.optJSONObject("nextAiringEpisode")
@@ -426,6 +432,7 @@ class AniListClient {
         )
     }
 
+    // Reads a date, null when a part is missing
     private fun parseDate(json: JSONObject): LocalDate? =
         if (json.isNull("year") || json.isNull("month") || json.isNull("day")) {
             null
@@ -433,11 +440,11 @@ class AniListClient {
             runCatching { LocalDate.of(json.getInt("year"), json.getInt("month"), json.getInt("day")) }.getOrNull()
         }
 
-    // A value that is null on the server comes as the text "null" with the plain getters, and a field that was not asked for
-    // is not there, both count as null here
+    // A null of the server comes as the text "null" and a missing field is absent, both count as null
     private fun stringOrNull(json: JSONObject, key: String): String? =
         if (json.isNull(key)) null else json.getString(key)
 
+    // Reads the account of the user with its totals
     private fun parseViewer(json: JSONObject): AniViewer {
         val statistics = json.optJSONObject("statistics")
         return AniViewer(
@@ -451,11 +458,15 @@ class AniListClient {
         )
     }
 
+    // Constants of the client
     private companion object {
+        // Address of the API and the time to wait for it
         const val ApiUrl = "https://graphql.anilist.co"
         const val TimeoutMillis = 15_000
+
         // How many requests of the limit are kept for what comes after, when the limit says how many are left
         const val RateReserve = 2
+
         // How many titles the pool of the featured ones holds, where it is kept on the disk and for how long
         const val PoolSize = 40
         const val PoolSpace = "pool"
@@ -495,18 +506,26 @@ class AniListClient {
         const val AiredSize = 50
         const val ActivitySize = 50
         const val MineSize = 25
+
         // An activity of a list or of a text, with who did it
         const val ActivityFields = "__typename ... on ListActivity { id createdAt likeCount replyCount isLiked status progress user { id name avatar { large } } media { $ShelfCard } } " +
             "... on TextActivity { id createdAt likeCount replyCount isLiked text(asHtml: false) user { id name avatar { large } } }"
+
         // Likes and comments on the activities
         const val ReplyFields = "id text(asHtml: false) createdAt likeCount isLiked user { id name avatar { large } }"
         const val ToggleLikeQuery = "mutation (${'$'}id: Int, ${'$'}type: LikeableType) { ToggleLikeV2(id: ${'$'}id, type: ${'$'}type) { " +
             "... on ListActivity { isLiked likeCount } ... on TextActivity { isLiked likeCount } ... on ActivityReply { isLiked likeCount } ... on Thread { isLiked likeCount } ... on ThreadComment { isLiked likeCount } } }"
+
+        // Queries that delete and edit the replies of an activity
         const val DeleteReplyQuery = "mutation (${'$'}id: Int) { DeleteActivityReply(id: ${'$'}id) { deleted } }"
         const val EditReplyQuery = "mutation (${'$'}id: Int, ${'$'}activity: Int, ${'$'}text: String) { " +
             "SaveActivityReply(id: ${'$'}id, activityId: ${'$'}activity, text: ${'$'}text) { $ReplyFields } }"
+
+        // Query that follows an activity
         const val SubscribeActivityQuery = "mutation (${'$'}id: Int, ${'$'}subscribe: Boolean) { ToggleActivitySubscription(activityId: ${'$'}id, subscribe: ${'$'}subscribe) { " +
             "... on ListActivity { isSubscribed } ... on TextActivity { isSubscribed } ... on MessageActivity { isSubscribed } } }"
+
+        // Queries that delete an activity, post a status and a reply, and read the replies
         const val DeleteActivityQuery = "mutation (${'$'}id: Int) { DeleteActivity(id: ${'$'}id) { deleted } }"
         const val SaveStatusQuery = "mutation (${'$'}text: String) { SaveTextActivity(text: ${'$'}text) { id } }"
         const val RepliesQuery = "query (${'$'}id: Int) { Page(perPage: 50) { activityReplies(activityId: ${'$'}id) { $ReplyFields } } }"

@@ -25,8 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 // Project resources
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 
-// One option of a menu as a card: the icon in the violet of the app, its name and a line under it when there is one. The icon and the
-// name can take another color, for what is dangerous
+// One option of a menu as a card: an icon in the violet, a name and a line under it, other colors for what is dangerous
 @Composable
 fun MenuCard(
     icon: ImageVector,

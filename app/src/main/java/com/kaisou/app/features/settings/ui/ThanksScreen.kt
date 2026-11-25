@@ -37,8 +37,7 @@ import com.kaisou.app.features.settings.ui.components.SettingsDivider
 import com.kaisou.app.features.settings.ui.components.SettingsGroup
 import com.kaisou.app.features.settings.ui.components.SettingsPage
 
-// One of the projects, sites or tools the app is thankful to, the words that name it, what it gave, and the address of its page when it has one
-// Its picture is one of the app, or the one of the internet when it has none
+// One of the thanks of the app: the words that name it, what it gave, its address, and its picture
 private class Thanks(
     val titleRes: Int,
     val subtitleRes: Int,
@@ -81,7 +80,7 @@ private val AiThanks = listOf(
     Thanks(R.string.thanks_claude, R.string.thanks_claude_subtitle, R.string.thanks_claude_address, R.drawable.thanks_claude)
 )
 
-// The projects the app is thankful to, in the order of their names, then the tools that helped, each group under a line, and each one with its picture opens its page when it has one
+// The projects the app is thankful to, in the order of their names, then the tools, each group under a line, opening their page
 @Composable
 fun ThanksScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current

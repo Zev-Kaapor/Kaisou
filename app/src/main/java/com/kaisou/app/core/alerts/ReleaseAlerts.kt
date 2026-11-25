@@ -8,9 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-// The titles whose releases the user chose to follow with the bell: a new episode, a new season, the return after a pause, the release.
-// The choice is kept on the phone. The notices themselves are not made yet, so for now this only remembers what was chosen
+// The titles whose releases the user follows with the bell, kept on the phone until the notices are made
 object ReleaseAlerts {
+    // Name of the file of the choice and the key of the titles in it
     private const val FileName = "kaisou_alerts"
     private const val TitlesKey = "titles"
 
@@ -18,6 +18,7 @@ object ReleaseAlerts {
     private val mutableTitles = MutableStateFlow<Set<Int>>(emptySet())
     val titles: StateFlow<Set<Int>> = mutableTitles.asStateFlow()
 
+    // Opens the file of the choice and reads the titles that were followed
     fun init(context: Context) {
         preferences = context.getSharedPreferences(FileName, Context.MODE_PRIVATE)
         mutableTitles.value = preferences.getStringSet(TitlesKey, emptySet()).orEmpty().mapNotNull { it.toIntOrNull() }.toSet()

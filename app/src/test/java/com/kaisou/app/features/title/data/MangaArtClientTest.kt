@@ -4,7 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+// Tests of the covers of a manga
 class MangaArtClientTest {
+    // The manga is the one that has the id of AniList in its links
     @Test
     fun theMangaIsTheOneThatHasTheIdOfAniListInItsLinks() {
         val body = """{"data":[
@@ -15,6 +17,7 @@ class MangaArtClientTest {
         assertNull(MangaArtClient.findManga(body, 999))
     }
 
+    // The covers come by volume with the language of the user first
     @Test
     fun theCoversComeByVolumeWithTheLanguageOfTheUserFirst() {
         val body = """{"manga":"m1","covers":[
@@ -28,6 +31,7 @@ class MangaArtClientTest {
         assertEquals("https://uploads.mangadex.org/covers/m1/one-pt.jpg.512.jpg", covers[0].thumbnail)
     }
 
+    // A manga that is not there has no covers
     @Test
     fun aMangaThatIsNotThereHasNoCovers() {
         assertEquals(0, MangaArtClient.parse("{\"covers\":[]}", listOf("en")).size)

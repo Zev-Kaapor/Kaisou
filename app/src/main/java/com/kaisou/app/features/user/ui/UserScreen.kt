@@ -90,9 +90,7 @@ import com.kaisou.app.features.user.data.FavouriteKind
 import com.kaisou.app.features.user.data.UserUi
 import com.kaisou.app.features.user.ui.components.userOverviewItems
 
-// The page of a person of AniList, their own or someone else's: the banner goes up to the top of the screen under back and share, which turn
-// into a solid bar with the name as the page is scrolled, then the picture and name over the banner, the button to follow them when they are
-// not the user, and the overview
+// The page of a person of AniList: the banner under back and share that turn into a solid bar, picture, name, follow and sections
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UserScreen(
@@ -116,14 +114,17 @@ fun UserScreen(
     val density = LocalDensity.current
     var tab by viewModel::tab
     val scope = rememberCoroutineScope()
+
     // How far the items of the section that was just opened have come in, from nothing to all, and how far to the side they start
     var enter by remember { mutableFloatStateOf(1f) }
     var enterShift by remember { mutableFloatStateOf(0f) }
+
     // The sections go to the bar of the app while the page is there, and are taken from it when the page goes
     val barOwner = remember { Any() }
     DisposableEffect(barOwner) { onDispose { NavSectionsHost.clear(barOwner) } }
     val tabLabels = UserTab.entries.map { stringResource(it.label) }
     val statusBar = WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding()
+
     // The bar is clear over the banner and turns solid before the page gets under it, following the scroll
     val solidOffset = with(density) { (UserDimens.BannerHeight + statusBar).toPx() } * HomeDimens.HeaderSolidFraction
     val barProgress by remember(solidOffset) {
@@ -137,6 +138,7 @@ fun UserScreen(
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
     ) {
         val shiftPx = with(density) { maxWidth.toPx() } * TitleDimens.SectionShift
+
         // Opens a section: its items slide in from the side it is on, the page stays where it is
         val openTab: (Int) -> Unit = { index ->
             if (index != tab.ordinal) {
@@ -146,6 +148,7 @@ fun UserScreen(
                 scope.launch { animate(0f, 1f, animationSpec = tween(KaisouMotion.ExpandMillis)) { value, _ -> enter = value } }
             }
         }
+
         // The section that is open is read here, in the composition, so the bar follows it when it changes
         val openIndex = tab.ordinal
         if (user != null) SideEffect { NavSectionsHost.show(barOwner, NavSections(tabLabels, UserTab.entries.map { it.icon }, openIndex), openTab) }
@@ -154,6 +157,7 @@ fun UserScreen(
             when {
                 user != null -> {
                     item(key = "header") { UserHeader(user, counts, bannerTop = statusBar, onFollow = viewModel::toggleFollow) }
+
                     // Each section shows its own blocks, which come in as it is opened
                     with(EnterScope(this, { enter }, { enterShift })) {
                         when (tab) {
@@ -195,7 +199,8 @@ fun UserScreen(
                     .padding(horizontal = dimens.spaceSmall)
                     .alpha(barProgress)
             )
-            // The button that puts what they say of themselves in the language of the app, on until it is turned off, at the start of the share
+
+            // The button that puts what they say of themselves in the app language, on until turned off, at the start of the share
             if (user != null && user.about.isNotBlank() && AppLanguage.needsTranslation) {
                 HeaderAction(
                     icon = KaisouIcons.Translate,
@@ -231,8 +236,7 @@ private fun SoonBlock() {
     )
 }
 
-// The banner, which fades into the page at its foot, with the picture and the name of the person over it, the badge of a supporter and
-// whether they follow the user, and under it the button to follow them. The banner has the room of the status bar over it
+// The banner, fading into the page at its foot, with the picture, name, badge and follow button, under the room of the status bar
 @Composable
 private fun UserHeader(user: UserUi, counts: Pair<Int, Int>?, bannerTop: Dp, onFollow: () -> Unit) {
     val dimens = KaisouTheme.dimens
@@ -256,7 +260,7 @@ private fun UserHeader(user: UserUi, counts: Pair<Int, Int>?, bannerTop: Dp, onF
                     user.avatar?.let { AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
                 }
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)) {
-                    // Held, the name says the ones the person had before, as AniList does. The button to follow is at the end of the same line
+                    // Held, the name says the ones the person had before, as AniList does, and the follow button ends the line
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
                         Box(modifier = Modifier.weight(1f)) {
                             val name = @Composable {
@@ -277,6 +281,7 @@ private fun UserHeader(user: UserUi, counts: Pair<Int, Int>?, bannerTop: Dp, onF
                         }
                         if (!user.isSelf) FollowButton(following = user.isFollowing, onClick = onFollow)
                     }
+
                     // The year they joined, and what else is known of them in the same line
                     val facts = listOfNotNull(
                         user.joinedYear?.let { stringResource(R.string.user_joined, it.toString()) },
@@ -289,6 +294,7 @@ private fun UserHeader(user: UserUi, counts: Pair<Int, Int>?, bannerTop: Dp, onF
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+
                     // How many follow them and how many they follow, small, once they are known
                     counts?.let { (followers, following) ->
                         Text(
@@ -308,8 +314,7 @@ private fun UserHeader(user: UserUi, counts: Pair<Int, Int>?, bannerTop: Dp, onF
     }
 }
 
-// The button to follow, in the line of the name: a rounded rectangle in the color of the follow buttons of the social apps, with the person that has a
-// plus when they are not followed and a tick when they are, and the words beside it
+// The button to follow: a rounded rectangle in the red of social follow buttons, with a person and a plus or a tick, and the words
 @Composable
 private fun FollowButton(following: Boolean, onClick: () -> Unit) {
     val dimens = KaisouTheme.dimens

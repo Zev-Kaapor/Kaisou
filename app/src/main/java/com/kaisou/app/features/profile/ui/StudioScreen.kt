@@ -41,8 +41,7 @@ import com.kaisou.app.features.title.data.Load
 import java.text.NumberFormat
 import java.util.Locale
 
-// The page of a studio: back, its name, the heart of the favourite and share on top, and under them all its productions by year, which is
-// what a studio is. It has no picture on AniList
+// The page of a studio: back, name, heart and share, and under them all its productions by year, with no picture
 @Composable
 fun StudioScreen(
     onBack: () -> Unit,
@@ -69,6 +68,7 @@ fun StudioScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             HeaderAction(icon = KaisouIcons.Back, contentDescription = stringResource(R.string.cd_back), onClick = onBack)
+
             // The name, and how many people have it as a favourite under it
             Column(modifier = Modifier.weight(1f).padding(horizontal = dimens.spaceSmall)) {
                 Text(

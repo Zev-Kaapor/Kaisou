@@ -7,16 +7,15 @@ import org.json.JSONObject
 import com.kaisou.app.core.net.Gates
 import com.kaisou.app.core.net.HttpText
 
-// Asks TVmaze, which has a score for each episode of a series and needs no key. The series is found by the id of IMDb or the one of TheTVDB,
-// which ani.zip gives
+// Asks TVmaze, which has a score for each episode and needs no key, finding the series by the id of IMDb or TheTVDB
 object TvMazeClient {
+    // Address of the API
     private const val ApiUrl = "https://api.tvmaze.com"
 
     // An episode of a season of TVmaze: its number in the season, the day it aired as 2026-10-03 and its score from 0 to 10
     class Episode(val season: Int, val number: Int, val aired: String?, val rating: Float)
 
-    // The id of the series on TVmaze, null when it does not know it. The id of IMDb is tried first and then the one of TheTVDB. Throws when it
-    // could not be asked. Blocks on the network
+    // The id of the series on TVmaze, null when unknown, trying IMDb first then TheTVDB, throws when it could not be asked
     fun showId(imdbId: String?, tvdbId: Int?): Int? {
         val queries = listOfNotNull(imdbId?.let { "imdb=$it" }, tvdbId?.let { "thetvdb=$it" })
         for (query in queries) {
@@ -26,17 +25,16 @@ object TvMazeClient {
         return null
     }
 
-    // The episodes of the series that have a score, null when TVmaze does not know the series. Throws when it could not be asked. Blocks on the
-    // network
+    // The scored episodes of the series, null when TVmaze does not know it, throws when it could not be asked
     fun episodes(showId: Int): List<Episode>? {
         val text = Gates.TvMaze.run { HttpText.get("$ApiUrl/shows/$showId/episodes") } ?: return null
         return parseEpisodes(text)
     }
 
+    // Reads the id of a show from the answer
     internal fun parseShow(text: String): Int? = runCatching { JSONObject(text).optInt("id").takeIf { it > 0 } }.getOrNull()
 
-    // The episodes of the answer with a number and a score, the specials, which have no number, and the ones nobody scored are left out. Null
-    // when the answer is not a list
+    // The episodes of the answer with a number and a score, leaving out specials and unscored ones, null when it is not a list
     internal fun parseEpisodes(text: String): List<Episode>? =
         runCatching {
             val list = JSONArray(text)

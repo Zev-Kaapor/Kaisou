@@ -18,8 +18,7 @@ import com.kaisou.app.features.title.data.Load
 import com.kaisou.app.features.title.data.NewsClient
 import com.kaisou.app.features.title.data.TitleNews
 
-// Loads all the news of a title for the page that lists them. They were just asked for by the page of the title, so they come from what
-// is kept on the phone
+// Loads all the news of a title for the page that lists them, from what the title page kept on the phone
 class NewsViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
     private val anilistId: Int = checkNotNull(savedStateHandle[TitleIdArg])
     private val malId: Int? = savedStateHandle.get<Int>(NewsMalArg)?.takeIf { it > 0 }
@@ -31,6 +30,7 @@ class NewsViewModel(application: Application, savedStateHandle: SavedStateHandle
         load()
     }
 
+    // Asks for the news
     fun load() {
         mutableState.value = Load.Loading
         viewModelScope.launch {

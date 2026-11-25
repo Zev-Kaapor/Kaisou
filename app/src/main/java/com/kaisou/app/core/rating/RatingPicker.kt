@@ -1,8 +1,8 @@
 package com.kaisou.app.core.rating
 
-// Chooses the rating to show, from the nearest to the farthest: the one the country of the user gives, the one of MyAnimeList,
-// the one another country gives and, last, the adult mark of AniList
+// Chooses the rating to show: the country of the user, MyAnimeList, another country, then the adult mark of AniList
 object RatingPicker {
+    // Code of the country of Brazil
     private const val Brazil = "BR"
 
     // The countries looked at when the user own does not have one and MyAnimeList does not either, the best known scales first

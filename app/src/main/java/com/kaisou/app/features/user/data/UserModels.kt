@@ -10,8 +10,7 @@ import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.title.data.TitlePerson
 
-// What a user has done with anime or manga: how many titles, how much of them (days watched, or chapters read) and the mean of the scores
-// they gave, from 0 to 100
+// What a user has done with anime or manga: how many titles, how much of them, and the mean score from 0 to 100
 data class UserTotals(val count: Int, val amount: Double, val meanScore: Double)
 
 // How much a user did on a day, and the level AniList gives it from 1 up, which says how strong the day is painted
@@ -23,8 +22,7 @@ data class UserGenre(val name: String, val count: Int)
 // A studio the user has as a favourite, which opens its page
 data class UserStudio(val name: String, val ref: ProfileRef)
 
-// Something the person did lately: a title moved on their list, with the line that says what, its card and when, in seconds, or a text they
-// wrote, with no card, how many liked it and commented on it, and whether the user liked it and follows it
+// Something the person did lately: a title moved on their list with its card and time, or a text with its likes and comments
 data class UserActivity(
     val id: Int,
     val text: String,
@@ -42,7 +40,7 @@ class UserTail(val recent: List<UserActivity>, val followers: Int, val following
 // A page of what the person did, and whether there are more
 class UserActivityPage(val items: List<UserActivity>, val hasMore: Boolean)
 
-// The kinds of favourites a person has, with the name of the kind in the address and in the question to AniList, and the title of its page
+// The kinds of favourites a person has, with the name of the kind in the address and in the question, and the title of its page
 enum class FavouriteKind(val path: String, @StringRes val title: Int) {
     Anime("anime", R.string.user_fav_anime),
     Manga("manga", R.string.user_fav_manga),
@@ -50,7 +48,9 @@ enum class FavouriteKind(val path: String, @StringRes val title: Int) {
     Staff("staff", R.string.user_fav_staff),
     Studios("studios", R.string.user_fav_studios);
 
+    // Finds a kind by its path
     companion object {
+        // Gives the kind of a path, anime when it is not known
         fun of(path: String?): FavouriteKind = entries.firstOrNull { it.path == path } ?: Anime
     }
 }
@@ -68,9 +68,7 @@ data class UserFavourites(
     val more: Set<FavouriteKind> = emptySet()
 )
 
-// The page of a person of AniList: who they are, what they say of themselves, whether the user follows them, the totals, the days they
-// were active, the genres they like and their favourites. The badge is what a supporter of AniList wrote for it, null for the others, and
-// the year they joined AniList is null when it is not known
+// The page of a person of AniList: who they are, what they say, whether the user follows them, totals, days, genres and favourites
 data class UserUi(
     val id: Int,
     val name: String,

@@ -70,22 +70,21 @@ import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.data.ComposerUi
 import com.kaisou.app.features.home.ui.HomeDimens
 
-// The words of the screen of writing: its title, what it says while it is empty, what it asks before posting and what it says when it fails
+// The words of the screen of writing: its title, its hint, what it asks before posting and what it says when it fails
 class EditorTexts(@StringRes val title: Int, @StringRes val hint: Int, @StringRes val confirmTitle: Int, @StringRes val confirmText: Int, @StringRes val failed: Int) {
+    // The words of each use of the editor
     companion object {
         val Status = EditorTexts(R.string.status_title, R.string.status_hint, R.string.status_confirm_title, R.string.status_confirm_text, R.string.status_failed)
     }
 }
 
-// The screen to write a status, over the Home. The bar on top has the way back, the preview of how the text will look and the button
-// that posts it, which first asks if the user is sure, since it goes to their account. The text shows its markers faint and what they
-// style already styled while it is typed, and the buttons of the formats stay over the keyboard. When AniList takes the status the
-// screen closes
+// The screen to write a status, with the way back, the preview and the post button, which asks first, and the format buttons
 @Composable
 fun StatusEditor(composer: ComposerUi, onPost: (String) -> Unit, onClose: () -> Unit, texts: EditorTexts = EditorTexts.Status) {
     // Whether there is a text that would be lost, told by the screen, and whether the user is being asked about leaving
     var hasText by remember { mutableStateOf(false) }
     var discarding by rememberSaveable { mutableStateOf(false) }
+
     // The way back, the back button and a touch outside leave at once when there is nothing written, and ask first when there is
     val leave = { if (hasText && !composer.sent) discarding = true else onClose() }
 
@@ -112,6 +111,7 @@ fun StatusEditor(composer: ComposerUi, onPost: (String) -> Unit, onClose: () -> 
     }
 }
 
+// The content of the editor of a status
 @Composable
 private fun StatusEditorContent(
     composer: ComposerUi,
@@ -129,6 +129,7 @@ private fun StatusEditorContent(
     var asking by remember { mutableStateOf<MarkdownFormat?>(null) }
     val focus = remember { FocusRequester() }
     val canPost = value.text.isNotBlank() && !composer.sending
+
     // Lying down there is little height, so the buttons of the formats go in a single row
     val landscape = LocalWindowInfo.current.containerSize.let { it.width > it.height }
     val context = LocalContext.current
@@ -345,6 +346,7 @@ private fun MarkdownFormat.icon(): ImageVector = when (this) {
     MarkdownFormat.Video -> KaisouIcons.Video
 }
 
+// Gives the description of a format for the screen readers
 private fun MarkdownFormat.description(): Int = when (this) {
     MarkdownFormat.Bold -> R.string.md_bold
     MarkdownFormat.Italic -> R.string.md_italic

@@ -70,8 +70,7 @@ import com.kaisou.app.features.title.ui.components.TitleSynopsis
 import com.kaisou.app.core.designsystem.components.ImageViewer
 import com.kaisou.app.core.designsystem.components.ViewerImage
 
-// The page of a character, a person of the staff or a studio: back, the heart and share on top, then its picture and name, what is known
-// of it, what it says of itself and the rows of titles and people that go with it
+// The page of a character, staff or studio: back, heart and share on top, its picture and name, what it says, and the rows
 @Composable
 fun ProfileScreen(
     onBack: () -> Unit,
@@ -137,7 +136,7 @@ fun ProfileScreen(
                             }
                         }
                         if (section.title == R.string.profile_voices) {
-                            // The voices of a character come in all the languages, the original first, each with the mark of its language
+                            // The voices of a character come in all languages, the original first, each with its language mark
                             item(key = "people-${section.title}") {
                                 PeopleBlock(
                                     R.string.profile_voices,

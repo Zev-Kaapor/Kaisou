@@ -29,8 +29,9 @@ private const val WorkName = "update_check"
 private const val ChannelId = "app_updates"
 private const val NotificationId = 2002
 
-// The check of the last release done in the background, it tells with a notification when there is a newer version, unless the user paused it
+// The check of the last release in the background, notifying when there is a newer version unless the user paused it
 class UpdateWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    // Does the check, doing nothing when it is paused
     override suspend fun doWork(): Result {
         if (UpdateStore.updates.value.paused) return Result.success()
 
@@ -45,7 +46,7 @@ class UpdateWorker(context: Context, params: WorkerParameters) : CoroutineWorker
 
 // Puts the check to run at the pace the user chose, or takes it away when the updates are paused
 object UpdateWork {
-    // The first time after the app opens keeps the check that exists, so opening the app never delays it, a change of the settings replaces it
+    // The first time after opening keeps the existing check so opening never delays it, a change of the settings replaces it
     fun apply(context: Context, isPaused: Boolean, hours: Long, keepExisting: Boolean) {
         val manager = WorkManager.getInstance(context)
         if (isPaused) {

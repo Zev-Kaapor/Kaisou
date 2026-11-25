@@ -6,7 +6,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+// Tests of the reading of the shelves of the Home
 class AniShelvesParserTest {
+    // Builds a title as AniList sends it
     private fun media(id: Int, english: String? = null, romaji: String = "Name", score: Int? = 80, adult: Boolean = false) =
         JSONObject()
             .put("id", id)
@@ -16,12 +18,15 @@ class AniShelvesParserTest {
             .put("isAdult", adult)
             .put("coverImage", JSONObject().put("extraLarge", "https://x/$id.jpg").put("large", "https://x/$id-small.jpg"))
 
+    // Builds a list as AniList sends it
     private fun list(vararg entries: JSONObject) =
         JSONObject().put("lists", JSONArray().put(JSONObject().put("entries", JSONArray(entries.toList()))))
 
+    // Builds an entry of a list
     private fun entry(id: Int, progress: Int, english: String? = null, score: Int? = 80) =
         JSONObject().put("progress", progress).put("media", media(id, english, score = score))
 
+    // The English name comes first and the romaji is the fallback
     @Test
     fun theEnglishNameComesFirstAndTheRomajiIsTheFallback() {
         val data = JSONObject().put("watching", list(entry(1, 1, english = "English"), entry(2, 1)))
@@ -30,6 +35,7 @@ class AniShelvesParserTest {
         assertEquals("Name", cards[1].title)
     }
 
+    // The cover is the big one and a missing score is nothing
     @Test
     fun theCoverIsTheBigOneAndAMissingScoreIsNothing() {
         val data = JSONObject().put("plannedAnime", list(entry(7, 0, score = null)))
@@ -38,6 +44,7 @@ class AniShelvesParserTest {
         assertNull(card.score)
     }
 
+    // The entries keep their progress and order
     @Test
     fun theEntriesKeepTheirProgressAndOrder() {
         val data = JSONObject().put("reading", list(entry(1, 4), entry(2, 0)))
@@ -46,6 +53,7 @@ class AniShelvesParserTest {
         assertEquals(listOf(4, 0), reading.map { it.progress })
     }
 
+    // A title that aired twice shows once with its newest episode and adults are left out
     @Test
     fun aTitleThatAiredTwiceShowsOnceWithItsNewestEpisodeAndAdultsAreLeftOut() {
         val aired = { id: Int, episode: Int, at: Long, adult: Boolean ->
@@ -58,6 +66,7 @@ class AniShelvesParserTest {
         assertEquals(300L, airing.single().airedAt)
     }
 
+    // The activities come with the adult ones marked, private messages and ones with no user being left out
     @Test
     fun theActivitiesOfListsAndTextsComeWithTheAdultOnesMarkedAndPrivateMessagesAndOnesWithNoUserAreLeftOut() {
         val user = JSONObject().put("id", 7).put("name", "Friend").put("avatar", JSONObject().put("large", "https://x/a7.png"))
@@ -79,12 +88,14 @@ class AniShelvesParserTest {
         assertNull(found.last().card)
     }
 
+    // The mean score fills in when there is no weighted one
     @Test
     fun theMeanScoreFillsInWhenThereIsNoWeightedOne() {
         val data = JSONObject().put("plannedManga", list(JSONObject().put("progress", 0).put("media", media(3, score = null).put("meanScore", 86))))
         assertEquals(86, AniShelvesParser.parse(data).plannedManga.single().card.score)
     }
 
+    // The count of episodes and chapters is known only when AniList has it
     @Test
     fun theCountOfEpisodesAndChaptersIsKnownOnlyWhenAniListHasIt() {
         val anime = media(1).put("format", "TV").put("episodes", 12).put("chapters", JSONObject.NULL)
@@ -95,6 +106,7 @@ class AniShelvesParserTest {
         assertNull(card.chapters)
     }
 
+    // An airing title with no total knows how many episodes aired from the next one
     @Test
     fun anAiringTitleWithNoTotalKnowsHowManyEpisodesAiredFromTheNextOne() {
         val airing = media(1).put("nextAiringEpisode", JSONObject().put("episode", 8))
@@ -103,6 +115,7 @@ class AniShelvesParserTest {
         assertEquals(listOf<Int?>(7, null, null), AniShelvesParser.parse(data).popular.map { it.aired })
     }
 
+    // Recommendations leave out what is on the list, adults and repeats, and sort by score
     @Test
     fun recommendationsLeaveOutWhatIsOnTheListAndAdultsAndRepeatsAndSortByScore() {
         val rec = { id: Int, type: String, score: Int, onList: Boolean, adult: Boolean ->
@@ -120,6 +133,7 @@ class AniShelvesParserTest {
         assertEquals(listOf(6, 5), result.manga.map { it.id })
     }
 
+    // Only the anime sequels of what was finished are found, each once
     @Test
     fun onlyTheAnimeSequelsOfWhatWasFinishedAreFoundEachOnce() {
         val edge = { type: String, kind: String, id: Int -> JSONObject().put("relationType", type).put("node", JSONObject().put("id", id).put("type", kind)) }
@@ -130,12 +144,14 @@ class AniShelvesParserTest {
         assertEquals(listOf(10, 13), AniShelvesParser.sequelIds(completed))
     }
 
+    // The sequels found come best scored first
     @Test
     fun theSequelsFoundComeBestScoredFirst() {
         val data = JSONObject().put("sequels", JSONObject().put("media", JSONArray().put(media(1, score = 60)).put(media(2, score = 90))))
         assertEquals(listOf(2, 1), AniShelvesParser.parseSequels(data).map { it.id })
     }
 
+    // The likes and the comments of an activity come with it
     @Test
     fun theLikesAndTheCommentsOfAnActivityComeWithIt() {
         val item = JSONObject().put("__typename", "TextActivity").put("id", 9).put("createdAt", 1L).put("text", "hi")
@@ -146,6 +162,7 @@ class AniShelvesParserTest {
         assertEquals(true, activity.isLiked)
     }
 
+    // A comment is read with its author and an empty one is not
     @Test
     fun aCommentIsReadWithItsAuthorAndAnEmptyOneIsNot() {
         val json = JSONObject().put("id", 3).put("text", "nice").put("createdAt", 50L).put("likeCount", 1)
@@ -158,6 +175,7 @@ class AniShelvesParserTest {
         assertNull(AniShelvesParser.reply(JSONObject()))
     }
 
+    // Two parts of the shelves merge into one with each list whole
     @Test
     fun twoPartsOfTheShelvesMergeIntoOneWithEachListWhole() {
         val top = AniShelvesParser.parse(JSONObject().put("watching", list(entry(1, 1))))
@@ -168,6 +186,7 @@ class AniShelvesParserTest {
         assertEquals(0, merged.airing.size)
     }
 
+    // The shelves of discovery come as titles
     @Test
     fun theShelvesOfDiscoveryComeAsTitles() {
         val page = JSONObject().put("media", JSONArray().put(media(5)).put(media(6)))
@@ -177,6 +196,7 @@ class AniShelvesParserTest {
         assertEquals(0, shelves.popular.size)
     }
 
+    // A shelf that is not there is empty
     @Test
     fun aShelfThatIsNotThereIsEmpty() {
         val shelves = AniShelvesParser.parse(JSONObject())

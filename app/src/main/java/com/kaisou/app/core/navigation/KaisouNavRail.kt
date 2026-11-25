@@ -28,8 +28,7 @@ import androidx.compose.ui.res.stringResource
 // Project resources
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 
-// Rail on the left with only the icons of the main destinations stacked, used when the screen is wider than tall. The sections of a screen
-// take the place of the destinations with the same movement as in the bar
+// Rail on the left with the icons of the destinations stacked, used when the screen is wider than tall, swapping for sections
 @Composable
 fun KaisouNavRail(
     selected: MainTab,
@@ -39,6 +38,7 @@ fun KaisouNavRail(
 ) {
     val kept = remember { arrayOfNulls<NavSections>(1) }
     if (sections != null) kept[0] = sections
+
     // The camera cutout takes the first part of the rail, so the icons never go under it
     val cutout = WindowInsets.safeDrawing.asPaddingValues().calculateStartPadding(LocalLayoutDirection.current)
     val iconsInset = maxOf(cutout - NavBarDimens.RailCameraReduction, NavBarDimens.NoInset)

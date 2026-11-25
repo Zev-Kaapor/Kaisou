@@ -4,7 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+// Tests of the rating of MyAnimeList
 class MalRatingTest {
+    // The codes of the API are read
     @Test
     fun theCodesOfTheApiAreRead() {
         assertEquals(MalRating.Teens, MalRating.fromCode("pg_13"))
@@ -12,6 +14,7 @@ class MalRatingTest {
         assertNull(MalRating.fromCode(""))
     }
 
+    // They fall in the groups that were measured
     @Test
     fun theyFallInTheGroupsThatWereMeasured() {
         assertEquals(AgeGroup.All, MalRating.General.group)

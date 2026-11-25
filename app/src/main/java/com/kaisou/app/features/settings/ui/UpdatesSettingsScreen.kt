@@ -78,7 +78,7 @@ import com.kaisou.app.features.updates.data.UpdateNote
 import com.kaisou.app.features.updates.data.UpdateState
 import com.kaisou.app.features.updates.data.Updates
 
-// The updates, the version that is installed, what the check found with the buttons that download and install it, what changed in it and how the app looks for them
+// The updates: the installed version, what the check found with the buttons to download and install, what changed and how it looks
 @Composable
 fun UpdatesSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -120,7 +120,7 @@ fun UpdatesSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             StatusBlock(state = state, installed = Updates.installedVersion(context))
         }
 
-        // What changed in the last release, in the language of the app when the user asks, each change opens to its description when the user touches it
+        // What changed in the last release, in the language of the app when asked, each change opening to its description
         if (info != null && info.notes.isNotEmpty()) {
             var translated by remember(info.version) { mutableStateOf<List<UpdateNote>?>(null) }
             var isTranslating by remember(info.version) { mutableStateOf(false) }
@@ -134,6 +134,7 @@ fun UpdatesSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.weight(1f)
                 )
+
                 // The notes are written in English, so the button is there only for another language
                 if (AppLanguage.needsTranslation) {
                     IconButton(
@@ -262,7 +263,7 @@ private fun StatusBlock(state: UpdateState, installed: String) {
     }
 }
 
-// One change of the release, its name, and under it the first words of its description in gray with the word that opens it, or the whole description with the word that closes it
+// One change of the release, its name and the first words of its description with the word that opens it, or all of it
 @Composable
 private fun NoteItem(note: UpdateNote, key: String) {
     var isOpen by remember(key) { mutableStateOf(false) }
@@ -307,7 +308,7 @@ private fun NoteItem(note: UpdateNote, key: String) {
     }
 }
 
-// The notes in another language, each title and each description is translated, they come back in the same order. It fails if one of them does
+// Translates each title and description of the notes in the same order, failing if one of them fails
 private suspend fun translateNotes(notes: List<UpdateNote>, language: String): Result<List<UpdateNote>> =
     runCatching {
         coroutineScope {

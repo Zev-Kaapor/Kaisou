@@ -4,9 +4,7 @@ package com.kaisou.app.core.cache
 import java.io.File
 import java.security.MessageDigest
 
-// Texts kept on the disk by space and key, each with the time it was kept, so what was asked once is not asked again when the
-// app opens. The folder is the cache one, which the system empties when the phone needs room. Everything is best effort: a
-// file that cannot be read or written is the same as one that is not there
+// Texts kept on the disk by space and key with the time they were kept, best effort, in the cache folder the system may empty
 class DiskStore(private val root: File) {
     // What was kept and is not older than the life given, null when there is none or it expired
     fun get(space: String, key: String, lifeMillis: Long): String? {
@@ -26,6 +24,7 @@ class DiskStore(private val root: File) {
     // What was kept, however old it is, for when the service does not answer
     fun getAny(space: String, key: String): String? = read(space, key)?.second
 
+    // Keeps a text under a space and a key, making room when there are too many files
     fun put(space: String, key: String, value: String) {
         try {
             val folder = File(root, space).apply { mkdirs() }
@@ -62,7 +61,9 @@ class DiskStore(private val root: File) {
         files.sortedBy { it.lastModified() }.take(files.size - MaxFiles + PruneBatch).forEach { it.delete() }
     }
 
+    // Constants of the store
     private companion object {
+        // How many files the store holds and how many it removes at once when it is full
         const val MaxFiles = 400
         const val PruneBatch = 50
     }
@@ -72,18 +73,23 @@ class DiskStore(private val root: File) {
 object AppStore {
     private var store: DiskStore? = null
 
+    // Opens the store in the folder the app gives
     fun init(root: File) {
         store = DiskStore(root)
     }
 
+    // Gets a text not older than the life asked, null when there is none
     fun get(space: String, key: String, lifeMillis: Long): String? = store?.get(space, key, lifeMillis)
 
+    // Gets a text however old it is, null when there is none
     fun getAny(space: String, key: String): String? = store?.getAny(space, key)
 
+    // Forgets everything kept in a space
     fun clear(space: String) {
         store?.clear(space)
     }
 
+    // Keeps a text under a space and a key
     fun put(space: String, key: String, value: String) {
         store?.put(space, key, value)
     }

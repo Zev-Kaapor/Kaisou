@@ -77,8 +77,7 @@ import kotlinx.coroutines.flow.update
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 
-// What a notice says, a failure has its own color and icon, another icon can be given for what is neither, and the id tells one notice
-// from the one that comes after it
+// What a notice says: its color and icon, which can be a failure or another, and an id to tell it from the next
 data class ToastData(
     val message: String,
     val subtitle: String? = null,
@@ -103,14 +102,12 @@ object Toasts {
     }
 }
 
-// Draws the notice as an island at the top, a small black pill that comes down, opens to show what happened, closes back to the pill and
-// goes up. A notice that comes while another is on takes its place inside the same island, a tap or a swipe up closes it
+// Draws the notice as an island at the top that comes down, opens, closes and goes up, a new notice taking its place
 @Composable
 fun ToastHost(modifier: Modifier = Modifier) {
     val toast by Toasts.current.collectAsState()
 
-    // What the island holds, which stays after the notice goes so it can still be drawn while it closes, and whether it is on the
-    // screen and whether it is open
+    // What the island holds, kept while it closes, and whether it is shown and whether it is open
     var shown by remember { mutableStateOf<ToastData?>(null) }
     var isVisible by remember { mutableStateOf(false) }
     var isOpen by remember { mutableStateOf(false) }
@@ -161,8 +158,8 @@ private fun Island(data: ToastData, isOpen: Boolean, openWidth: Dp, onDismiss: (
     val content = KaisouTheme.colors.onMedia
     val accent = if (data.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
     val icon = data.icon ?: if (data.isError) KaisouIcons.Close else KaisouIcons.Check
-    // How wide the words are, as the widest of their lines once they have wrapped in the room the island has at most, so it opens to the
-    // size of what it says
+
+    // The width of the words, as the widest of their lines in the most room the island has, so it opens to what it says
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
     val messageStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
@@ -181,8 +178,8 @@ private fun Island(data: ToastData, isOpen: Boolean, openWidth: Dp, onDismiss: (
         animationSpec = spring(dampingRatio = ToastBounce, stiffness = Spring.StiffnessMediumLow),
         label = "IslandWidth"
     )
-    // The mark is in the middle of the dot while it is closed and goes to the start as it opens, it never gets narrower than it is so it
-    // does not turn oval
+
+    // The mark goes from the middle of the dot to the start as it opens, never narrower than itself
     val markStart by animateDpAsState(
         targetValue = if (isOpen) ToastPaddingX else (ToastClosedWidth - ToastBadge) / 2,
         animationSpec = spring(dampingRatio = ToastBounce, stiffness = Spring.StiffnessMediumLow),
@@ -286,8 +283,7 @@ private fun Island(data: ToastData, isOpen: Boolean, openWidth: Dp, onDismiss: (
     }
 }
 
-// How long it stays open, how long it waits as the pill before it opens, how long it takes to close, to come down and go up, and how its
-// parts fade
+// How long it stays open, waits as the pill, takes to close, comes down and goes up, and how its parts fade
 private const val ToastMillis = 3000
 private const val IslandPeekMillis = 220L
 private const val IslandCloseMillis = 320L
@@ -313,6 +309,8 @@ private val ToastBadgeIcon = 16.dp
 private val ToastGap = 12.dp
 private val ToastSubtitleTop = 2.dp
 private val ToastSwipe = 36.dp
+
+// How strong the colors of the border, the badge and the subtitle are
 private const val ToastBorderAlpha = 0.16f
 private const val ToastBadgeAlpha = 0.16f
 private const val ToastBadgeBorderAlpha = 0.24f

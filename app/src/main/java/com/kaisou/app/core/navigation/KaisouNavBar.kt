@@ -48,8 +48,7 @@ import androidx.compose.ui.unit.IntOffset
 import com.kaisou.app.core.designsystem.theme.KaisouMotion
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 
-// Bar docked at the bottom with the main destinations, icons together in the middle. When a screen puts its sections in it, the items of the
-// destinations go up and out and the ones of the sections come up from below, and the other way when the screen goes
+// Bar docked at the bottom with the main destinations, which swap for the sections a screen puts in it
 @Composable
 fun KaisouNavBar(
     selected: MainTab,
@@ -100,8 +99,7 @@ fun KaisouNavBar(
     }
 }
 
-// The movement of the items of the bar and of the rail when they are swapped: going to the sections the old ones go up and out and the new
-// ones come from below, coming back it is all the other way
+// The movement when the items of the bar and the rail swap: the old ones go up and out, the new ones come from below
 internal fun AnimatedContentTransitionScope<Boolean>.navSwap(): ContentTransform {
     val toSections = targetState
     val move = tween<IntOffset>(KaisouMotion.ExpandMillis)
@@ -110,8 +108,7 @@ internal fun AnimatedContentTransitionScope<Boolean>.navSwap(): ContentTransform
         (slideOutVertically(move) { if (toSections) -it else it } + fadeOut(fade))
 }
 
-// The body of the bar, docked at the bottom over its own color, with the items together in the middle. The bar of the main destinations
-// and the one of the sections of a title are both drawn in it
+// The body of the bar, docked at the bottom over its own color, shared by the bar of destinations and the one of sections
 @Composable
 internal fun NavBarContainer(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     val dimens = KaisouTheme.dimens
@@ -120,6 +117,7 @@ internal fun NavBarContainer(modifier: Modifier = Modifier, content: @Composable
         modifier = modifier
             .fillMaxWidth()
             .background(KaisouTheme.colors.navBar)
+
             // Grows when the system bars come back with a swipe
             .windowInsetsPadding(WindowInsets.navigationBars),
         contentAlignment = Alignment.TopCenter

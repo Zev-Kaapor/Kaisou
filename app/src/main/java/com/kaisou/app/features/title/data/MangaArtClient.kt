@@ -16,9 +16,9 @@ import com.kaisou.app.core.net.HttpText
 // A cover of a volume of a manga: which volume it is of, the language of the edition and the addresses of the picture, whole and small
 class MangaCover(val volume: String?, val language: String, val original: String, val thumbnail: String)
 
-// The covers of the volumes of a manga as MangaDex keeps them, which is the art that AniList has only one of. MangaDex is asked by the name
-// of the manga and the one that has the id of AniList among its links is the one, so a title with the same name is never taken for it
+// The covers of the volumes of a manga from MangaDex, found by name and the AniList id among its links
 object MangaArtClient {
+    // Addresses of the API and of the covers, the thumbnail suffix, where and how long covers are kept, and how many names are tried
     private const val ApiUrl = "https://api.mangadex.org"
     private const val ImageUrl = "https://uploads.mangadex.org/covers"
     private const val ThumbnailSuffix = ".512.jpg"
@@ -28,8 +28,7 @@ object MangaArtClient {
     private const val MaxCovers = 100
     private const val FirstVolume = "1"
 
-    // The covers by volume and, in each volume, the language of the user first, then English and Japanese. Empty when MangaDex does not know
-    // the manga, null when it could not be reached, which is not kept
+    // The covers by volume, the user's language first, then English and Japanese, empty when unknown, null when it failed
     suspend fun covers(anilistId: Int, names: List<String>, language: String, region: String): List<MangaCover>? = withContext(Dispatchers.IO) {
         val key = anilistId.toString()
         val kept = AppStore.get(StoreSpace, key, StoreMillis)
@@ -41,15 +40,13 @@ object MangaArtClient {
         runCatching { parse(body, preferred(language, region)) }.getOrNull()
     }
 
-    // The covers that were kept a moment ago for a manga, with no question to MangaDex. Null when nothing is kept, so the page of all the covers
-    // does not take an empty answer for the one of a manga that has none
+    // The covers kept a moment ago for a manga, null when nothing is kept, so an empty answer is not taken for one
     suspend fun kept(anilistId: Int, language: String, region: String): List<MangaCover>? = withContext(Dispatchers.IO) {
         val body = AppStore.get(StoreSpace, anilistId.toString(), StoreMillis) ?: return@withContext null
         runCatching { parse(body, preferred(language, region)) }.getOrNull()
     }
 
-    // The cover that stands for the manga: the first volume in the language of the user if there is one, then in the other languages, and
-    // the first of the list when there is no first volume
+    // The cover that stands for the manga: the first volume in the user's language, then the others, then the first listed
     fun poster(covers: List<MangaCover>): MangaCover? = covers.firstOrNull { it.volume == FirstVolume } ?: covers.firstOrNull()
 
     // What MangaDex answers, ready to be kept: the id of the manga and its covers, or nothing when it is not there
@@ -60,6 +57,7 @@ object MangaArtClient {
         return JSONObject().put("manga", id).put("covers", JSONObject(covers).optJSONArray("data") ?: JSONArray()).toString()
     }
 
+    // Searches MangaDex for the manga by a name and returns its id when the AniList id is among its links
     private fun search(anilistId: Int, name: String): String? {
         val ratings = listOf("safe", "suggestive", "erotica", "pornographic").joinToString("&") { "${enc("contentRating[]")}=$it" }
         val body = HttpText.get("$ApiUrl/manga?title=${enc(name)}&limit=10&$ratings") ?: return null
@@ -95,6 +93,7 @@ object MangaArtClient {
     private fun preferred(language: String, region: String): List<String> =
         listOf("$language-${region.lowercase()}", language, "en", "ja").distinct()
 
+    // Makes a text safe for an address
     private fun enc(text: String): String = URLEncoder.encode(text, Charsets.UTF_8.name())
 
     // What is kept when MangaDex does not know the manga, so it is not asked again

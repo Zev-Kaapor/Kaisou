@@ -8,8 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 
-// The state of a list that starts where the position was left and keeps the position up to date, so the list is at the same place when the
-// phone is turned and the screen is built again
+// The state of a list that starts where it was left and keeps the position, so turning the phone keeps the place
 @Composable
 fun rememberKeptListState(position: ScrollPosition): LazyListState {
     // Not saved by the screen: what it saves is kept for each way the phone is held and would come over the position that was kept

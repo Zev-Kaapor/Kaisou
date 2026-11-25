@@ -16,9 +16,9 @@ import com.kaisou.app.core.cache.AppStore
 import com.kaisou.app.core.cache.TimedCache
 import kotlinx.coroutines.delay
 
-// Finds the poster, the backdrop, the logos, the ratings of the countries and the seasons of the series of a title. Everything that can go on together does: the two sites are asked at the same
-// time, and the pictures are picked among what both have, as soon as both answered or the slower one waited too long
+// Finds the pictures, the ratings and the seasons of a title, asking both sites at once and picking from what both have
 class ArtworkRepository {
+    // What was found of a title and whether the answer failed
     private class Found(val art: TitleArt, val failed: Boolean)
 
     private val ids = IdResolver(AniListClient())
@@ -26,15 +26,12 @@ class ArtworkRepository {
     // What was found per title, one with nothing means the title has none, so it is not asked again
     private val cache = TimedCache<TitleArt>(CacheMillis, MaxEntries)
 
-    // The ratings alone, by title: they do not depend on the language
-    // The ids of the titles, which are asked once
+    // The ratings alone by title, which do not depend on the language, and the ids of the titles, asked once
     private val idsCache = TimedCache<TitleIds>(CacheMillis, MaxEntries)
 
     private val certificationsCache = TimedCache<Map<String, String>>(CacheMillis, CertificationsMaxEntries)
 
-    // The ids a title has on TMDB and TheTVDB, kept in memory and on the phone for a month since they do not change, so the pictures, the ratings and
-    // the seasons of a title do not each ask for them again. Null when nothing is known of the title, which is not kept. Throws when it could not
-    // be asked
+    // The ids of a title on TMDB and TheTVDB, kept for a month, null when nothing is known, throws when it could not be asked
     private suspend fun idsOf(anilistId: Int, query: ArtQuery): TitleIds? {
         idsCache.get(anilistId)?.let { return it.value }
         withContext(Dispatchers.IO) { AppStore.get(IdsSpace, anilistId.toString(), IdsStoreMillis) }?.let(::readIds)?.let {
@@ -47,15 +44,14 @@ class ArtworkRepository {
         return found
     }
 
+    // Reads kept ids, null when the text is broken
     private fun readIds(text: String): TitleIds? {
         val parts = text.split(IdsSeparator)
         if (parts.size != IdsParts || parts[0].isEmpty()) return null
         return TitleIds(parts[0], parts[1].toIntOrNull(), parts[2].toIntOrNull(), parts[3].ifEmpty { null })
     }
 
-    // The day each season of the series of a title first aired, asked apart from the pictures and the ratings so a slow one of them does not take it
-    // away. The answer is kept on the phone by series for a day, so the titles of the same series and the next times do not ask again, and a
-    // failed question is asked again a few times before it is given up. Empty when the title is not a series or it could not be found
+    // The day each season of a series first aired, kept for a day and asked again a few times when it fails
     suspend fun seasonStarts(anilistId: Int, query: ArtQuery): Map<Int, LocalDate> {
         val resolved = try {
             idsOf(anilistId, query)
@@ -76,7 +72,7 @@ class ArtworkRepository {
         return emptyMap()
     }
 
-    // The seasons as they were kept, as 1=2012-10-06,2=2014-04-05, and nothing for a series that has none. Null when the text is not one of these
+    // Reads kept seasons, as 1=2012-10-06,2=2014-04-05, null when the text is not one of these
     private fun readSeasons(text: String): Map<Int, LocalDate>? =
         try {
             if (text.isBlank()) emptyMap() else text.split(",").associate { part -> part.substringBefore("=").toInt() to LocalDate.parse(part.substringAfter("=")) }
@@ -99,6 +95,7 @@ class ArtworkRepository {
             return it
         }
         val found = fetch(anilistId, query, language)
+
         // A failed request is not kept, so it is tried again next time
         if (!found.failed) {
             cache.put(key.hashCode(), found.art)
@@ -107,10 +104,7 @@ class ArtworkRepository {
         return found.art
     }
 
-    // The poster and the backdrop of a season of the series of a title, so the seasons after the first do not all show the picture of the series.
-    // TMDB has a poster for each season, which is used when its season began about when the title did, since the two sites do not always number
-    // the seasons the same, and TheTVDB has a poster and sometimes a backdrop for each, of the numbering the season was worked out with. Each is
-    // null when neither site has one. What was found is kept for a week, and a question that failed is not kept
+    // The poster and the backdrop of a season, taken from TMDB when its season began with the title, else from TheTVDB
     suspend fun seasonArt(anilistId: Int, query: ArtQuery, season: Int, start: LocalDate?, language: String): SeasonPictures {
         val key = "$anilistId $season $language"
         withContext(Dispatchers.IO) { AppStore.get(SeasonArtSpace, key, SeasonArtStoreMillis) }?.let(::readSeasonPictures)?.let { return it }
@@ -134,22 +128,20 @@ class ArtworkRepository {
         return pictures
     }
 
-    // Whether a season began about when the title did: up to a little after it, or up to a year and a bit before it, which is how far a second
-    // part of a season can be from where the season began
+    // Whether a season began about when the title did, a little after it or up to a year and a bit before
     private fun began(airDate: LocalDate?, start: LocalDate?): Boolean {
         if (airDate == null || start == null) return false
         return ChronoUnit.DAYS.between(airDate, start) in -SeasonLateDays..SeasonEarlyDays
     }
 
+    // Reads the kept pictures of a season, null when the text is broken
     private fun readSeasonPictures(text: String): SeasonPictures? {
         val parts = text.split("\n")
         if (parts.size != 2) return null
         return SeasonPictures(parts[0].ifEmpty { null }, parts[1].ifEmpty { null })
     }
 
-    // The id on YouTube of the trailer TMDB has for a title, for the ones AniList has none for: one question to TMDB, once for a title, with the
-    // answer kept, even when it is that there is none. The place of the title on TMDB is already known from its pictures. Null when there is
-    // none or it could not be asked, which is not kept
+    // The id on YouTube of the trailer TMDB has for a title, kept even when there is none, null when it could not be asked
     suspend fun trailer(anilistId: Int, query: ArtQuery, language: String): String? {
         val key = anilistId.toString()
         withContext(Dispatchers.IO) { AppStore.get(TrailerSpace, key, TrailerStoreMillis) }?.let { return it.takeIf(String::isNotEmpty) }
@@ -160,8 +152,7 @@ class ArtworkRepository {
         return id.takeIf(String::isNotEmpty)
     }
 
-    // The ratings of the countries of a title and nothing else, for the cards that only need them: the ids and one question to TMDB,
-    // with no pictures. Null when they could not be found, which is not kept, so it is asked again
+    // The ratings of the countries of a title and nothing else, null when they could not be found, which is not kept
     suspend fun certifications(anilistId: Int, query: ArtQuery): Map<String, String>? {
         certificationsCache.get(anilistId)?.let { return it.value }
         withContext(Dispatchers.IO) { AppStore.get(CertificationsSpace, anilistId.toString(), CertificationsStoreMillis) }
@@ -182,6 +173,7 @@ class ArtworkRepository {
         return certified.byCountry
     }
 
+    // Asks both sites for what a title has and picks the best of each
     private suspend fun fetch(anilistId: Int, query: ArtQuery, language: String): Found = coroutineScope {
         val resolved = try {
             idsOf(anilistId, query)
@@ -217,6 +209,7 @@ class ArtworkRepository {
         val posters = first.posters.list + second?.posters?.list.orEmpty()
         val logos = first.logos.list + second?.logos?.list.orEmpty()
         val backdrops = first.backdrops.list + second?.backdrops?.list.orEmpty()
+
         // The ratings and the seasons were asked from the start, so they are almost always there by now
         val ratings = withTimeoutOrNull(OtherSiteWaitMillis) { certified.await() }
         if (ratings == null) certified.cancel()
@@ -233,6 +226,7 @@ class ArtworkRepository {
         )
     }
 
+    // The one instance of the whole app, so what was found stays in memory
     companion object {
         // One instance for the whole app, so what was found stays in memory
         val Shared = ArtworkRepository()
@@ -244,22 +238,26 @@ class ArtworkRepository {
 
         // What is kept on the disk and for how long: a day, since a title does not change its pictures or its ratings that fast
         private const val StoreSpace = "art5"
+
         // Where the ids of the titles are kept, and for how long: a month
         private const val IdsSpace = "ids1"
         private const val IdsStoreMillis = 30L * 24L * 60L * 60L * 1000L
         private const val IdsSeparator = "|"
         private const val IdsParts = 4
-        // Where the seasons of a series are kept, for how long and how many times they are asked when they fail, with how long between them
+
+        // Where the seasons are kept, how long, and how many times they are asked again when they fail
         private const val SeasonsSpace = "seasons1"
         private const val SeasonsStoreMillis = 24L * 60L * 60L * 1000L
         private const val SeasonAttempts = 3
         private const val SeasonRetryMillis = 1_500L
+
         // Where the trailers are kept, and for how long: a week, a title seldom gets one
         private const val SeasonArtSpace = "seasonart1"
         private const val SeasonArtStoreMillis = 7L * 24L * 60L * 60L * 1000L
         private const val SeasonLateDays = 60L
         private const val SeasonEarlyDays = 450L
 
+        // Where the trailers are kept, how long the trailers and the other answers are kept
         private const val TrailerSpace = "trailer1"
         private const val TrailerStoreMillis = 7L * 24L * 60L * 60L * 1000L
         private const val StoreMillis = 24L * 60L * 60L * 1000L

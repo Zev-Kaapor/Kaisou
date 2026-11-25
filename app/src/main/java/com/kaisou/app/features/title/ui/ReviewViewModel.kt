@@ -29,8 +29,7 @@ import com.kaisou.app.features.title.data.TitleRepository
 // The review in the language of the app: its summary and its text
 class ReviewTranslated(val summary: String, val text: String)
 
-// What the page of a review shows: the review, whether it is shown translated, which is on until the user turns it off, and the translation
-// when it is there
+// What the page of a review shows: the review, whether it is shown translated, on until turned off, and the translation
 data class ReviewUi(
     val review: Load<ReviewBody> = Load.Loading,
     val translate: Boolean = true,
@@ -52,6 +51,7 @@ class ReviewViewModel(application: Application, savedStateHandle: SavedStateHand
         load()
     }
 
+    // Asks for the review
     fun load() {
         mutableState.update { it.copy(review = Load.Loading) }
         viewModelScope.launch {
@@ -83,8 +83,7 @@ class ReviewViewModel(application: Application, savedStateHandle: SavedStateHand
         }
     }
 
-    // The thumb of the review: it changes at once and goes back if AniList does not take it, and when it does the counts are the ones AniList
-    // says. The same thumb again takes the vote back. A second touch while the first is going is left out
+    // The thumb of the review changes at once and goes back if AniList does not take it, the same thumb again taking the vote back
     fun vote(target: ReviewVote) {
         val now = mutableState.value
         val body = (now.review as? Load.Done)?.value ?: return

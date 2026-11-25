@@ -47,11 +47,7 @@ data class HeroUi(
     val artColors: List<Color>
 )
 
-// What is ready for a featured title besides its data: the poster and the backdrop, the wide picture for the screen lying down, and
-// the logo that goes in place of its name. The one of the way the screen is in was downloaded, the other is only known,
-// its synopsis in the language of the app, its advisory rating for the country of the user and its season in the series. Each is
-// null when there is none, and the cover, the name in text and the synopsis as it came take its place, with no rating no tag
-// shows and with no season the button only has the episode
+// What is ready for a featured title: poster, backdrop, logo, synopsis, rating and season, each null when there is none
 class HeroArt(
     val posterUrl: String?,
     val backdropUrl: String?,
@@ -91,9 +87,7 @@ enum class ShelfId(@StringRes val titleRes: Int) {
 // The shape of the cards of a shelf: a poster standing up, or a wide picture
 enum class CardShape { Poster, Wide }
 
-// A title on a shelf: its picture, its score from 0 to 10, null when it has none, the
-// number of an episode that just aired, and the line under its name: how far the user is in it, as done out of the total, or the
-// details of the title. A wide card also looks for the wide picture of its title, to show it in turn with the one it has
+// A title on a shelf: its picture, its score out of ten, a new episode, and the line under its name, progress or details
 data class CardUi(
     val anilistId: Int,
     val title: String,
@@ -167,16 +161,15 @@ data class HomeShelvesUi(val ownStory: List<StoryItemUi>, val friends: List<Stor
 // What the Home is doing: loading with nothing to show, showing what came, or failed with nothing to show
 enum class HomeStatus { Loading, Content, Error }
 
+// What the Home shows, its state and what is on it
 data class HomeUiState(
     val status: HomeStatus = HomeStatus.Loading,
     // Asking again with the Home on the screen, which stays until the new one comes
     val isRefreshing: Boolean = false,
     val heroes: List<HeroUi> = emptyList(),
-    // What the look for the pictures and the translation of each title came to, by AniList id. A title that is not here is still
-    // being looked for and shows as a placeholder
+    // What the look for pictures and translation found for each title, by AniList id, a missing one still being looked for
     val art: Map<Int, HeroArt> = emptyMap(),
-    // The featured title that is on. It is here and not in the screen, which is built in another way standing up and lying down,
-    // so turning the phone does not change the title
+    // The featured title that is on, kept here so turning the phone does not change it
     val heroIndex: Int = 0,
     // What is under the hero, which comes with it: nothing is shown until both are ready
     val ownStory: List<StoryItemUi> = emptyList(),

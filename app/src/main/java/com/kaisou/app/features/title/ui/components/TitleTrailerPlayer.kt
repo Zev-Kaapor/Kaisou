@@ -35,14 +35,13 @@ import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.Ful
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFramePlayerOptions
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
 
-// The player of YouTube inside the page, which starts the video as soon as it is ready. It stops with the app and goes with the page. The
-// button of the full screen opens it over everything, lying down. When YouTube does not let the video play outside of its own site, the
-// page is told and opens it where it can
+// The YouTube player in the page: starts when ready, stops with the app, goes full screen, and tells the page when it cannot play
 @Composable
 internal fun TrailerPlayer(videoId: String, onFailed: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentFailed by rememberUpdatedState(onFailed)
+
     // The view of the video while it is on the full screen, with the way out of it
     var fullscreen by remember { mutableStateOf<Pair<View, () -> Unit>?>(null) }
     val player = remember { YouTubePlayerView(context).apply { enableAutomaticInitialization = false } }
@@ -50,10 +49,12 @@ internal fun TrailerPlayer(videoId: String, onFailed: () -> Unit, modifier: Modi
     DisposableEffect(player) {
         lifecycleOwner.lifecycle.addObserver(player)
         player.addFullscreenListener(object : FullscreenListener {
+            // Shows the video full screen
             override fun onEnterFullscreen(fullscreenView: View, exitFullscreen: () -> Unit) {
                 fullscreen = fullscreenView to exitFullscreen
             }
 
+            // Leaves the full screen
             override fun onExitFullscreen() {
                 fullscreen = null
             }
@@ -61,10 +62,12 @@ internal fun TrailerPlayer(videoId: String, onFailed: () -> Unit, modifier: Modi
         val options = IFramePlayerOptions.Builder(context).controls(1).fullscreen(1).build()
         player.initialize(
             object : AbstractYouTubePlayerListener() {
+                // Starts the video when the player is ready
                 override fun onReady(youTubePlayer: YouTubePlayer) {
                     youTubePlayer.loadVideo(videoId, 0f)
                 }
 
+                // Tells the page when the player fails
                 override fun onError(youTubePlayer: YouTubePlayer, error: PlayerConstants.PlayerError) {
                     currentFailed()
                 }
@@ -101,6 +104,7 @@ internal fun TrailerPlayer(videoId: String, onFailed: () -> Unit, modifier: Modi
     }
 }
 
+// Finds the activity a context lives in
 private tailrec fun Context.findActivity(): Activity? =
     when (this) {
         is Activity -> this

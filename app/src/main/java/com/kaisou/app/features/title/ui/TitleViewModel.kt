@@ -90,6 +90,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
     val scroll = ScrollPosition()
     var tab by mutableStateOf(TitleTab.Details)
     var newestFirst by mutableStateOf(false)
+
     // The source of the episodes, which stays when the phone is turned. It is only the look for now
     var episodeSource by mutableStateOf<String?>(null)
 
@@ -103,7 +104,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         translateOpen()
     }
 
-    // The texts of the open season that TMDB did not have in the language, in it by Google Translate. They show as they are while it works
+    // The texts of the open season that TMDB did not have in the language, put in it by Google Translate while they show as they are
     private fun translateOpen() {
         if (!AppLanguage.needsTranslation) return
         val title = mutableState.value.title ?: return
@@ -151,8 +152,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
     // Whether the list is going to AniList, so a second touch while the first is going is left out
     private var savingEntry = false
 
-    // Puts the title on the list or changes its entry, which shows at once and goes back if AniList does not take it. The island says what
-    // happened
+    // Puts the title on the list or changes its entry, shown at once and undone if AniList does not take it, with a notice
     fun saveEntry(draft: ListDraft, notice: ProgressNotice? = null) {
         val before = mutableState.value.title ?: return
         if (savingEntry) return
@@ -171,6 +171,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
             if (saved != null) {
                 setEntry(saved)
                 ListChanges.changed()
+
                 // What the island says is what was done when it was a mark of the progress, otherwise that the list was saved
                 if (notice != null) Toasts.show(notice.message, notice.subtitle, icon = notice.icon) else Toasts.show(application.getString(R.string.title_list_saved))
             } else {
@@ -181,14 +182,12 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
-    // Marks how far the user is on the title, up to an episode, keeping all else of the entry as it is, or takes it back to the one before when
-    // it was done. The status follows what the user is doing, as Dantotsu does: going forward it is watching, or watching again when it
-    // already was, and the last episode finishes the title. Going back it stays what it was, and only a title that was finished goes back to
-    // watching, since it has episodes left. It never goes to planned, which is a status the user chooses. The island says what happened
+    // Marks how far the user is, up to an episode, the status following what they do as Dantotsu does, never going to planned
     fun markEpisode(number: Int) {
         val title = mutableState.value.title ?: return
         val entry = title.entry ?: return
         val total = title.episodes
+
         // How far the user was, which for a finished title is all of it
         val done = if (entry.status == ListStatus.Completed) total ?: entry.progress else entry.progress
         val goingBack = number < done
@@ -198,6 +197,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
             total != null && number >= total -> ListStatus.Completed
             else -> ListStatus.Current
         }
+
         // The day it was finished goes with the status
         val completedAt = if (status == ListStatus.Completed) entry.completedAt ?: LocalDate.now() else null
         saveEntry(
@@ -209,11 +209,11 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         )
     }
 
-    // What the island says about a mark of the progress, for each thing that can happen: going back from a title that was finished, to the
-    // start or to an episode, going forward to finish it, while watching it again, to start it, to take it up again after a pause or a
-    // drop, or only to go on
+    // What the island says about a mark of progress: going back, finishing, watching again, starting, resuming or going on
     private fun progressNotice(before: ListStatus, after: ListStatus, number: Int, total: Int?, goingBack: Boolean): ProgressNotice {
         val application = getApplication<Application>()
+
+        // Writes a text of the island from a resource
         fun text(id: Int, vararg args: Any) = application.getString(id, *args)
         val upTo = text(R.string.title_progress_up_to, number)
         return if (goingBack) {
@@ -258,15 +258,14 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
+    // Sets the entry and its status on the title
     private fun setEntry(entry: ListEntry?) {
         mutableState.update { state ->
             state.copy(title = state.title?.copy(entry = entry, listStatus = entry?.status, nextUnit = entry?.nextUnit ?: 1))
         }
     }
 
-    // Asks for the title again without showing it, to keep what AniList says on the page: the heart, the list and the score, when the user
-    // comes back to the app after changing them there. The pictures and the synopsis stay. It waits while the heart is going, and a title
-    // that was asked for a moment ago is not asked again, so going to another app and back does not use the requests AniList gives
+    // Asks for the title again without showing it, to keep the heart, the list and the score right, not using requests needlessly
     fun refresh() {
         if (mutableState.value.status != TitleStatus.Content || turningFavourite || savingEntry) return
         if (System.currentTimeMillis() - askedAt < RefreshMinMillis) return
@@ -277,12 +276,12 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
+    // Sets whether the title is a favourite
     private fun setFavourite(value: Boolean) {
         mutableState.update { state -> state.copy(title = state.title?.copy(isFavourite = value)) }
     }
 
-    // Asks for the title, and then for its pictures, its synopsis and its rating. The page only shows when they are ready or the time
-    // for them ended, so what shows does not change after it
+    // Asks for the title and then its pictures, synopsis and rating, showing the page only when they are ready or their time ended
     fun load() {
         mutableState.update { it.copy(status = TitleStatus.Loading) }
         viewModelScope.launch {
@@ -301,8 +300,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
-    // What comes after the top: the details, what people recommend and the characters and the staff come together in one question, and
-    // then the order of the series, which starts from what the details say is tied to the title. The page does not wait for them
+    // Asks for what comes after the top in one question, then the order of the series, with the page not waiting for them
     fun loadExtras() {
         val title = mutableState.value.title ?: return
         mutableState.update { it.copy(details = Load.Loading, recommendations = Load.Loading, people = Load.Loading) }
@@ -321,14 +319,13 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
-    // The age of a manga, worked out from its tags, is its rating on the top of the page, as the one of an anime is. It comes with the details, after
-    // the top, so it goes into it when it comes. It has the symbol of Brazil in Brazil and the square with the age in every other country
+    // The age of a manga from its tags is its rating on the top, with the symbol in Brazil and the square elsewhere
     private fun applyMangaRating(group: AgeGroup) {
         val rating = ContentRating(group, official = false, symbol = AppLanguage.region == BrazilRegion)
         mutableState.update { state -> state.art?.let { state.copy(art = it.withRating(rating)) } ?: state }
     }
 
-    // The trailer TMDB has, for a title AniList has none for. It is asked once the details are there and show none, and it goes in them
+    // The trailer TMDB has for a title AniList has none for, asked once the details show none
     private fun loadFallbackTrailer(title: TitleUi) {
         if (title.manga) return
         viewModelScope.launch {
@@ -341,11 +338,13 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
+    // Asks for the order of the series again
     fun retryWatchOrder() {
         val details = (mutableState.value.details as? Load.Done)?.value
         loadWatchOrder(details?.relations.orEmpty(), details?.malId)
     }
 
+    // Asks for the order of the series from the relations of the title
     private fun loadWatchOrder(relations: List<TitleRelation>, malId: Int?) {
         val title = mutableState.value.title ?: return
         mutableState.update { it.copy(watchOrder = Load.Loading) }
@@ -365,14 +364,17 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
+    // Asks for the episodes again
     fun retryEpisodes() {
         mutableState.value.title?.let(::loadEpisodes)
     }
 
+    // Asks for the news again
     fun retryNews() {
         mutableState.value.title?.let(::loadNews)
     }
 
+    // Asks for the community again
     fun retryCommunity() {
         mutableState.value.title?.let(::loadCommunity)
     }
@@ -385,8 +387,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
-    // The openings and the endings come from MyAnimeList by its id, so a title without one has none, and they are left out of the page when
-    // they cannot be reached
+    // The openings and endings come from MyAnimeList by its id, left out when there is none or it cannot be reached
     private fun loadThemes(title: TitleUi) {
         val malId = title.malId ?: return
         mutableState.update { it.copy(themes = Load.Loading) }
@@ -405,16 +406,19 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
+    // Asks for the episodes of the title
     private fun loadEpisodes(title: TitleUi) {
         mutableState.update { it.copy(episodes = Load.Loading) }
         viewModelScope.launch {
             val found = repository.episodes(title)
             mutableState.update { it.copy(episodes = if (found == null) Load.Failed else Load.Done(found.episodes)) }
+
             // The list shows at once as ani.zip has it and then comes again with the names and texts in the language of the app
             if (found != null) {
                 val translated = repository.translatedEpisodes(found)
                 if (translated != found.episodes) mutableState.update { it.copy(episodes = Load.Done(translated)) }
                 translateOpen()
+
                 // The scores come last, each time a source answers, and go on whatever the list has by then
                 repository.episodeRatings(found) { rated ->
                     mutableState.update { state ->
@@ -426,11 +430,13 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
+    // Asks for the community of the title
     private fun loadCommunity(title: TitleUi) {
         mutableState.update { it.copy(community = Load.Loading) }
         viewModelScope.launch {
             val community = repository.community(title.anilistId, title.manga)
             mutableState.update { it.copy(community = if (community == null) Load.Failed else Load.Done(community)) }
+
             // The summaries of the reviews and the titles of the threads come in the language of the app a moment after the tab
             if (community != null) {
                 launch {
@@ -445,8 +451,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         }
     }
 
-    // The same look for the pictures, the translation and the rating that the hero of the Home does, all at once. A manga has no art on
-    // the other sites, which only know the anime, so it keeps the cover and the banner of AniList
+    // The same look for pictures, translation and rating as the hero of the Home, a manga keeping the cover and banner of AniList
     private suspend fun loadArt(title: TitleUi): HeroArt {
         var posterUrl: String? = null
         var backdropUrl: String? = null
@@ -454,10 +459,11 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         var synopsis: String? = null
         var rating: ContentRating? = null
         var covers = emptyList<MangaCover>()
+
         // Whether the pictures of the season were already put in the page with the others, so they are not asked for again
         var usedSeasonArt = false
-        // The season does not wait for the pictures, nor is it lost when one of the sites is slow: it goes on after the time of the pictures
-        // ends and is put in the title when it comes
+
+        // The season does not wait for the pictures nor is it lost when a site is slow, it is put in the title when it comes
         val seasonJob = if (title.manga) null else viewModelScope.async {
             SeasonNumber.of(title.startDate, ArtworkRepository.Shared.seasonStarts(title.anilistId, title.query), title.seasonMarker, title.hasPrequel, title.isContinuation)
         }
@@ -475,9 +481,8 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
                     launch {
                         rating = RatingRepository.forCard(AppLanguage.region, RatingQuery(title.anilistId, title.malId, title.adult, true, title.query))
                     }
-                    // The art of a manga is its covers on MangaDex, one for each volume, and the first volume stands for it. It is
-                    // downloaded now, so it comes up whole, and the cover of AniList stays when there is none. A manga that goes on from another
-                    // keeps the cover of AniList, which is its own, since the first volume on MangaDex is the one of the one before it
+
+                    // The art of a manga is its MangaDex volume covers, the first for the title, the AniList one when none
                     launch {
                         val found = MangaArtClient.covers(title.anilistId, title.query.names, AppLanguage.code, AppLanguage.region).orEmpty()
                         covers = found
@@ -488,8 +493,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
                     return@coroutineScope
                 }
                 launch {
-                    // The pictures of the season are asked at the same time as the ones of the series, for a title that says it is not the first
-                    // of its series, so each season shows its own from the start and not after the ones of the series
+                    // The pictures of the season are asked with the series for a title that is not the first, so each shows its own
                     val own = if (title.hasPrequel || title.seasonMarker != null || title.isContinuation) {
                         async {
                             val season = seasonJob?.await()
@@ -507,6 +511,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
                     usedSeasonArt = mine.posterUrl != null || mine.backdropUrl != null
                     posterUrl = mine.posterUrl ?: found.posterUrl
                     backdropUrl = mine.backdropUrl ?: found.backdropUrl
+
                     // A picture that could not be downloaded is left for the one of the series
                     suspend fun loaded(url: String?, size: Size): String? = url?.takeIf { loader.execute(artRequest(context, it, size)) is SuccessResult }
                     coroutineScope {
@@ -552,8 +557,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         return HeroArt(posterUrl, backdropUrl, logoUrl, synopsis, rating, season)
     }
 
-    // A season after the first has its own poster and backdrop when the sites have them, so it is not taken for the others of its series. They are
-    // downloaded first, so the picture changes at once, and the ones of the series stay when there are none
+    // A season after the first has its own poster and backdrop when the sites have them, downloaded first so it changes at once
     private suspend fun showSeasonArt(title: TitleUi, season: Int) {
         if (season <= 1) return
         val pictures = ArtworkRepository.Shared.seasonArt(title.anilistId, title.query, season, title.startDate, AppLanguage.code)
@@ -566,6 +570,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         mutableState.update { state -> state.art?.let { state.copy(art = it.withPictures(poster ?: it.posterUrl, backdrop ?: it.backdropUrl)) } ?: state }
     }
 
+    // Constants of the view model
     private companion object {
         // The country whose symbols of rating are the official ones of the app
         const val BrazilRegion = "BR"

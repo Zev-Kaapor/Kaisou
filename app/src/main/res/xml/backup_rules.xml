@@ -1,7 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Rules of the automatic backup of devices older than API 31.
-   See https://developer.android.com/guide/topics/data/autobackup
--->
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rules of the automatic backup of devices older than API 31, see developer.android.com/guide/topics/data/autobackup -->
 <full-backup-content>
     <!-- The token of the AniList login stays on the device -->
     <exclude domain="sharedpref" path="kaisou_session.xml" />

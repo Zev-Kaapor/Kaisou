@@ -1,7 +1,6 @@
 package com.kaisou.app.core.anilist
 
-// Turns the description of a title as AniList sends it, with breaks, italic and links written as HTML, into the markdown of AniList
-// that the app already shows, keeping the lines and the paragraphs the way they came
+// Turns the HTML description of AniList into the markdown the app shows, keeping lines and paragraphs
 object AniDescription {
     private val LineBreak = Regex("(?i)<br\\s*/?>")
     private val Link = Regex("(?is)<a\\s[^>]*href=[\"']([^\"']*)[\"'][^>]*>(.*?)</a>")
@@ -20,6 +19,7 @@ object AniDescription {
 
     private val Named = mapOf("amp" to "&", "lt" to "<", "gt" to ">", "quot" to "\"", "apos" to "'", "nbsp" to " ")
 
+    // Turns a description written as HTML into markdown
     fun markdown(raw: String?): String {
         var text = raw ?: return ""
         text = LineBreak.replace(text, "\n")
@@ -40,15 +40,16 @@ object AniDescription {
             Named[name.lowercase()]
         }
 
+    // Base of a hexadecimal number
     private const val HexRadix = 16
 
-    // A translation puts spaces inside the marks, as _ attack on titan _, and in a link, as [Name] (https://...), and then they are not marks any
-    // more. The spaces are taken out
+    // Takes out the spaces a translation puts inside the marks and links, which would break them
     private val SpacedPair = Regex("(\\*\\*|__|~~)[ \\t]+([^*_~\\n]+?)[ \\t]+\\1")
     private val SpacedSingle = Regex("(?<![*\\w])([*_])[ \\t]+([^*_\\n]+?)[ \\t]+\\1(?![*\\w])")
 
     private val SpacedLink = Regex("(\\[[^\\]\\n]+])[ \\t]*\\([ \\t]*(https?)[ \\t]*:[ \\t]*/[ \\t]*/[ \\t]*([^)\\s]*)[ \\t]*\\)")
 
+    // Fixes the marks and links that a translation spaced out
     fun tidy(text: String): String =
         SpacedLink.replace(SpacedSingle.replace(SpacedPair.replace(text, "$1$2$1"), "$1$2$1"), "$1($2://$3)")
 }

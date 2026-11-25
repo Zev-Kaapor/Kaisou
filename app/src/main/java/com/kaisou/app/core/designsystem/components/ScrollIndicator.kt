@@ -18,14 +18,15 @@ import androidx.compose.ui.unit.dp
 // Width of the bar, the shortest its thumb gets, and how strong the track and the thumb are
 val ScrollIndicatorWidth = 4.dp
 private val ThumbMinHeight = 32.dp
+
+// How strong the track and the thumb are
 private const val TrackAlpha = 0.08f
 private const val ThumbAlpha = 0.6f
 
 // How much of the content is on the screen and how far it was scrolled, both from 0 to 1
 private class ScrollShare(val visible: Float, val scrolled: Float)
 
-// A thin bar on the end of what scrolls, a faint track with a violet thumb, so it is clear there is more below, only while there is. It is
-// the one of Wavvy. It goes before verticalScroll in the chain, so it is drawn over the part on the screen and not over the whole content
+// A thin bar at the end of what scrolls, a faint track with a violet thumb, drawn over the part on the screen
 @Composable
 fun Modifier.scrollIndicator(state: ScrollState): Modifier = indicator { viewport ->
     if (state.maxValue <= 0 || state.maxValue == Int.MAX_VALUE) null
@@ -84,8 +85,7 @@ private fun Modifier.indicator(share: (viewport: Float) -> ScrollShare?): Modifi
     }
 }
 
-// Where a list that scrolls was left, kept by the view model of its screen, which stays when the phone is turned. The position kept by the
-// screen itself is lost between standing up and lying down, since each has its own layout
+// Where a list was left, kept by the view model so it survives turning the phone, since each layout has its own
 class ScrollPosition {
     var index = 0
     var offset = 0

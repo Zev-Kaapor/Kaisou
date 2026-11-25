@@ -35,6 +35,8 @@ object SettingsDimens {
     // The picture of each project on the screen of the thanks, and how many lines of words a project may take
     val ThanksInset = 8.dp
     val ThanksIcon = 40.dp
+
+    // How many lines of thanks are shown before they close
     const val ThanksLines = 4
 
     // The photo of the author on the page about the app
@@ -43,8 +45,7 @@ object SettingsDimens {
     // The line between two rows of a card, which starts where the words start
     val DividerStart = RowPadding + RowIcon + RowIconGap
 
-    // The sheet of choices: the room at its sides and at its bottom, around its title, the corners of its cards, the room inside a row,
-    // the gap before the note of the default one and the check at the end, and the share of the width the title takes lying down
+    // The sheet of choices: its room, corners, rows, check and the width of the title lying down
     val ChoiceSide = 16.dp
     val ChoiceBottom = 24.dp
     val ChoiceTitleHorizontal = 8.dp
@@ -55,5 +56,7 @@ object SettingsDimens {
     val ChoiceTagGap = 8.dp
     val ChoiceCheck = 24.dp
     val ChoiceIcon = 20.dp
+
+    // The share of the width the title of the sheet takes lying down
     const val ChoiceLandscapeTitleWeight = 0.35f
 }

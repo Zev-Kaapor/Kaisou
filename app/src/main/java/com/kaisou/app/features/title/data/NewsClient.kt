@@ -23,9 +23,9 @@ import com.kaisou.app.core.translation.GoogleTranslator
 import com.kaisou.app.core.net.Gates
 import com.kaisou.app.core.net.HttpText
 
-// The news about a title: for an anime they come from Kuroiru by the id of MyAnimeList, which gathers the headlines of Anime News Network,
-// and for a manga from MangaBaka by the id of AniList. Each one is the headline, the day and where it opens
+// The news about a title: from Kuroiru for an anime by its MyAnimeList id, from MangaBaka for a manga by its AniList id
 object NewsClient {
+    // Addresses of the sources of news, where and how long they are kept, and how many are shown
     private const val KuroiruUrl = "https://kuroiru.co/api/anime"
     private const val BakaUrl = "https://api.mangabaka.org/v1"
     private const val AniNewsUrl = "https://www.animenewsnetwork.com/news/."
@@ -33,8 +33,7 @@ object NewsClient {
     private const val StoreMillis = 3L * 60L * 60L * 1000L
     private const val MaxNews = 30
 
-    // The news from the newest, empty when there are none or the site does not know the title, null when it could not be reached, which is
-    // not kept
+    // The news from the newest, empty when there are none, null when it could not be reached, which is not kept
     suspend fun news(anilistId: Int, malId: Int?, manga: Boolean): List<TitleNews>? {
         val found = withContext(Dispatchers.IO) {
             if (!manga && malId == null) return@withContext emptyList()
@@ -56,10 +55,10 @@ object NewsClient {
         return news.zip(titles) { item, title -> item.copy(title = title) }
     }
 
+    // Reads the news of an anime from Kuroiru
     private fun fromKuroiru(malId: Int): List<TitleNews> = HttpText.get("$KuroiruUrl/$malId")?.let(::parseKuroiru).orEmpty()
 
-    // MangaBaka knows a series by a number of its own, which is asked first, and its news come as a big list, newest first, so only the
-    // beginning of it is read
+    // MangaBaka knows a series by its own number, asked first, and its news come newest first, so only the beginning is read
     private fun fromBaka(anilistId: Int): List<TitleNews> {
         val source = HttpText.get("$BakaUrl/source/anilist/$anilistId") ?: return emptyList()
         val id = JSONObject(source).optJSONObject("data")?.optJSONArray("series")?.optJSONObject(0)?.optInt("id")?.takeIf { it > 0 } ?: return emptyList()
@@ -102,6 +101,7 @@ object NewsClient {
         return found
     }
 
+    // Reads one news item of MangaBaka
     private fun readBaka(reader: JsonReader): TitleNews? {
         var title: String? = null
         var url: String? = null
@@ -123,6 +123,7 @@ object NewsClient {
         return TitleNews(name, published?.let { runCatching { dateText(Instant.parse(it)) }.getOrNull() }, author?.takeIf { it.isNotBlank() }, null, null, address)
     }
 
+    // Reads a text, null when it is not one
     private fun text(reader: JsonReader): String? =
         if (reader.peek() == JsonToken.STRING) {
             reader.nextString()
@@ -158,6 +159,7 @@ object NewsClient {
     private fun dateText(moment: Instant): String =
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault()).format(moment)
 
+    // Writes the news as text to keep them
     private fun write(news: List<TitleNews>): String =
         JSONArray().apply {
             news.forEach { item ->
@@ -165,6 +167,7 @@ object NewsClient {
             }
         }.toString()
 
+    // Reads the news that were kept
     private fun read(text: String): List<TitleNews>? =
         try {
             val list = JSONArray(text)

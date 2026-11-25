@@ -43,10 +43,7 @@ import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.ui.HomeDimens
 
-// Placeholder of the hero while the titles are not there: each block sits where the title, the details, the synopsis and the
-// buttons of the real hero go, so nothing moves when it arrives. The art is a block too, with the icon of an image in its
-// middle, and one light sweeps over all of it. Standing up the art fills the width and fades into the page under the
-// details, lying down the details stay on the left and the art, on the right, fades into them
+// Placeholder of the hero, each block where the real one goes so nothing moves, with one light sweeping over all of it
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeHeroSkeleton(
@@ -79,8 +76,7 @@ fun HomeHeroSkeleton(
                     }
                 )
         ) {
-            // The art is what is above the details and under the header, and the icon of an image sits in the middle of that. Lying
-            // down it is the right half
+            // The art is what is above the details and under the header, with the icon of an image in its middle
             val headerHeight = WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding() + HomeDimens.HeaderAction
             if (landscape) {
                 // The art block on the right, with its left edge and its bottom melting into the page like the real art
@@ -119,8 +115,7 @@ fun HomeHeroSkeleton(
     }
 }
 
-// The art lying down as a block that melts into the page on its left edge and at its bottom by becoming transparent, and not by being
-// covered with the color of the page, so the light of the sweep only shows where the art is and there is no edge where the block ends
+// The art lying down as a block that melts into the page by turning transparent, so the sweep shows only where the art is
 @Composable
 private fun Modifier.meltingArt(color: Color): Modifier {
     val bottom = HomeDimens.HeroLandscapeBottomFade
@@ -183,6 +178,7 @@ private fun SkeletonDetails(landscape: Boolean, modifier: Modifier = Modifier) {
                     .skeleton()
             )
         }
+
         // The tag of the day and the line with the year, the format and the genres
         Row(
             modifier = Modifier.padding(top = if (landscape) dimens.spaceSmall else dimens.spaceMedium),
@@ -196,6 +192,7 @@ private fun SkeletonDetails(landscape: Boolean, modifier: Modifier = Modifier) {
             lines = if (landscape) HomeDimens.HeroLandscapeSynopsisLines else HomeDimens.HeroSynopsisLines,
             modifier = Modifier.padding(top = dimens.spaceSmall)
         )
+
         // The main button and the round one next to it
         Row(
             modifier = Modifier.padding(top = if (landscape) HomeDimens.HeroLandscapeButtonsTop else HomeDimens.HeroButtonsTop),
@@ -213,8 +210,7 @@ private fun SkeletonDetails(landscape: Boolean, modifier: Modifier = Modifier) {
     }
 }
 
-// The fade of the art into the page, the same the real art has: standing up it goes down, lying down only the bottom melts, the left
-// edge of the art has its own
+// The fade of the art into the page, the same as the real art: down when standing up, only the bottom when lying down
 @Composable
 fun HeroFade(landscape: Boolean, modifier: Modifier = Modifier) {
     val background = MaterialTheme.colorScheme.background
@@ -242,11 +238,11 @@ fun HeroFade(landscape: Boolean, modifier: Modifier = Modifier) {
     )
 }
 
-// The left edge of the art lying down melting into the page over a long, eased stretch, so the art and the page are one picture and
-// not a picture with a dark band over it
+// The left edge of the art lying down melting into the page over a long eased stretch, with no dark band
 @Composable
 fun HeroArtEdgeFade(modifier: Modifier = Modifier) {
     val background = MaterialTheme.colorScheme.background
+
     // The brush is made once for a color, not at each frame of the screen
     val brush = remember(background) {
         val stops = HomeDimens.HeroArtEdgeFadeStops.map { (at, alpha) -> at * HomeDimens.HeroArtEdgeFadeReach to background.copy(alpha = alpha) }

@@ -19,8 +19,7 @@ private const val GlowMiddleStrength = 0.45f
 private const val GlowTailStop = 0.4f
 private const val GlowTailStrength = 0.07f
 
-// Two accent colors blending from left to right across the whole width, strongest at the top edge and gone by the middle of the screen
-// The strength goes from 0 to 1 and is read while drawing, so fading it never recomposes
+// Two accent colors blending left to right, strongest at the top edge and gone by the middle, its strength read while drawing
 @Composable
 fun Modifier.backgroundGlow(strength: () -> Float = { 1f }): Modifier {
     val colors = KaisouTheme.colors

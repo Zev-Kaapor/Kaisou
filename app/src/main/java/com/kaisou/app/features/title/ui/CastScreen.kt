@@ -60,8 +60,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import com.kaisou.app.features.home.ui.components.SpoilerText
 
-// All the characters or all the staff of a title, a page at a time: the next one is asked for when the list gets near its end. Each one
-// opens its page
+// All the characters or all the staff of a title a page at a time, the next asked near the end, each opening its page
 @Composable
 fun CastScreen(onBack: () -> Unit, onOpenProfile: (ProfileRef) -> Unit, modifier: Modifier = Modifier, viewModel: CastViewModel = viewModel()) {
     val dimens = KaisouTheme.dimens
@@ -111,8 +110,7 @@ fun CastScreen(onBack: () -> Unit, onOpenProfile: (ProfileRef) -> Unit, modifier
 // How many rows before the end of the list the next page is asked for
 private const val LoadAhead = 4
 
-// A person of the title in a card: the picture runs the whole height on the start, and beside it the name, what it is in the title and the
-// beginning of what it says of itself, with its covers kept. The button at the end opens its page, where all the rest is
+// A person of the title in a card: the picture at full height, the name, the part, the start of what it says, and a button
 @Composable
 internal fun CastCard(person: TitlePerson, onOpenProfile: (ProfileRef) -> Unit) {
     val dimens = KaisouTheme.dimens

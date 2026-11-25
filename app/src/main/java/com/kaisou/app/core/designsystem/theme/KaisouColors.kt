@@ -11,21 +11,19 @@ data class KaisouColors(
     // Text and icons over images and gradients
     val onMedia: Color,
     // Black of the veil at the top of the hero
-    // Black of the veil at the top of the hero
     val veil: Color,
     // Soft shadow of the texts over pictures, the one of the icons over them and the color of the numbers over any art
     val textShadow: Color,
     val iconShadow: Color,
     val numberHighlight: Color,
-    // The stars of the places a title has among the best: gold, silver and bronze for the first three, then one for the first ten, one for
-    // the first fifty and one for the first hundred
+    // The stars of the places a title has among the best: gold, silver and bronze, then the first ten, fifty and hundred
     val medalGold: Color,
     val medalSilver: Color,
     val medalBronze: Color,
     val rankTopTen: Color,
     val rankTopFifty: Color,
     val rankTopHundred: Color,
-    // The colors that tell apart the parts of a chart, like the genres of a person, from the one with the most to the one with the least
+    // The colors that tell apart the parts of a chart, from the one with the most to the one with the least
     val chart: List<Color>,
     // Tag with the day of the week of a weekly release and what is drawn over it
     val weeklyBadge: Color,

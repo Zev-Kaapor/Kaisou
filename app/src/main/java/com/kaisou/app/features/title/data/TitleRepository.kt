@@ -71,10 +71,7 @@ class TitleRepository(context: Context) {
         return title.copy(friends = friends(data.optJSONObject("friends")?.optJSONArray("mediaList"), title.manga))
     }
 
-    // Everything that comes after the top, in one question to AniList and not three: the details, what other people recommend and the
-    // characters and the staff. Each page asking for a handful of questions was what made AniList ask the app to rest, so what it says is
-    // kept on the phone for a while. It is the same for everyone, the heart and the list are in the top, which is never kept. Null when
-    // AniList could not be reached
+    // Everything after the top in one question: the details, recommendations, characters and staff, kept on the phone for a while
     suspend fun extras(id: Int): TitleExtras? {
         val variables = JSONObject().put("id", id)
         val raw = kept(ExtrasSpace, id.toString()) { client.query(ExtrasQuery, variables, AniListSession.token)?.toString() } ?: return null
@@ -82,6 +79,7 @@ class TitleRepository(context: Context) {
         val details = data.optJSONObject("details") ?: return null
         val parsed = parseDetails(details)
         val people = cast(data.optJSONObject("cast"))
+
         // The ones that made the title are in the data too, by what they did, each one a link
         val makers = people.creators.groupBy { it.role }.map { (role, list) -> TitleDatum(role.orEmpty(), list.map { it.name }, list.map { it.ref }) }
         return TitleExtras(
@@ -106,8 +104,7 @@ class TitleRepository(context: Context) {
             )
         }.filterNot { it.name.equals(AniListSession.viewer?.name, ignoreCase = true) }
 
-    // The names of the tags in the language of the app, in the alphabetical order of that language. A name that is not translated stays as
-    // AniList has it
+    // The names of the tags in the language of the app, in its alphabetical order, a name not translated staying as AniList has it
     private suspend fun inTheLanguage(tags: List<TitleTag>): List<TitleTag> {
         if (!AppLanguage.needsTranslation || tags.isEmpty()) return tags
         val names = GoogleTranslator.translateLines(tags.map { it.name }, AppLanguage.translationCode)
@@ -115,14 +112,14 @@ class TitleRepository(context: Context) {
         return tags.zip(names) { tag, name -> tag.copy(name = name) }.sortedWith(compareBy(collator) { it.name })
     }
 
-    // The ones that made the title put right after the studios and the producers, or after the numbers when it has none, as AniList does
+    // The makers go right after the studios and producers, or after the numbers when it has none, as AniList does
     private fun afterStudios(data: List<TitleDatum>, makers: List<TitleDatum>): List<TitleDatum> {
         val anchors = listOf(R.string.title_data_producers, R.string.title_data_studios, R.string.title_data_favourites).map(resources::getString)
         val at = anchors.firstNotNullOfOrNull { label -> data.indexOfFirst { it.label == label }.takeIf { it >= 0 } } ?: (data.size - 1)
         return data.take(at + 1) + makers + data.drop(at + 1)
     }
 
-    // What was kept on the phone for a title when it is still good, or what AniList says, which is then kept. Nothing kept when it failed
+    // What was kept on the phone for a title when still good, or what AniList says, which is then kept, nothing kept on failure
     private suspend fun kept(space: String, key: String, load: suspend () -> String?): String? {
         withContext(Dispatchers.IO) { AppStore.get(space, key, KeptMillis) }?.let { return it }
         val fresh = load() ?: return null
@@ -148,8 +145,7 @@ class TitleRepository(context: Context) {
             moreStaff = media?.optJSONObject("staff")?.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true
         )
 
-    // The people of the staff with a part that makes the title: who wrote it and drew it, who directed it, who made its music. Each once, with
-    // the first parts that AniList puts before the others
+    // The staff with a part that makes the title: who wrote, drew, directed, made the music, each once
     private fun creators(block: JSONObject?): List<TitlePerson> =
         objects(block?.optJSONArray("edges")).mapNotNull { edge ->
             val raw = text(edge, "role") ?: return@mapNotNull null
@@ -167,11 +163,11 @@ class TitleRepository(context: Context) {
             TitleVoice(name, text(actor, "languageV2") ?: return@mapNotNull null)
         }.distinct()
 
-    // The voice that shows under a character on the page of the title: the one in the original language of the title, and when there is none
-    // the first that came
+    // The voice shown under a character: the one in the original language of the title, or the first that came
     private fun shownVoice(voices: List<TitleVoice>, original: DubLanguage): TitleVoice? =
         voices.firstOrNull { it.language.equals(original.englishName, ignoreCase = true) } ?: voices.firstOrNull()
 
+    // Reads the characters or the staff of a title with the voice each shows
     private fun people(block: JSONObject?, kind: String, original: DubLanguage = DubLanguage.Japanese, voicesOf: (JSONObject) -> List<TitleVoice>): List<TitlePerson> {
         val edges = block?.optJSONArray("edges") ?: return emptyList()
         return (0 until edges.length()).mapNotNull { index ->
@@ -213,8 +209,7 @@ class TitleRepository(context: Context) {
         return CastPage(withAboutTranslated(people), block?.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true)
     }
 
-    // The reviews, how the scores and the lists are spread and the threads of the forum. Null when
-    // AniList could not be reached
+    // The reviews, how the scores and lists are spread and the forum threads, null when AniList could not be reached
     suspend fun community(id: Int, manga: Boolean): TitleCommunity? {
         val variables = JSONObject().put("id", id).put("fresh", -Random.nextInt(1, Int.MAX_VALUE))
         val data = client.query(CommunityQuery, variables, AniListSession.token) ?: return null
@@ -245,6 +240,7 @@ class TitleRepository(context: Context) {
         val progress = text(activity, "progress").orEmpty()
         val range = " - " in progress
 
+        // Writes the line of an activity for a range or a single number
         fun of(single: Int, several: Int) = resources.getString(if (range) several else single, progress)
         val said = when {
             status.startsWith("rewatched") -> of(R.string.activity_rewatched, R.string.activity_rewatched_range)
@@ -295,14 +291,12 @@ class TitleRepository(context: Context) {
         return ThreadBody(thread, text(found, "body").orEmpty(), found.optBoolean("isLiked"), found.optBoolean("isSubscribed"), found.optBoolean("isLocked"), tags)
     }
 
-    // Follows a thread or stops following it, and says how it stands. This changes the account of the user, so it is only called when they touch
-    // the bell. Null when AniList did not do it
+    // Follows a thread or stops following it, only when the user touches the bell, null when AniList did not do it
     suspend fun subscribeThread(id: Int, subscribe: Boolean): Boolean? =
         client.query(SubscribeThreadQuery, JSONObject().put("id", id).put("subscribe", subscribe), AniListSession.token)
             ?.optJSONObject("ToggleThreadSubscription")?.optBoolean("isSubscribed")
 
-    // Writes a comment on a thread, or an answer to a comment, and gives it as AniList has it. This is posted on the account of the user, so it is
-    // only called after they confirm. Null when AniList did not take it
+    // Writes a comment or an answer on a thread, only after the user confirms, giving it as AniList has it, null when not taken
     suspend fun saveComment(threadId: Int, parentId: Int?, comment: String): ThreadComment? {
         val variables = JSONObject().put("id", threadId).put("text", comment)
         if (parentId != null) variables.put("parent", parentId)
@@ -328,6 +322,7 @@ class TitleRepository(context: Context) {
         return CommentsPage(objects(block.optJSONArray("threadComments")).mapNotNull(::commentOf), block.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true)
     }
 
+    // Reads one comment, null when it has no author
     private fun commentOf(comment: JSONObject): ThreadComment? {
         val user = comment.optJSONObject("user") ?: return null
         return ThreadComment(
@@ -342,10 +337,10 @@ class TitleRepository(context: Context) {
         )
     }
 
-    // Likes a thread or a comment, or takes the like back, and says how it stands. This changes the account of the user, so it is only called
-    // when they touch the heart. Null when AniList did not do it
+    // Likes a thread or a comment or takes it back, only when the user touches the heart, null when AniList did not do it
     suspend fun toggleThreadLike(id: Int): AniLike? = client.toggleLikeOf(id, "THREAD", AniListSession.token)
 
+    // Likes or unlikes a comment of a thread
     suspend fun toggleCommentLike(id: Int): AniLike? = client.toggleLikeOf(id, "THREAD_COMMENT", AniListSession.token)
 
     // A review as AniList gives it, null when it has no author
@@ -377,8 +372,7 @@ class TitleRepository(context: Context) {
         return ReviewBody(review, text(media, "body").orEmpty(), voteOf(text(media, "userRating")))
     }
 
-    // Votes on a review: the thumb up, the thumb down, or takes the vote back. This changes the account of the user, so it is only called when
-    // they touch a thumb. Null when AniList did not take it
+    // Votes on a review, up, down or taking it back, only when the user touches a thumb, null when AniList did not take it
     suspend fun rateReview(id: Int, vote: ReviewVote): ReviewTally? {
         val rating = when (vote) {
             ReviewVote.Up -> "UP_VOTE"
@@ -389,22 +383,21 @@ class TitleRepository(context: Context) {
         return ReviewTally(result.optInt("rating"), result.optInt("ratingAmount"), voteOf(text(result, "userRating")))
     }
 
+    // Reads a vote of a review
     private fun voteOf(rating: String?): ReviewVote = when (rating) {
         "UP_VOTE" -> ReviewVote.Up
         "DOWN_VOTE" -> ReviewVote.Down
         else -> ReviewVote.None
     }
 
-    // What the user has done with the title, as AniList names the lists in the language of the app: reading for a manga, watching for
-    // an anime
+    // What the user has done with the title, as AniList names the lists in the language of the app, reading or watching
     private fun listNames(manga: Boolean): Map<String, String> =
         if (manga) names(R.array.title_list_keys, R.array.title_list_names_manga) else names(R.array.title_list_keys, R.array.title_list_names_anime)
 
+    // Reads a JSON array as objects
     private fun objects(list: JSONArray?): List<JSONObject> = if (list == null) emptyList() else (0 until list.length()).map { list.getJSONObject(it) }
 
-    // The whole series of an anime or of a manga in the order to take it, with a card for each title. What is tied to this title is known
-    // from its details, so the first question already goes two steps from it. What was found is kept on the phone, a series does not change.
-    // Null when AniList could not be reached
+    // The whole series in the order to take it, a card for each title, kept on the phone, null when AniList could not be reached
     suspend fun watchOrder(id: Int, manga: Boolean, relations: List<TitleRelation>, malId: Int?): TitleWatchOrder? {
         val ordered = (if (!manga && malId != null) chiakiOrder(malId) else null) ?: run {
             val seeds = relations.filter { it.type in SeriesTies }.map { it.card.anilistId }
@@ -420,10 +413,7 @@ class TitleRepository(context: Context) {
         return TitleWatchOrder(cards, cards.indexOfFirst { it.anilistId == id }.coerceAtLeast(0))
     }
 
-    // The titles of an anime in the order chiaki.site gives, as AniList has them. The site is asked by the id on MyAnimeList and answers with a
-    // page that has a row for each title, and the titles come from AniList by those ids, so each has its card. What was found is kept on the
-    // phone, for each title of the order, and the ones AniList does not know are left out. Null when the site has nothing for the title or
-    // could not be reached, and then the ties on AniList are followed
+    // The titles of an anime in the order chiaki.site gives, asked by the id on MyAnimeList and read from AniList, null when none
     private suspend fun chiakiOrder(malId: Int): List<JSONObject>? {
         withContext(Dispatchers.IO) { AppStore.get(OrderSpace, malId.toString(), OrderMillis) }?.let { own ->
             val text = if (own.startsWith(SeriesPointer)) withContext(Dispatchers.IO) { AppStore.get(OrderSpace, own.removePrefix(SeriesPointer), OrderMillis) } else own
@@ -460,8 +450,7 @@ class TitleRepository(context: Context) {
         return ordered
     }
 
-    // The series as it was kept, or asked for. It is the same from each of its titles, so the one that was asked keeps all of it and the
-    // others keep only the id of that one, and going from one title to the next asks nothing, nor fills the phone with the same list
+    // The series as kept or asked: the title asked keeps all of it and the others only its id, so going between them asks nothing
     private suspend fun keptSeries(id: Int, seeds: List<Int>, manga: Boolean): String? {
         val own = withContext(Dispatchers.IO) { AppStore.get(SeriesSpace, id.toString(), KeptMillis) }
         if (own != null && !own.startsWith(SeriesPointer)) return own
@@ -488,8 +477,7 @@ class TitleRepository(context: Context) {
         return year * 10_000 + (number(start, "month") ?: 0) * 100 + (number(start, "day") ?: 0)
     }
 
-    // The titles of a series in the order to take them. What AniList says comes before another comes first, even when it came out later, as
-    // a prequel that was drawn after the story it tells the start of, and the ones with nothing tying them in that way go by the day they started
+    // The titles of a series in the order to take them: what AniList says comes before goes first, the rest by the day they started
     private fun inOrder(items: List<JSONObject>): List<JSONObject> {
         val ids = items.map { it.getInt("id") }.toSet()
         val before = mutableMapOf<Int, MutableSet<Int>>()
@@ -516,9 +504,7 @@ class TitleRepository(context: Context) {
         return result
     }
 
-    // The titles of the series, as AniList has them. It starts from this title and the ones tied to it and follows what comes before and
-    // after and the stories apart, a few questions of many titles each, until there is nothing new or it is big enough. The first question
-    // failing is a failure, a later one only ends the search
+    // The titles of the series from this one and its ties, following before, after and apart stories until nothing is new
     private suspend fun series(id: Int, seeds: List<Int>, manga: Boolean): JSONArray? {
         val found = LinkedHashMap<Int, JSONObject>()
         var next = (listOf(id) + seeds).distinct()
@@ -544,8 +530,7 @@ class TitleRepository(context: Context) {
         return JSONArray(found.values.toList())
     }
 
-    // The episodes of an anime, with the ones that ani.zip does not have yet as numbers only, up to the last that aired. Null when ani.zip
-    // could not be reached
+    // The episodes of an anime, those ani.zip lacks as numbers only up to the last aired, null when ani.zip could not be reached
     suspend fun episodes(title: TitleUi): EpisodeSet? {
         val found = EpisodeClient.episodes(title.anilistId, AppLanguage.code, AppLanguage.region) ?: return null
         val aired = title.episodes ?: title.nextAiring?.let { it.episode - 1 } ?: found.episodes.maxOfOrNull { it.number } ?: 0
@@ -559,22 +544,19 @@ class TitleRepository(context: Context) {
         )
     }
 
-    // What people score each episode, from 0 to 10 by the number of the episode: IMDb first, then MyAnimeList, then TVmaze, then TMDB. They are given
-    // as each source answers
+    // What people score each episode, IMDb first, then MyAnimeList, TVmaze and TMDB, given as each source answers
     suspend fun episodeRatings(found: EpisodeSet, onScores: suspend (Map<Int, Float>) -> Unit) = EpisodeRatings.rate(found, AppLanguage.code, AppLanguage.region, onScores)
 
     // The same episodes with their names and what they tell in the language of the app
     suspend fun translatedEpisodes(found: EpisodeSet): List<TitleEpisode> = EpisodeTranslator.translate(found, AppLanguage.code, AppLanguage.region)
 
-    // AniList keeps its answer to a question for about a minute, for the same user, and gives it again to the same question, so the heart
-    // and the list would show what they were a moment ago. A comment or a name does not make the question another, a value does: every
-    // title passes a filter below any number, and the number is different each time, so each question is one that AniList has not seen
-    // and the answer is always a new one
+    // Asks without AniList's cache of about a minute, by making each question different, so the heart and the list are never old
     private suspend fun askAll(query: String, id: Int): JSONObject? {
         val variables = JSONObject().put("id", id).put("fresh", -Random.nextInt(1, Int.MAX_VALUE))
         return client.query(query, variables, AniListSession.token)
     }
 
+    // Reads a title from its answer
     private fun parse(media: JSONObject): TitleUi {
         val titles = media.getJSONObject("title")
         val english = text(titles, "english")
@@ -632,10 +614,13 @@ class TitleRepository(context: Context) {
         )
     }
 
+    // A studio of a title, with whether it is the main one and an animation one
     private class Studio(val id: Int, val name: String, val main: Boolean, val animation: Boolean)
 
+    // Gives the page reference of a studio
     private fun studioRef(studio: Studio): ProfileRef? = studio.id.takeIf { it > 0 }?.let { ProfileRef(ProfileKind.Studio, it) }
 
+    // Reads the studios of a title
     private fun studios(media: JSONObject): List<Studio> {
         val edges = media.optJSONObject("studios")?.optJSONArray("edges") ?: return emptyList()
         return (0 until edges.length()).mapNotNull { index ->
@@ -645,7 +630,7 @@ class TitleRepository(context: Context) {
         }
     }
 
-    // The age a manga is for, from the tags and the genres in English as AniList gives them, before the names are put in the language of the app
+    // The age a manga is for, from its tags and genres in English as AniList gives them, before the names are translated
     private fun mangaAge(media: JSONObject): AgeGroup? {
         val tags = objects(media.optJSONArray("tags")).mapNotNull { tag ->
             text(tag, "name")?.let { AgeTag(it, tag.optInt("rank"), tag.optBoolean("isMediaSpoiler"), tag.optBoolean("isAdult")) }
@@ -660,14 +645,18 @@ class TitleRepository(context: Context) {
         val titles = media.optJSONObject("title")
         val studios = studios(media)
         val data = buildList {
+            // Adds a line of data with several values
             fun addAll(label: Int, values: List<String>, refs: List<ProfileRef?> = emptyList(), urls: List<String?> = emptyList(), help: DatumHelp? = null) {
                 if (values.isNotEmpty()) add(TitleDatum(resources.getString(label), values, refs, urls, help))
             }
+
+            // Adds a line of data with one value
             fun add(label: Int, value: String?, url: String? = null, help: DatumHelp? = null) =
                 addAll(label, listOfNotNull(value?.takeIf { it.isNotBlank() }), urls = listOf(url), help = help)
-            // In the order of the page of AniList: what it is, how long, when, how it is rated and liked, who made it, where it came from and
-            // its names
+
+            // In the order of the page of AniList: kind, length, dates, rating, makers, origin and names
             add(R.string.title_data_format, text(media, "format")?.let { formatNames[it] })
+
             // The country it comes from, right under the format, since a manga from Korea or from China is told by it
             add(R.string.title_data_origin, text(media, "countryOfOrigin")?.let { Locale.Builder().setRegion(it).build().getDisplayCountry(Locale.getDefault()).takeIf { name -> name.isNotBlank() } })
             if (manga) {
@@ -683,11 +672,13 @@ class TitleRepository(context: Context) {
             if (!manga) {
                 val season = text(media, "season")?.let { seasonNames[it] }
                 val year = number(media, "seasonYear")
+
                 // The season is a link to the search of AniList for the titles of that season
                 val seasonName = text(media, "season")
                 val seasonUrl = if (seasonName != null && year != null) "$SearchUrl/anime?year=$year%25&season=$seasonName" else null
                 add(R.string.title_data_season, if (season != null && year != null) resources.getString(R.string.title_season_year, season, year) else null, seasonUrl)
             }
+
             // The weighted score has a hint that is a question mark, and the page of AniList that explains it
             add(
                 R.string.title_data_weighted,
@@ -697,12 +688,14 @@ class TitleRepository(context: Context) {
             add(R.string.title_data_mean, number(media, "meanScore")?.let { resources.getString(R.string.title_data_percent, it) })
             add(R.string.title_data_popularity, number(media, "popularity")?.let(numbers::format))
             add(R.string.title_data_favourites, number(media, "favourites")?.let(numbers::format))
+
             // The studios and the producers are links to their pages
             val animation = studios.filter { it.animation }
             val others = studios.filterNot { it.animation }
             addAll(R.string.title_data_studios, animation.map { it.name }, animation.map(::studioRef))
             addAll(R.string.title_data_producers, others.map { it.name }, others.map(::studioRef))
             add(R.string.title_data_source, text(media, "source")?.let { sourceNames[it] })
+
             // The hashtags search for them on X, and each genre searches for the titles of it on AniList, as the pages of AniList do
             val hashtag = text(media, "hashtag")
             val hashtagUrl = hashtag?.split(Regex("\\s+"))?.filter { it.startsWith("#") }?.takeIf { it.isNotEmpty() }
@@ -731,8 +724,7 @@ class TitleRepository(context: Context) {
         )
     }
 
-    // The titles tied to this one as cards with the name of the tie under them, the prequel and the sequel first and each kind in the order
-    // AniList gives it, the same title once
+    // The titles tied to this one as cards with the name of the tie, prequel and sequel first, each title once
     private fun relations(edges: JSONArray?): List<TitleRelation> {
         val order = resources.getStringArray(R.array.title_relation_keys).toList()
         return objects(edges)
@@ -749,8 +741,7 @@ class TitleRepository(context: Context) {
             }
     }
 
-    // The places of the title among the best rated and the most popular, each as the words of AniList do: #81 most popular of all time. The
-    // best places come first, and the ones with the same place are in the alphabetical order of the language of the phone
+    // The places of the title among the best and the most popular as AniList words them, the best first
     private fun rankings(media: JSONObject): List<TitleRanking> {
         val collator = Collator.getInstance(Locale.getDefault())
         return objects(media.optJSONArray("rankings"))
@@ -813,12 +804,11 @@ class TitleRepository(context: Context) {
         return listOf(base, lerp(base, Background, FadeToPage))
     }
 
+    // Pairs the keys of an array with its names
     private fun names(keys: Int, names: Int): Map<String, String> =
         resources.getStringArray(keys).zip(resources.getStringArray(names)).toMap()
 
-    // Turns or not the title among the favourites of the user, true when AniList did it. It only says what the title is now, so the page
-    // keeps its own idea of it and goes back when this is false
-    // The entry as AniList gives it, null when it has no state that is known
+    // Reads the entry of a title on the list of the user, null when it has no known state
     private fun listEntry(json: JSONObject): ListEntry? {
         val status = ListStatus.of(text(json, "status")) ?: return null
         return ListEntry(
@@ -839,7 +829,7 @@ class TitleRepository(context: Context) {
         )
     }
 
-    // Puts the title on the list of the user or changes what is there, and gives the entry as AniList kept it. Null when it was not taken
+    // Puts the title on the user's list or changes it, giving the entry as AniList kept it, null when not taken
     suspend fun saveEntry(id: Int, draft: ListDraft): ListEntry? {
         val variables = JSONObject()
             .put("mediaId", id)
@@ -865,8 +855,7 @@ class TitleRepository(context: Context) {
             .put("month", day?.monthValue ?: JSONObject.NULL)
             .put("day", day?.dayOfMonth ?: JSONObject.NULL)
 
-    // How the user gives a score and the lists they made for this kind of title, from their account, kept on the phone for a while. The
-    // key has the name of the user, so another account does not get what the first one chose. Null when AniList could not be reached
+    // How the user scores and the lists they made for a kind of title, kept for a while by user name, null when unreachable
     suspend fun listOptions(manga: Boolean): ListOptions? {
         val user = AniListSession.viewer?.name ?: return null
         val raw = kept(OptionsSpace, user) { client.query(OptionsQuery, JSONObject(), AniListSession.token)?.toString() } ?: return null
@@ -883,9 +872,11 @@ class TitleRepository(context: Context) {
     suspend fun removeEntry(entryId: Int): Boolean =
         client.query(RemoveEntryQuery, JSONObject().put("id", entryId), AniListSession.token)?.optJSONObject("DeleteMediaListEntry")?.optBoolean("deleted") == true
 
+    // Turns the title among the favourites of the user, true when AniList did it
     suspend fun toggleFavourite(id: Int, manga: Boolean): Boolean =
         client.query(ToggleFavouriteQuery, JSONObject().put(if (manga) "mangaId" else "animeId", id), AniListSession.token) != null
 
+    // Reads a date, null when a part is missing
     private fun localDate(json: JSONObject): LocalDate? {
         val year = number(json, "year") ?: return null
         val month = number(json, "month") ?: return null
@@ -893,7 +884,7 @@ class TitleRepository(context: Context) {
         return runCatching { LocalDate.of(year, month, day) }.getOrNull()
     }
 
-    // A date as it is written in the language of the phone, all of it, the month and the year, or only the year, as much as AniList knows
+    // A date as written in the language of the phone, as much as AniList knows: all of it, or the month and year, or the year
     private fun dateText(json: JSONObject): String? {
         val year = number(json, "year") ?: return null
         val month = number(json, "month")
@@ -908,25 +899,30 @@ class TitleRepository(context: Context) {
         }.getOrNull()
     }
 
+    // Reads a JSON array as texts
     private fun strings(list: JSONArray?): List<String> =
         if (list == null) emptyList() else (0 until list.length()).mapNotNull { list.optString(it).takeIf { text -> text.isNotBlank() } }
 
+    // Reads a positive number, null when it is missing
     private fun number(json: JSONObject, key: String): Int? = if (json.isNull(key)) null else json.optInt(key).takeIf { it > 0 }
 
-    // A value that is null on the server comes as the text "null" with the plain getters, and a field that was not asked for is not there
+    // A null of the server comes as the text "null" with the plain getters, and a field not asked for is absent
     private fun text(json: JSONObject, key: String): String? = if (json.isNull(key)) null else json.getString(key).takeIf { it.isNotBlank() }
 
+    // Constants of the repository
     internal companion object {
+        // The types, formats, ties and rankings the repository tells apart
         const val MangaType = "MANGA"
         const val MovieFormat = "MOVIE"
         const val PrequelRelation = "PREQUEL"
         const val PopularRanking = "POPULAR"
+
         // How many places the highlights show, how many titles of a series are looked for at most and how many go in each question
         const val MaxRankings = 8
         const val MaxSeries = 40
         const val SeriesBatch = 50
-        // The site of the order of an anime, asked by the id on MyAnimeList, what it wants to see in the request and what a row of its page
-        // begins with. What it gave is kept for six hours
+
+        // The site of the watch order, asked by the MyAnimeList id, what it needs and what a row begins with, kept six hours
         const val ChiakiOrderUrl = "https://chiaki.site/?/tools/watch_order/id/"
         val ChiakiHeaders = mapOf(
             "Referer" to "https://chiaki.site/?/tools/watch_order",
@@ -934,46 +930,61 @@ class TitleRepository(context: Context) {
             "Accept" to "text/html"
         )
         val ChiakiRow = Regex("<tr[^>]*\\sdata-id=\"(\\d+)\"")
+
+        // Where the order is kept and for how long, the query of the cards, the most hops and the type of an anime
         const val OrderSpace = "title-order1"
         const val OrderMillis = 6L * 60L * 60L * 1000L
         const val MalCardsQuery = "query (\$ids: [Int]) { Page(perPage: 50) { media(idMal_in: \$ids, type: ANIME) { idMal ${AniShelvesParser.CardFields} } } }"
         const val MaxHops = 6
         const val AnimeType = "ANIME"
-        // Where what AniList says of a title and of its series is kept on the phone, and for how long: half an hour, since it changes slowly
+
+        // Where what AniList says of a title and its series is kept on the phone, for half an hour
         const val ExtrasSpace = "title-extras13"
         const val SeriesSpace = "title-series3"
+
         // What a title of a series keeps in place of the series, the id of the title that has it
         const val SeriesPointer = "@"
         const val KeptMillis = 30L * 60L * 1000L
+
         // The ties that make the order of a series: before, after, apart from the story and from it
         val SeriesTies = setOf("PREQUEL", "SEQUEL", "SIDE_STORY", "SPIN_OFF", "PARENT")
+
+        // The kind of link of a streaming site and the pattern of a month and a year
         const val StreamingLink = "STREAMING"
         const val MonthYearPattern = "MMMM yyyy"
+
         // The place of a character and of a person of the staff on the site of AniList, and the most episodes a list shows
         const val CastCharactersQuery = "query (\$id: Int, \$page: Int) { Media(id: \$id) { countryOfOrigin characters(sort: [ROLE, RELEVANCE, FAVOURITES_DESC], page: \$page, perPage: 25) { " +
             "pageInfo { hasNextPage } edges { role node { id name { userPreferred } image { large } description(asHtml: false) } " +
             "voiceActors(sort: [RELEVANCE, ID]) { name { userPreferred } languageV2 } } } } }"
+
+        // The query of the characters and staff of a title
         const val CastStaffQuery = "query (\$id: Int, \$page: Int) { Media(id: \$id) { staff(sort: RELEVANCE, page: \$page, perPage: 25) { " +
             "pageInfo { hasNextPage } edges { role node { id name { userPreferred } image { large } description(asHtml: false) } } } } }"
+
         // The parts of the staff that are shown in the data, and how many of the people
         val CreatorRole = Regex("(?i)original creator|^story|^art|story & art|^director|chief director|series composition|character design|^music|original character")
+
+        // How many creators, the names of the pages of people, and the most episodes
         const val MaxCreators = 8
         const val CharacterPage = "character"
         const val StaffPage = "staff"
         const val MaxEpisodes = 2000
+
         // How many reviews the community shows
         const val MaxReviews = 5
         const val MaxGenres = 3
         const val FadeToPage = 0.7f
+
         // AniList scores go from 0 to 100, the page shows them from 0 to 10
         const val ScoreScale = 10f
 
-        // What is asked of an entry of the list: the score is asked from 0 to 100, whatever the user chose to see on AniList
-        // The score of AniList that is from 0 to 100, shown from 0 to 10
+        // The score of AniList, from 0 to 100, asked whatever the user sees, and shown from 0 to 10
         const val ScoreTenScale = 10f
         const val EntryFields = "id status progress progressVolumes score userScore: score(format: POINT_100) repeat notes private hiddenFromStatusLists customLists advancedScores " +
             "startedAt { year month day } completedAt { year month day }"
-        // What the top of the page and the strip under the synopsis need of a title. The filter is only there to make each question new
+
+        // What the top of the page and the strip under the synopsis need of a title, with a filter that only makes each question new
         const val HeaderQuery = "query (\$id: Int, \$fresh: Int) { Media(id: \$id, popularity_greater: \$fresh) { id idMal type status isAdult isFavourite format " +
             "title { romaji english } description(asHtml: false) startDate { year month day } genres averageScore meanScore " +
             "episodes chapters volumes duration season seasonYear studios { edges { isMain node { name isAnimationStudio } } } " +
@@ -982,9 +993,7 @@ class TitleRepository(context: Context) {
             "friends: Page(perPage: 15) { mediaList(mediaId: \$id, isFollowing: true, sort: UPDATED_TIME_DESC) { " +
             "status progress score(format: POINT_10_DECIMAL) user { name avatar { large } } } } }"
 
-        // Everything after the top in one question, as three names for the same title: the details (the data, the tags, the trailer, the links
-        // and what is tied to it), what other people recommend, the ones with a score above zero being the ones that people agreed on, and the
-        // characters, the best known first, with who voices them in Japanese, and the staff
+        // Everything after the top in one question as three names: details, the agreed recommendations, and characters and staff
         const val ExtrasQuery = "query (\$id: Int) { " +
             "details: Media(id: \$id) { idMal isAdult type format status title { romaji english native } synonyms episodes chapters volumes duration " +
             "season seasonYear startDate { year month day } endDate { year month day } source countryOfOrigin " +
@@ -1020,11 +1029,17 @@ class TitleRepository(context: Context) {
         // What is asked of a thread, a page of them, one with its text, and a page of its comments
         const val ThreadsQuery = "query (\$id: Int, \$page: Int) { Page(page: \$page, perPage: 20) { pageInfo { hasNextPage } " +
             "threads(mediaCategoryId: \$id, sort: REPLIED_AT_DESC) { $ThreadFields } } }"
+
+        // The query of a thread with its text
         const val ThreadQuery = "query (\$id: Int) { Thread(id: \$id) { $ThreadFields body(asHtml: false) isSubscribed isLocked categories { name } " +
             "mediaCategories { id title { userPreferred } } } }"
+
+        // The mutations that follow a thread and save a comment, and the fields of a comment
         const val SubscribeThreadQuery = "mutation (\$id: Int, \$subscribe: Boolean) { ToggleThreadSubscription(threadId: \$id, subscribe: \$subscribe) { id isSubscribed } }"
         const val SaveThreadCommentQuery = "mutation (\$id: Int, \$parent: Int, \$text: String) { SaveThreadComment(threadId: \$id, parentCommentId: \$parent, comment: \$text) { " +
             "id comment(asHtml: false) likeCount isLiked createdAt user { name avatar { large } } childComments } }"
+
+        // The most titles linked in one question, the query of them, and the fields and query of the comments of a thread
         const val LinkedMax = 50
         const val LinkedTitlesQuery = "query (\$ids: [Int]) { Page(perPage: $LinkedMax) { media(id_in: \$ids) { id format startDate { year } title { userPreferred } coverImage { large } } } }"
         const val ThreadCommentsQuery = "query (\$id: Int, \$page: Int) { Page(page: \$page, perPage: 25) { pageInfo { hasNextPage } " +
@@ -1033,8 +1048,11 @@ class TitleRepository(context: Context) {
         // A page of the reviews of a title, the most useful first, and one review with its text
         const val ReviewsQuery = "query (\$id: Int, \$page: Int) { Page(page: \$page, perPage: 20) { pageInfo { hasNextPage } " +
             "reviews(mediaId: \$id, sort: RATING_DESC) { id summary score rating ratingAmount createdAt user { name avatar { large } } } } }"
+
+        // The query of a review
         const val ReviewQuery = "query (\$id: Int) { Review(id: \$id) { id body(asHtml: false) summary score rating ratingAmount userRating createdAt user { name avatar { large } } } }"
 
+        // The mutation that votes on a review
         const val RateReviewQuery = "mutation (\$id: Int, \$rating: ReviewRating) { RateReview(reviewId: \$id, rating: \$rating) { rating ratingAmount userRating } }"
 
         // Puts a title on the list of the user or changes its entry, and takes it off
@@ -1043,12 +1061,16 @@ class TitleRepository(context: Context) {
             "SaveMediaListEntry(mediaId: \$mediaId, status: \$status, progress: \$progress, progressVolumes: \$progressVolumes, score: \$score, " +
             "customLists: \$customLists, advancedScores: \$advancedScores, " +
             "repeat: \$repeat, notes: \$notes, private: \$private, hiddenFromStatusLists: \$hidden, startedAt: \$startedAt, completedAt: \$completedAt) { $EntryFields } }"
+
+        // The mutation that removes an entry, the addresses of the search, hashtags and weighted score, and the options query
         const val RemoveEntryQuery = "mutation (\$id: Int) { DeleteMediaListEntry(id: \$id) { deleted } }"
         const val SearchUrl = "https://anilist.co/search"
         const val HashtagUrl = "https://x.com/search?q="
         const val WeightedScoreUrl = "https://anilist.co/forum/thread/89398"
         const val OptionsQuery = "{ Viewer { mediaListOptions { scoreFormat " +
             "animeList { customLists advancedScoring advancedScoringEnabled } mangaList { customLists advancedScoring advancedScoringEnabled } } } }"
+
+        // Where the options of the lists are kept
         const val OptionsSpace = "list-options1"
 
         // The favourite of a title, which AniList turns on or off, and something of the answer has to be asked for

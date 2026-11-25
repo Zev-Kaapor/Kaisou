@@ -9,6 +9,7 @@ import com.kaisou.app.core.anilist.AniViewer
 
 // The login of the user: the token of AniList and who it belongs to, kept on the device only, the backup leaves this file out
 object AniListSession {
+    // Name of the file of the session and the keys of what is kept in it
     private const val FileName = "kaisou_session"
     private const val TokenKey = "token"
     private const val ExpiresKey = "expires_at"
@@ -21,6 +22,7 @@ object AniListSession {
 
     private lateinit var preferences: SharedPreferences
 
+    // Opens the file of the session once
     fun init(context: Context) {
         if (!::preferences.isInitialized) {
             preferences = context.applicationContext.getSharedPreferences(FileName, Context.MODE_PRIVATE)
@@ -49,6 +51,7 @@ object AniListSession {
             )
         }
 
+    // Keeps the token and when it ends
     fun saveToken(token: String, expiresAtMillis: Long) {
         preferences.edit {
             putString(TokenKey, token)
@@ -56,6 +59,7 @@ object AniListSession {
         }
     }
 
+    // Keeps who the user is
     fun saveViewer(viewer: AniViewer) {
         preferences.edit {
             putInt(IdKey, viewer.id)

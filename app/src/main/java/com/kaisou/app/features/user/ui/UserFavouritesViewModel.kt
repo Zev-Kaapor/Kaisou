@@ -21,8 +21,7 @@ import com.kaisou.app.features.user.data.FavouriteKind
 import com.kaisou.app.features.user.data.UserRepository
 import com.kaisou.app.features.user.data.UserStudio
 
-// What the page of all the favourites of one kind shows: what came, whichever the kind is, whether there are more to ask for, and whether a page is
-// being asked for
+// What the page of all the favourites of one kind shows: what came, whether there is more, and whether a page is coming
 data class UserFavouritesUi(
     val cards: List<CardUi> = emptyList(),
     val people: List<TitlePerson> = emptyList(),
@@ -50,6 +49,7 @@ class UserFavouritesViewModel(application: Application, savedStateHandle: SavedS
         loadMore()
     }
 
+    // Asks for the next page when there is one and none is being asked
     fun loadMore() {
         val now = mutableState.value
         if (now.loading || !now.hasMore) return

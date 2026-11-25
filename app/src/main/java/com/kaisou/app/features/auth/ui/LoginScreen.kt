@@ -52,8 +52,7 @@ import com.kaisou.app.features.auth.ui.components.KeyMark
 private const val LearnMoreTag = "learn_more"
 private const val SignUpTag = "sign_up"
 
-// The first screen: the brand and the way in, since the app needs an AniList account. While the saved login is being
-// checked only the brand shows, in the same place, so the buttons do not push it when they come
+// The first screen: the brand and the way in, the buttons not pushing the brand while the saved login is checked
 @Composable
 fun LoginScreen(
     checking: Boolean,
@@ -81,6 +80,7 @@ fun LoginScreen(
             onLearnMore = { infoOpen = true },
             onToken = {
                 tokenOpen = true
+
                 // The page of AniList that shows the token opens at once, the sheet waits for the user to come back with it
                 if (tokenByBrowser) onTokenPage()
             }
@@ -110,6 +110,7 @@ private fun LoginContent(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .backgroundGlow()
+
             // The camera cutout and the bars, when they are showing, are left clear
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
@@ -206,6 +207,7 @@ private fun Actions(
         modifier = modifier
             .widthIn(max = AuthDimens.ActionsMaxWidth)
             .fillMaxWidth()
+
             // Held in place but out of sight while the saved login is checked
             .alpha(if (checking) 0f else 1f)
             .then(if (checking) Modifier.clearAndSetSemantics {} else Modifier),
@@ -220,6 +222,7 @@ private fun Actions(
                 textAlign = TextAlign.Center
             )
         }
+
         // What the login does with the credentials in one sentence, the rest is one tap away on the link that ends it
         val privacy = stringResource(R.string.login_privacy)
         val learnMore = stringResource(R.string.login_learn_more)
@@ -250,6 +253,7 @@ private fun Actions(
             leading = { KeyMark() },
             enabled = !checking && !busy
         )
+
         // The way to get an account is a line of its own, not a third button
         val noAccount = stringResource(R.string.login_no_account)
         val signUp = stringResource(R.string.login_signup)

@@ -11,11 +11,11 @@ object AboutSnippet {
     private val DataLead = Regex("^(?:~!)?\\s*(?:__|\\*\\*)\\s*[^_*\\n]{1,40}?:\\s*(?:__|\\*\\*)|^(?:~!)?\\s*(?:__|\\*\\*)\\s*[^_*\\n]{1,40}?\\s*(?:__|\\*\\*)\\s*:")
     private val MarkdownLink = Regex("\\[([^\\]]+)]\\([^)]*\\)")
 
-    // The lines of data it opens with are left out, the links are turned into their words and a cover that was cut is closed, so a spoiler
-    // does not come out in plain text. Null when there is nothing left
+    // Cuts the lines of data, turns links into words and closes a cut cover so a spoiler never shows
     fun of(raw: String?): String? {
         if (raw.isNullOrBlank()) return null
         var text = raw.lines().map { it.trim() }.filter { it.isNotEmpty() }.dropWhile { DataLead.containsMatchIn(it) }.joinToString(" ")
+
         // A cover that opened on the lines of data and closed after them leaves its end at the start
         val close = text.indexOf("!~")
         if (close >= 0 && (text.indexOf("~!").let { it < 0 || it > close })) text = text.substring(close + 2).trim()
@@ -30,8 +30,7 @@ object AboutSnippet {
         return text
     }
 
-    // Some beginnings in the language of the app, all in one go, in the same order. They stay as they are when the language is the one of
-    // AniList or the translation fails
+    // Puts some beginnings in the language of the app at once, unchanged when it is AniList's or fails
     suspend fun translated(texts: List<String>): List<String> =
         if (!AppLanguage.needsTranslation || texts.isEmpty()) texts else GoogleTranslator.translateLines(texts, AppLanguage.translationCode).map(AniDescription::tidy)
 }

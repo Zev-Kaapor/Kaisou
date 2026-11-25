@@ -41,8 +41,7 @@ import com.kaisou.app.features.title.ui.components.DetailsError
 import com.kaisou.app.features.title.ui.components.DetailsSkeleton
 import com.kaisou.app.features.title.ui.components.ThreadRow
 
-// All the threads of the forum about a title, a page at a time: the next one is asked for when the list gets near its end. Each one opens to
-// be read
+// All the threads of the forum about a title a page at a time, the next asked near the end, each opening to be read
 @Composable
 fun ThreadsScreen(onBack: () -> Unit, onOpenThread: (Int) -> Unit, modifier: Modifier = Modifier, viewModel: ThreadsViewModel = viewModel()) {
     val dimens = KaisouTheme.dimens

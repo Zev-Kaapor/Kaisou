@@ -1,7 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Rules of the cloud backup and of the transfer to a new device from API 31.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
--->
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rules of the cloud backup and of the device transfer from API 31, see developer.android.com/about/versions/12/backup-restore -->
 <data-extraction-rules>
     <cloud-backup>
         <!-- The token of the AniList login stays on the device -->

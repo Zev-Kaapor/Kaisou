@@ -4,7 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+// Tests of the reading of the answers of TVmaze
 class TvMazeClientTest {
+    // The id of the series is the one of the answer
     @Test
     fun theIdOfTheSeriesIsTheOneOfTheAnswer() {
         assertEquals(31396, TvMazeClient.parseShow("""{"id":31396,"name":"Black Clover"}"""))
@@ -12,6 +14,7 @@ class TvMazeClientTest {
         assertNull(TvMazeClient.parseShow("not json"))
     }
 
+    // The episodes with a number and a score are kept
     @Test
     fun theEpisodesWithANumberAndAScoreAreKept() {
         val episodes = TvMazeClient.parseEpisodes(
@@ -28,6 +31,7 @@ class TvMazeClientTest {
         assertNull(episodes?.last()?.aired)
     }
 
+    // An answer that is not a list is left out
     @Test
     fun anAnswerThatIsNotAListIsLeftOut() {
         assertNull(TvMazeClient.parseEpisodes("""{"error":"x"}"""))

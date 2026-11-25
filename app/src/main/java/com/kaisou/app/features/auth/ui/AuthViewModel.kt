@@ -26,16 +26,17 @@ import com.kaisou.app.core.cache.AppStore
 
 // Where the user is: the token is being checked, the user has to sign in, or the user is in
 sealed interface AuthState {
+    // Busy while the token that came is being checked
     data object Checking : AuthState
 
     // Busy while the token that came is being checked, the error is what to tell when the last try did not work
     data class LoggedOut(val busy: Boolean = false, @StringRes val error: Int? = null) : AuthState
 
+    // Signed in, with the user
     data class LoggedIn(val viewer: AniViewer) : AuthState
 }
 
-// The login with AniList: the user authorizes in the browser, AniList sends the token back to the app through its own
-// address, and it is kept to open the app already signed in the next time
+// The login with AniList: the user authorizes in the browser, the token comes back to the app and is kept for the next time
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val client = AniListClient()
     private val session = AniListSession.also { it.init(application) }
@@ -47,7 +48,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         if (session.token != null) validate()
     }
 
-    // Signs out: the token and the user are forgotten, and so is the pool of the featured titles, which came with the lists of the user
+    // Signs out: forgets the token, the user and the pool of featured titles that came with their lists
     fun signOut() {
         session.clear()
         AppStore.clear("pool")
@@ -59,13 +60,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         mutableState.value = AuthState.LoggedOut()
     }
 
+    // Gives the state the app starts in, from what the session kept
     private fun initialState(): AuthState {
         if (session.token == null) return AuthState.LoggedOut()
         return session.viewer?.let { AuthState.LoggedIn(it) } ?: AuthState.Checking
     }
 
-    // Opens the page of AniList where the user authorizes the app, in a tab of the browser. The page asks for the
-    // sign in first when the user is not signed in there
+    // Opens the page of AniList where the user authorizes the app, which asks for the sign in first when needed
     fun startLogin(context: Context) {
         if (BuildConfig.ANILIST_CLIENT_ID.isEmpty()) {
             mutableState.value = AuthState.LoggedOut(error = R.string.login_missing_client)
@@ -91,6 +92,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         openInBrowser(context, SignUpUrl.toUri())
     }
 
+    // Opens an address in the browser
     private fun openInBrowser(context: Context, address: Uri) {
         InAppBrowser.open(context, address.toString())
     }
@@ -125,8 +127,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         validate()
     }
 
-    // Asks AniList who the token belongs to, a token that was pasted and is refused is a different thing to tell than a
-    // session that ran out
+    // Asks AniList who the token belongs to, telling a pasted token that is refused from a session that ran out
     private fun validate(pasted: Boolean = false) {
         val token = session.token ?: return
         viewModelScope.launch {
@@ -141,6 +142,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         error = if (pasted) R.string.login_token_invalid else R.string.login_expired
                     )
                 }
+
                 // Without an answer the user that is known keeps the app, otherwise there is nobody to show
                 ViewerResult.Unreachable -> if (mutableState.value !is AuthState.LoggedIn) {
                     mutableState.value = AuthState.LoggedOut(error = R.string.login_network)
@@ -149,9 +151,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Constants of the login
     private companion object {
+        // Addresses of the page that authorizes the app and of the sign up
         const val AuthorizeUrl = "https://anilist.co/api/v2/oauth/authorize"
         const val SignUpUrl = "https://anilist.co/signup"
+
         // The redirect URL of the API client registered on AniList
         const val RedirectScheme = "kaisou"
         const val RedirectHost = "anilist"

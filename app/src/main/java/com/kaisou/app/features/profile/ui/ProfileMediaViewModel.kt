@@ -23,8 +23,7 @@ import com.kaisou.app.features.profile.data.ProfileMediaItem
 import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.profile.data.ProfileRepository
 
-// What the page of all the titles of a person shows: the titles that came, the filters chosen, whether there are more and whether a page is
-// being asked for
+// What the page of all the titles of a person shows: the titles, the filters, whether there are more and whether a page is coming
 data class ProfileMediaUi(
     val items: List<ProfileMediaItem> = emptyList(),
     val tab: MediaTab = MediaTab.Anime,
@@ -41,6 +40,7 @@ data class ProfileMediaUi(
 class ProfileMediaViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
     val ref = ProfileRef(ProfileKind.of(savedStateHandle[ProfileKindArg]), checkNotNull(savedStateHandle[TitleIdArg]))
     private val repository = ProfileRepository(application)
+
     // The titles start from the newest, by year, in the tab the page was opened on
     private val mutableState = MutableStateFlow(ProfileMediaUi(tab = MediaTab.of(savedStateHandle[ProfileTabArg])))
     val state: StateFlow<ProfileMediaUi> = mutableState.asStateFlow()
@@ -54,10 +54,13 @@ class ProfileMediaViewModel(application: Application, savedStateHandle: SavedSta
         loadMore()
     }
 
+    // Chooses a tab and starts again
     fun chooseTab(tab: MediaTab) = restart(mutableState.value.copy(tab = tab))
 
+    // Chooses whether to show only the user's list and starts again
     fun chooseOnList(onList: Boolean) = restart(mutableState.value.copy(onList = onList))
 
+    // Chooses a sort and starts again
     fun chooseSort(sort: MediaSort) = restart(mutableState.value.copy(sort = sort))
 
     // A filter changed: what came is thrown away and the list starts again
@@ -70,6 +73,7 @@ class ProfileMediaViewModel(application: Application, savedStateHandle: SavedSta
         loadMore()
     }
 
+    // Asks for the next page when there is one and none is being asked
     fun loadMore() {
         val now = mutableState.value
         if (now.loading || !now.hasMore) return

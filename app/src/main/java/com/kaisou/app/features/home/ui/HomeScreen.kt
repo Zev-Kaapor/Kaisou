@@ -1,6 +1,5 @@
 package com.kaisou.app.features.home.ui
 
-// Compose animation
 // Compose layouts and foundations
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -67,14 +66,14 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
     val listState = rememberKeptListState(viewModel.scroll)
 
-    // The news of the friends come without pulling: when the user comes to the app and then every few minutes while the Home is on the
-    // screen. Nothing is asked while the app is in the background. The time between is a sleep, nothing is checked meanwhile
+    // The news of the friends come without pulling, when the user comes back and every few minutes while the Home is shown
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner, viewModel) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             viewModel.refreshIfStale(HomeDimens.ResumeRefreshMinMillis)
             while (true) {
                 delay(HomeDimens.AutoRefreshMillis)
+
                 // A little less than the time between, since the Home was asked for a moment after the last time it was due
                 viewModel.refreshIfStale(HomeDimens.AutoRefreshMillis / 2)
             }
@@ -83,14 +82,14 @@ fun HomeScreen(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val landscape = maxWidth > maxHeight
-        // Standing up the art of the hero is a poster as tall as the screen is wide times a ratio, lying down it takes a share of
-        // the height, so the next part of the Home shows under it
+
+        // Standing up the hero is as tall as the screen is wide times a ratio, lying down it takes a share of the height
         val heroHeight = if (landscape) maxHeight * HomeDimens.HeroLandscapeHeightFraction else maxWidth * HomeDimens.HeroAspect
 
-        // The header is clear over the art of the hero and turns solid before the details of the hero get under it, so its
-        // icons never sit over the text and the buttons
+        // The header is clear over the hero and turns solid before the details get under it, so its icons never sit over the text
         val solidOffset = with(LocalDensity.current) { heroHeight.toPx() } * HomeDimens.HeaderSolidFraction
-        // How far along the fade is: none at the top, all of it where the details get under the header, in between it follows the scroll
+
+        // How far along the fade is: none at the top, all where the details get under the header, following the scroll in between
         val headerProgress by remember(solidOffset) {
             derivedStateOf {
                 if (listState.firstVisibleItemIndex > 0) 1f else (listState.firstVisibleItemScrollOffset / solidOffset).coerceIn(0f, 1f)
@@ -104,7 +103,7 @@ fun HomeScreen(
 
 
         when (state.status) {
-            // The placeholders of the hero and of what is under it, where they will be, with no pulling to refresh while they are there
+            // The placeholders of the hero and of what is under it, with no pulling to refresh while they are there
             HomeStatus.Loading -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 userScrollEnabled = false,
@@ -152,6 +151,7 @@ fun HomeScreen(
                         onOpenTitle = onOpenTitle
                     )
                 }
+
                 // What is under the hero: the user and the friends, then the shelves that have something on them
                 item(key = "friends") { HomeFriends(own = own, friends = state.friends, seen = state.seen, onOpen = { openStory = it.userId }, onAdd = viewModel::openComposer) }
                 items(state.shelves, key = { it.id.name }) { shelf -> HomeShelf(shelf = shelf, onOpenTitle = onOpenTitle) }

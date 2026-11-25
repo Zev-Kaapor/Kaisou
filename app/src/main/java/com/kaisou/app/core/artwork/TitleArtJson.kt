@@ -7,6 +7,7 @@ import org.json.JSONObject
 
 // The art of a title as text, to keep it on the disk
 object TitleArtJson {
+    // Writes the art of a title as text to keep it
     fun write(art: TitleArt): String =
         JSONObject()
             .put("poster", art.posterUrl ?: JSONObject.NULL)

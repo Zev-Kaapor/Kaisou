@@ -23,16 +23,19 @@ class HomeRepository(context: Context) {
     private val client = AniListClient()
     private val mapper = HomeMapper(context.resources)
 
-    // The four parts of what goes under the hero. The top is what the page waits for, the others come in when they are ready. What was
-    // kept of the three lower ones can be asked for at once, to show it while the new ones come
+    // The four parts under the hero: the top is what the page waits for, and the lower ones can be asked from what was kept
     suspend fun top(userId: Int): AniShelves? = client.topShelves(userId, AniListSession.token)
 
+    // Asks for the lower part of the Home
     suspend fun below(userId: Int): AniShelves? = client.belowShelves(userId, AniListSession.token)
 
+    // Asks for what is recommended
     suspend fun recommended(userId: Int): AniRecommended? = client.recommended(userId, AniListSession.token)
 
+    // Asks for the missing sequels
     suspend fun sequels(userId: Int): List<AniCard>? = client.missingSequels(userId, AniListSession.token)
 
+    // Gives what was kept of the lower parts
     suspend fun kept(userId: Int): HomeParts =
         HomeParts(below = client.keptBelow(userId), recommended = client.keptRecommended(userId), sequels = client.keptSequels(userId))
 
@@ -54,6 +57,7 @@ class HomeRepository(context: Context) {
     // Deleting a comment of the user and changing its text, which give true and the comment as AniList kept it
     suspend fun deleteReply(replyId: Int): Boolean = client.deleteReply(replyId, AniListSession.token)
 
+    // Edits a reply to an activity
     suspend fun editReply(activityId: Int, replyId: Int, text: String): ReplyUi? =
         client.editReply(activityId, replyId, text, AniListSession.token)?.let(mapper::reply)
 
@@ -67,10 +71,10 @@ class HomeRepository(context: Context) {
     suspend fun replies(activityId: Int): List<ReplyUi>? =
         client.replies(activityId, AniListSession.token)?.sortedBy { it.createdAt }?.map(mapper::reply)
 
+    // Posts a reply to an activity
     suspend fun reply(activityId: Int, text: String): ReplyUi? = client.reply(activityId, text, AniListSession.token)?.let(mapper::reply)
 
-    // The featured titles are drawn from the pool each time the app opens, so there is always something new. Null when
-    // AniList cannot be reached or has nothing to feature
+    // The featured titles are drawn from the pool each time the app opens, null when AniList fails or has none
     suspend fun heroes(fresh: Boolean = false): List<HeroUi>? =
         client.heroPool(AniListSession.token, fresh)
             ?.takeIf { it.isNotEmpty() }

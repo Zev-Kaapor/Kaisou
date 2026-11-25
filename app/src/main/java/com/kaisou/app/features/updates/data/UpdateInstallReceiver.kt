@@ -11,6 +11,7 @@ import com.kaisou.app.R
 
 // Receives what the installer of the system answers, asks the user to confirm when it needs to and tells the updater when it failed
 class UpdateInstallReceiver : BroadcastReceiver() {
+    // Handles what the system says of the installation, asking the user over the app when needed
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
             // The system asks the user, its question is opened over the app

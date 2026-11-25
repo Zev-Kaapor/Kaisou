@@ -5,12 +5,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 // Address text
 import java.net.URLDecoder
 
-// How a link of the text of AniList is opened inside the app: it returns true when the address is of a title, a character, a person of the
-// staff, a studio or a person of AniList, which open their own pages, and false for any other, which goes to the browser. The shell of the
-// app gives it, since it is the one that knows how to go to a page
+// How a link of an AniList text opens inside the app: true for a title, character, staff, studio or person, false goes to the browser
 val LocalAniLinks = staticCompositionLocalOf<(String) -> Boolean> { { false } }
 
-// How the page of a person of AniList opens from where only their name is known, like a story, a review or a thread. The shell gives it too
+// How the page of a person of AniList opens from only their name, as in a story, a review or a thread, given by the shell
 val LocalOpenUser = staticCompositionLocalOf<(String) -> Unit> { {} }
 
 private val AniLink = Regex("^https?://(?:www\\.)?anilist\\.co/(anime|manga|character|staff|studio)/(\\d+)", RegexOption.IGNORE_CASE)

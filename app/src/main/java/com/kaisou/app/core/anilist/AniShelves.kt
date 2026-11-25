@@ -15,8 +15,7 @@ data class AniCard(
     val score: Int?,
     val cover: String?,
     val banner: String?,
-    // Whether it is out, like RELEASING or NOT_YET_RELEASED
-    // The format as AniList names it, like TV or MANGA, and how many episodes or chapters it has, null when it is not known
+    // Whether it is out, like RELEASING, then the format, like TV or MANGA, and how many episodes or chapters it has
     val status: String?,
     val format: String?,
     val episodes: Int?,
@@ -36,8 +35,7 @@ data class AniEntry(val card: AniCard, val progress: Int)
 // A new episode that aired: the title, which episode it is and when it aired, in seconds
 data class AniAiring(val card: AniCard, val episode: Int, val airedAt: Long)
 
-// Something a person did lately: moved a title on their list, with the status AniList writes, like "watched episode", and the
-// episodes or chapters, like "5" or "3 - 5", or wrote a text. The time is in seconds
+// What a person did lately: moved a title on their list, with its status and progress, or wrote a text
 data class AniActivity(
     val id: Int,
     val userId: Int,
@@ -107,6 +105,7 @@ class AniShelves(
         newManga = newManga + other.newManga
     )
 
+    // The shelves with nothing in them
     companion object {
         val Empty = AniShelves(
             emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(),
@@ -123,12 +122,10 @@ object AniShelvesParser {
     // What a card needs of a title, asked of AniList
     const val CardFields = "id idMal isAdult title { romaji english } status format episodes chapters nextAiringEpisode { episode } startDate { year } averageScore meanScore bannerImage coverImage { extraLarge large } mediaListEntry { userScore: score(format: POINT_100) }"
 
+    // How many recommendations are kept
     private const val RecommendedSize = 20
 
-    // What is recommended after the titles on the list of the user. The anime come from the recommendations of everything on the list,
-    // the best rated and the newest ones. The manga come from the ones of the manga read last, since the list of most people is mostly
-    // anime and would leave almost no room for them. The titles already on the list, the ones for adults and the repeated ones are
-    // left out, and the best scored come first
+    // What is recommended after the list: anime from the whole list, manga from the last read, with no repeats or adult titles
     fun parseRecommended(data: JSONObject): AniRecommended {
         val found = mutableListOf<JSONObject>()
         for (key in listOf("byRating", "byNew")) {
@@ -183,6 +180,7 @@ object AniShelvesParser {
     // The sequels found, the best scored first
     fun parseSequels(data: JSONObject): List<AniCard> = cards(data, "sequels").sortedByDescending { it.score ?: 0 }.take(RecommendedSize)
 
+    // The best scored recommendations of a type, without adult titles and the ones already on the list
     private fun best(found: List<JSONObject>, type: String): List<AniCard> =
         found
             .filter { it.optString("type") == type && !it.optBoolean("isAdult") && it.isNull("mediaListEntry") }
@@ -191,6 +189,7 @@ object AniShelvesParser {
             .sortedByDescending { it.score ?: 0 }
             .take(RecommendedSize)
 
+    // Reads the shelves of the Home from the answer
     fun parse(data: JSONObject): AniShelves =
         AniShelves(
             following = activities(data.optJSONObject("activity")?.optJSONArray("activities")),
@@ -267,6 +266,7 @@ object AniShelvesParser {
         return (0 until media.length()).mapNotNull { card(media.getJSONObject(it)) }
     }
 
+    // Reads a card of a title, null when it has no id
     fun card(media: JSONObject?): AniCard? {
         if (media == null || media.isNull("id")) return null
         val title = media.optJSONObject("title")
@@ -292,9 +292,10 @@ object AniShelvesParser {
         )
     }
 
+    // Reads a positive number, null when it is missing
     private fun number(json: JSONObject, key: String): Int? = if (json.isNull(key)) null else json.optInt(key).takeIf { it > 0 }
 
-    // A value that is null on the server comes as the text "null" with the plain getters, and a field that was not asked for is not there
+    // Reads a text, null when it is missing or comes as "null"
     private fun text(json: JSONObject?, key: String): String? =
         if (json == null || json.isNull(key)) null else json.getString(key).takeIf { it.isNotBlank() }
 }

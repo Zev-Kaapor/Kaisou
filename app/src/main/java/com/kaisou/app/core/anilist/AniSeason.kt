@@ -14,14 +14,15 @@ data class AniSeason(val name: String, val year: Int) {
         else -> AniSeason(Winter, year + 1)
     }
 
+    // Gives the season of a day and holds the names AniList uses
     companion object {
+        // Names of the seasons as AniList writes them
         private const val Winter = "WINTER"
         private const val Spring = "SPRING"
         private const val Summer = "SUMMER"
         private const val Fall = "FALL"
 
-        // The season of a day, as AniList counts it: winter is December to February, with December already belonging to the
-        // winter of the next year, spring is March to May, summer is June to August and fall is September to November
+        // The season of a day as AniList counts it, December already belonging to the winter of the next year
         fun of(date: LocalDate): AniSeason = when (date.monthValue) {
             12 -> AniSeason(Winter, date.year + 1)
             1, 2 -> AniSeason(Winter, date.year)

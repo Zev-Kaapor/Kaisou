@@ -19,8 +19,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 
-// The formats of the text of AniList that the editor offers, in the order of the two rows of buttons. The syntax is what goes into the
-// text, with the cursor going to the offset inside it, and the ones that ask for an address have the place for it marked
+// The formats of the text of AniList that the editor offers, in the order of the two rows of buttons
 enum class MarkdownFormat(val syntax: String, val offset: Int, val asksAddress: Boolean = false) {
     Bold("****", 2),
     Italic("**", 1),
@@ -38,19 +37,21 @@ enum class MarkdownFormat(val syntax: String, val offset: Int, val asksAddress: 
     Video("webm(%s)", 0, asksAddress = true)
 }
 
-// A text of AniList cut in the parts that are shown each in its way: the text, a picture, and a video that opens outside the app. A picture
-// can have the width it was asked, as img220(address) for 220 or img50%(address) for half of the line, and says whether it stood in a
-// centered part
+// A text of AniList cut in parts shown each in its way: text, picture, and video, a picture with the width it was asked
 sealed interface MarkdownBlock {
+    // A part of text
     data class Text(val text: String) : MarkdownBlock
+
+    // A picture, with the width asked, whether it is in percent and whether it stood in a centered part
     data class Image(val url: String, val width: Int? = null, val percent: Boolean = false, val centered: Boolean = false) : MarkdownBlock
+
+    // A video, and whether it is from YouTube
     data class Video(val url: String, val youtube: Boolean) : MarkdownBlock
 }
 
 // What the editor does with the text of AniList: puts a format in it, shows it styled while it is typed, and shows it as the site will
 object StatusMarkdown {
-    // A selection is wrapped in the syntax, or turned into a list line by line, and with nothing selected the syntax is put at the
-    // cursor with the cursor inside it. The ones that ask for an address are given it
+    // Wraps a selection in the syntax, or turns it into a list, or puts the syntax at the cursor, asking an address when needed
     fun apply(value: TextFieldValue, format: MarkdownFormat, address: String? = null): TextFieldValue {
         val text = value.text
         val start = value.selection.min
@@ -123,8 +124,7 @@ object StatusMarkdown {
         return result
     }
 
-    // A centered part that has a picture or a video in it, as ~~~img(address)~~~, is cut so the media stands alone, which a part of its own centers
-    // by itself, and what is around it in the part stays centered, each in its own ~~~, so no ~~~ is left without its pair when the text is cut
+    // A centered part with a picture or video is cut so the media stands alone and the rest stays centered, each in its own ~~~
     private fun apartMedia(text: String): String = CenterBlock.replace(text) { center ->
         val inner = center.groupValues[1]
         if (!MediaMarkup.containsMatchIn(inner)) {
@@ -142,13 +142,11 @@ object StatusMarkdown {
         }
     }
 
-    // A part of text as the site shows it: the markers are gone and what they asked for is applied, the links open when touched, and only
-    // what is between ~~~ and ~~~ is centered, over one line or several. The rest stays at the start, as in the site
+    // A part of text as the site shows it: markers resolved, links opening, and only what is between ~~~ and ~~~ centered
     fun render(text: String, link: Color, heading: TextUnit): AnnotatedString = buildAnnotatedString {
         var cursor = 0
         CenterBlock.findAll(text).forEach { match ->
-            // A paragraph already starts on a line of its own, so of the line breaks around it only the one that ends the line is not added, the
-            // others are the empty lines the text has between its parts
+            // A paragraph starts on its own line, so only the line break that ends the line is not added
             lines(text.substring(cursor, match.range.first).removeSuffix("\n"), link, heading)
             withStyle(ParagraphStyle(textAlign = TextAlign.Center)) { lines(match.groupValues[1].trim('\n'), link, heading) }
             cursor = match.range.last + 1
@@ -159,14 +157,17 @@ object StatusMarkdown {
 
     // The lines of a text, each one as what it is: a quote, a title, an item of a list or a line of text
     private fun AnnotatedString.Builder.lines(text: String, link: Color, heading: TextUnit) {
-        // The lines of text that follow one another are a paragraph, which has its marks resolved together, since an italic or a bold can
-        // begin in a line and end in the next one
+        // The lines that follow one another are a paragraph, its marks resolved together, since an italic can end in the next line
         val paragraph = mutableListOf<String>()
         var first = true
+
+        // Adds a line break unless it is the first
         fun lineBreak() {
             if (!first) append("\n")
             first = false
         }
+
+        // Resolves the paragraph that was gathered and clears it
         fun flush() {
             if (paragraph.isEmpty()) return
             lineBreak()
@@ -224,6 +225,7 @@ object StatusMarkdown {
         }
     }
 
+    // The kinds of marker of the text
     private enum class Kind { Emphasis, Link, Url, Media }
 
     // A marker of the text, with what is inside it in the first group
@@ -243,8 +245,11 @@ object StatusMarkdown {
         Inline(Regex("(?i)(img|webm|youtube)\\d*%?\\(([^)\\n]*)\\)"), Kind.Media, null),
         Inline(Regex("(https?://[^\\s)\\]]+)"), Kind.Url, null)
     )
-    // The kind, the width that was asked and the address of a picture or a video, and the mark that goes before one that stood in a centered part
+
+    // The kind, the width asked and the address of a picture or video, and the mark before one in a centered part
     private val MediaMarkup = Regex("(?i)(img|webm|youtube)(\\d*%?)\\(([^)\\n]*)\\)")
+
+    // Mark put before a picture or video that stood in a centered part
     private const val CenterMark = '\u0001'
     private val QuoteLine = Regex("(?m)^> .*$")
     private val HeadingLine = Regex("(?m)^#{1,3} .*$")

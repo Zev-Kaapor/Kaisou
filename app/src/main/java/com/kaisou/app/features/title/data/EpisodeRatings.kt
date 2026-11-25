@@ -15,23 +15,20 @@ import org.json.JSONObject
 // Project resources
 import com.kaisou.app.core.cache.AppStore
 
-// What people score each episode, from 0 to 10, by the number of the episode. Each episode takes the first source that has a score for it:
-// IMDb, through the open door its own site uses, then MyAnimeList, through Jikan, then TVmaze, then TMDB. AniList has no score for
-// episodes. An episode none of them scored shows none, since the one ani.zip has comes from TheTVDB and is far from what people think of the
-// anime
+// What people score each episode, from 0 to 10: the first source that has it, IMDb, MyAnimeList, TVmaze, then TMDB
 object EpisodeRatings {
+    // Names of the log tag, where each source is kept, how long, and how many pages are read
     private const val Tag = "EpisodeRatings"
     private const val ImdbSpace = "imdb-ratings2"
     private const val MalSpace = "mal-ratings1"
     private const val TvMazeSpace = "tvmaze-ratings1"
     private const val StoreMillis = 7L * 24L * 60L * 60L * 1000L
     private const val MaxPages = 6
+
     // MyAnimeList scores an episode from 0 to 5
     private const val MalScale = 2f
 
-    // The scores as the sources give them: each time one answers, what is known is given to the one that asked, so a slow one does not hold the
-    // others back. An episode shows the score of the first source that has it by then, and changes to
-    // the one of a better source if it comes after
+    // The scores as the sources give them, each answer given at once, an episode changing to a better source when it comes late
     suspend fun rate(found: EpisodeSet, language: String, region: String, onScores: suspend (Map<Int, Float>) -> Unit) {
         val sources = listOf<Pair<String, suspend () -> Map<Int, Float>>>(
             "IMDb" to { imdb(found) },
@@ -63,8 +60,7 @@ object EpisodeRatings {
         return merged
     }
 
-    // The scores of IMDb, matched to the episodes by the day they aired since IMDb numbers the seasons its own way. What was found is kept for
-    // a week when all the seasons came, and when some did not what came is used and not kept
+    // The scores of IMDb, matched by the day the episodes aired, kept for a week when all the seasons came
     private suspend fun imdb(found: EpisodeSet): Map<Int, Float> {
         val id = found.imdbId
         if (id == null) {
@@ -77,6 +73,7 @@ object EpisodeRatings {
         return pairs.mapValues { it.value.rating }
     }
 
+    // Gives the episodes of IMDb with a score, from the disk or from IMDb, keeping them only when complete
     private suspend fun imdbEpisodes(id: String): List<ImdbClient.Episode> {
         withContext(Dispatchers.IO) { AppStore.get(ImdbSpace, id, StoreMillis) }?.let(::readImdb)?.let { return it }
         val (episodes, complete) = ImdbClient.episodes(id) ?: run {
@@ -87,7 +84,7 @@ object EpisodeRatings {
         return episodes
     }
 
-    // The scores of MyAnimeList, which numbers the episodes of a title as ani.zip does, so they are taken by the number. A score is from 0 to 5
+    // The scores of MyAnimeList, taken by episode number, from 0 to 5
     private suspend fun mal(found: EpisodeSet): Map<Int, Float> {
         val id = found.malId
         if (id == null) {
@@ -112,8 +109,7 @@ object EpisodeRatings {
         }
     }
 
-    // The scores of TVmaze, matched to the episodes by the day they aired since it numbers the seasons its own way. What was found is kept for a
-    // week, and nothing is kept when the series is not known or could not be asked
+    // The scores of TVmaze, matched by the day the episodes aired, kept for a week, nothing kept when the series is not known
     private suspend fun tvMaze(found: EpisodeSet): Map<Int, Float> {
         val key = found.imdbId ?: found.tvdbId?.let { "tvdb$it" }
         if (key == null) {
@@ -130,8 +126,7 @@ object EpisodeRatings {
         return DayMatcher.pair(found.episodes, episodes, day = { it.aired }, order = { it.season * SeasonStride + it.number }).mapValues { it.value.rating }
     }
 
-    // The scores of an answer of Jikan for the episodes of an anime, by number and from 0 to 10, and whether there is another page. Null when
-    // the answer is not one
+    // The scores of an answer of Jikan by episode number, from 0 to 10, and whether there is another page, null when it is not one
     internal fun parseMal(text: String): Pair<Map<Int, Float>, Boolean>? =
         runCatching {
             val json = JSONObject(text)
@@ -145,10 +140,12 @@ object EpisodeRatings {
             scores to (json.optJSONObject("pagination")?.optBoolean("has_next_page") ?: false)
         }.getOrNull()
 
+    // Writes the IMDb episodes as text to keep them
     private fun writeImdb(list: List<ImdbClient.Episode>): String = JSONArray().apply {
         list.forEach { put(JSONArray().put(it.season).put(it.number).put(it.released ?: "").put(it.rating.toDouble())) }
     }.toString()
 
+    // Reads the IMDb episodes that were kept
     private fun readImdb(text: String): List<ImdbClient.Episode>? =
         try {
             val list = JSONArray(text)
@@ -160,10 +157,12 @@ object EpisodeRatings {
             null
         }
 
+    // Writes the TVmaze episodes as text to keep them
     private fun writeTvMaze(list: List<TvMazeClient.Episode>): String = JSONArray().apply {
         list.forEach { put(JSONArray().put(it.season).put(it.number).put(it.aired ?: "").put(it.rating.toDouble())) }
     }.toString()
 
+    // Reads the TVmaze episodes that were kept
     private fun readTvMaze(text: String): List<TvMazeClient.Episode>? =
         try {
             val list = JSONArray(text)
@@ -175,8 +174,10 @@ object EpisodeRatings {
             null
         }
 
+    // Writes the scores of MyAnimeList as text to keep them
     private fun writeMal(scores: Map<Int, Float>): String = scores.entries.joinToString(",") { "${it.key}=${it.value}" }
 
+    // Reads the scores of MyAnimeList that were kept
     private fun readMal(text: String): Map<Int, Float>? =
         try {
             if (text.isBlank()) emptyMap() else text.split(",").associate { it.substringBefore("=").toInt() to it.substringAfter("=").toFloat() }

@@ -64,8 +64,7 @@ import com.kaisou.app.features.title.data.EpisodeSources
 import com.kaisou.app.features.title.data.TitleEpisode
 import com.kaisou.app.features.title.ui.TitleDimens
 
-// The block of the source over the list of episodes, as Dantotsu has it: a wide field with the source that is chosen, which opens the choice,
-// the button of the options by its side, over it the title the source has for this anime, and under it the link to pick it by hand
+// The block of the source over the episodes, as Dantotsu has it: source, options, its title and the link to pick by hand
 @Composable
 internal fun SourceBlock(sourceId: String?, onSource: (String?) -> Unit) {
     val dimens = KaisouTheme.dimens
@@ -186,8 +185,7 @@ internal fun EpisodesHeading(watched: Int, total: Int, newestFirst: Boolean, onS
     }
 }
 
-// The card of where to go on, thin and over the picture of the episode that comes next: its picture darkened toward the start, the line that
-// says it, the name of the episode and a round with the play on the end, and under all of it a thin bar with how far the user is
+// The card to go on, thin over the picture of the next episode: its darkened picture, its line, its name, the play and a progress bar
 @Composable
 internal fun ContinueCard(episode: TitleEpisode, progress: Float, onClick: () -> Unit) {
     val dimens = KaisouTheme.dimens
@@ -249,6 +247,7 @@ internal fun ContinueCard(episode: TitleEpisode, progress: Float, onClick: () ->
 internal fun GroupChips(groups: List<EpisodeGroup>, selected: Int, onSelect: (Int) -> Unit) {
     val dimens = KaisouTheme.dimens
     val scroll = rememberScrollState()
+
     // Where each chip is in the row and how wide, and how wide the row shows, to bring the open one to the middle
     val places = remember { mutableStateMapOf<Int, IntRange>() }
     var width by remember { mutableIntStateOf(0) }
@@ -301,8 +300,7 @@ private fun RoundAction(icon: ImageVector, description: String, onClick: () -> U
 // A line of the lists of the sheets of the source: its icon, its name and what it does
 private class OptionLine(val icon: ImageVector, @StringRes val name: Int, @StringRes val note: Int)
 
-// The lines in a card, the same for the options and for the title, each with its icon in the accent, its name, what it does and an arrow, and
-// a line between two of them. They come with the extensions, so a touch only says so
+// The lines of a card for the options and the title, each with an icon, name, description and arrow, coming with extensions
 @Composable
 private fun OptionList(lines: List<OptionLine>) {
     val dimens = KaisouTheme.dimens
@@ -336,8 +334,7 @@ private fun OptionList(lines: List<OptionLine>) {
     }
 }
 
-// The sheet to pick by hand the title the source has for this anime, for when it found another: what it is for and the line to search for
-// it, which needs a source first
+// The sheet to pick by hand the title the source has for this anime, which needs a source first
 @Composable
 private fun WrongTitleSheet(hasSource: Boolean, onDismiss: () -> Unit) {
     val dimens = KaisouTheme.dimens
@@ -362,9 +359,7 @@ private fun WrongTitleSheet(hasSource: Boolean, onDismiss: () -> Unit) {
     }
 }
 
-// The options of the source, the ones Dantotsu has in its dialog of the source: the settings of the extension itself, the way around the check
-// of Cloudflare, playing from a torrent or a magnet, opening the site of the source, the download of many episodes and the reset of what was
-// kept
+// The options of the source as Dantotsu has them: the extension settings, Cloudflare, torrent, the site, many downloads and the reset
 @Composable
 private fun OptionsSheet(onDismiss: () -> Unit) {
     val dimens = KaisouTheme.dimens

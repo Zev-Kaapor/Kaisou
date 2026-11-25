@@ -55,8 +55,10 @@ object UpdateRepository {
         return false
     }
 
+    // Gives the numbers of a version
     private fun numbersOf(version: String): List<Int> = version.trim().removePrefix("v").split('.').map { it.takeWhile(Char::isDigit).toIntOrNull() ?: 0 }
 
+    // Reads a release, with its assets and the one that fits the device
     private fun parse(json: JSONObject, abis: List<String>): UpdateInfo {
         val assets = json.optJSONArray("assets")?.let { array ->
             (0 until array.length()).mapNotNull { index ->
@@ -79,8 +81,7 @@ object UpdateRepository {
         )
     }
 
-    // The lines of what changed, which come after its title in the text of the release, without the mark of the list, the type of the commit, its code and the version it ends with
-    // A line that starts the list is a title, the lines indented under it are its description
+    // The notes of a release after its title, without list mark, commit type, code and version, indented lines being descriptions
     private fun notesOf(body: String): List<UpdateNote> {
         val lines = body.lines()
         val start = lines.indexOfFirst { it.trim().startsWith(NotesTitle) }
@@ -105,6 +106,8 @@ object UpdateRepository {
     private val CommitCode = Regex("\\s*\\(`[0-9a-f]+`\\)\\s*$")
     private val CommitType = Regex("^[a-z]+(\\([^)]*\\))?!?:\\s*")
     private val VersionTail = Regex(",?\\s*version\\s+[0-9.]+\\s*$")
+
+    // The title of the notes, the address of the last release, the universal file mark, the app name, the timeout and the code OK
     private const val NotesTitle = "### What's changed"
     private const val LatestUrl = "https://api.github.com/repos/Zev-Kaapor/Kaisou/releases/latest"
     private const val UniversalMark = "universal"

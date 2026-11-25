@@ -64,8 +64,7 @@ import com.kaisou.app.features.title.ui.TitleDimens
 import com.kaisou.app.features.home.ui.components.SpoilerText
 import com.kaisou.app.features.home.ui.components.rememberScoreFormat
 
-// The tab of the community: the reviews, how the scores and the lists are spread, and the threads of the
-// forum. A block that has nothing is left out, and when all of them have nothing the tab says so
+// The tab of the community: reviews, how scores and lists are spread, and the forum threads, empty blocks left out
 fun LazyListScope.titleCommunityItems(community: Load<TitleCommunity>, onOpenReviews: () -> Unit, onOpenReview: (Int) -> Unit, onOpenThreads: () -> Unit, onOpenThread: (Int) -> Unit, onRetry: () -> Unit) {
     when (community) {
         is Load.Done -> {
@@ -83,6 +82,7 @@ fun LazyListScope.titleCommunityItems(community: Load<TitleCommunity>, onOpenRev
     }
 }
 
+// The message when the community has nothing
 @Composable
 private fun CommunityMessage() {
     Text(
@@ -194,8 +194,7 @@ internal fun ReviewCard(review: TitleReview, onClick: () -> Unit, modifier: Modi
 private const val ScoreScale = 10f
 private const val ScoreTens = 10
 
-// How much happened around the title each day, in bars that rise from the base with the first and the last day under them, how many people gave
-// each score, in bars of the same kind, and how many have the title in each state of their list, in lines with a bar that fills as far as the largest
+// How much happened around the title each day in bars, how many people gave each score, and how many have it in each state
 @Composable
 private fun StatsBlock(trends: List<TitleTrend>, scores: List<TitleScoreBar>, statuses: List<TitleStatusShare>) {
     val dimens = KaisouTheme.dimens
@@ -207,6 +206,7 @@ private fun StatsBlock(trends: List<TitleTrend>, scores: List<TitleScoreBar>, st
         if (trends.isNotEmpty()) {
             val top = trends.maxOf { it.activity }.coerceAtLeast(1)
             val day = rememberShortDay()
+
             // The day that is picked, the last one until a touch picks another
             var picked by remember(trends) { mutableIntStateOf(trends.lastIndex) }
             Row(modifier = Modifier.fillMaxWidth().padding(top = dimens.spaceSmall), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -217,6 +217,7 @@ private fun StatsBlock(trends: List<TitleTrend>, scores: List<TitleScoreBar>, st
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+
             // A touch or a drag over the bars picks the day under the finger
             Row(
                 modifier = Modifier
@@ -266,6 +267,7 @@ private fun StatsBlock(trends: List<TitleTrend>, scores: List<TitleScoreBar>, st
                                 .clip(MaterialTheme.shapes.extraSmall)
                                 .background(MaterialTheme.colorScheme.primary)
                         )
+
                         // AniList spreads the scores in tens, the page says them from 1 to 10
                         Text(
                             text = (bar.score / ScoreTens).toString(),
@@ -322,6 +324,7 @@ internal fun rememberShortDay(): DateTimeFormatter = remember {
 internal fun relativeTime(seconds: Long): String =
     DateUtils.getRelativeTimeSpanString(seconds * MillisPerSecond, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
 
+// Milliseconds in a second
 private const val MillisPerSecond = 1000L
 
 // What people did to the title lately, each one with who did it, what and when, and it opens the page of the person
@@ -368,7 +371,7 @@ private fun ThreadsBlock(threads: List<TitleThread>, onOpenThreads: () -> Unit, 
     }
 }
 
-// A thread in a card: the picture of who wrote it at the start, then its title, who wrote it and when, and how many answered and liked it
+// A thread in a card: the author's picture, its title, author and day, and how many answered and liked it
 @Composable
 internal fun ThreadRow(thread: TitleThread, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
@@ -402,8 +405,8 @@ internal fun ThreadRow(thread: TitleThread, onClick: () -> Unit, modifier: Modif
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            // The same room above the numbers as there is under them, to the edge of the card: the line of the numbers has room of its own under
-            // them, so the card has less padding at the bottom than at the top
+
+            // The same room above the numbers as under them, to the edge of the card, which has less padding at the bottom
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = dimens.spaceMedium - dimens.spaceExtraSmall / 2),
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium, Alignment.End),

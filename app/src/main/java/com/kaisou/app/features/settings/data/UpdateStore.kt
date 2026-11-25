@@ -27,9 +27,9 @@ data class UpdateSettings(
     val interval: UpdateInterval = UpdateInterval.OneDay
 )
 
-// What the user chose about the updates, and the last check and the version the user said later to, kept on the phone. It is set up when
-// the app starts, so the screens and the check that runs in the background read the same thing
+// What the user chose about the updates, the last check and the version they said later to, kept on the phone
 object UpdateStore {
+    // Name of the file of the settings and the keys of what is kept in it
     private const val FileName = "kaisou_settings"
     private const val PausedKey = "updates_paused"
     private const val IntervalKey = "update_interval"
@@ -41,16 +41,19 @@ object UpdateStore {
 
     val updates: StateFlow<UpdateSettings> = mutableUpdates.asStateFlow()
 
+    // Opens the settings and reads them
     fun init(context: Context) {
         preferences = context.applicationContext.getSharedPreferences(FileName, Context.MODE_PRIVATE)
         mutableUpdates.value = read()
     }
 
+    // Sets whether the updates are paused
     fun setPaused(value: Boolean) {
         preferences.edit { putBoolean(PausedKey, value) }
         mutableUpdates.value = read()
     }
 
+    // Sets how often the app looks for updates
     fun setInterval(value: UpdateInterval) {
         preferences.edit { putString(IntervalKey, value.name) }
         mutableUpdates.value = read()
@@ -65,6 +68,7 @@ object UpdateStore {
         get() = preferences.getString(DismissedKey, null)
         set(value) = preferences.edit { putString(DismissedKey, value) }
 
+    // Reads the settings of the updates
     private fun read(): UpdateSettings =
         UpdateSettings(
             paused = preferences.getBoolean(PausedKey, false),

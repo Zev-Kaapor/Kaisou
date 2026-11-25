@@ -28,24 +28,42 @@ import kotlinx.coroutines.withContext
 import com.kaisou.app.R
 import com.kaisou.app.features.settings.data.UpdateStore
 
-// What the updater is doing, waiting, looking, knowing the app is the newest, knowing there is a newer one, downloading it, having it ready, asking the system to install it or failing
+// What the updater is doing: waiting, looking, the newest, a newer one, downloading, ready, installing or failing
 sealed interface UpdateState {
+    // Nothing is being done
     data object Idle : UpdateState
+
+    // Looking for the last release
     data object Checking : UpdateState
+
+    // The app is the newest
     data class UpToDate(val info: UpdateInfo) : UpdateState
+
+    // A newer version exists
     data class Available(val info: UpdateInfo) : UpdateState
+
+    // The file is being downloaded, with how much has come
     data class Downloading(val info: UpdateInfo, val bytes: Long, val total: Long) : UpdateState {
         val percent: Int get() = if (total > 0) ((bytes * PercentTotal) / total).toInt().coerceIn(0, PercentTotal) else 0
     }
+
+    // The file is ready to install
     data class Ready(val info: UpdateInfo, val file: File) : UpdateState
+
+    // The system is installing the file
     data class Installing(val info: UpdateInfo) : UpdateState
+
+    // The install needs the permission of the user
     data class NeedsPermission(val info: UpdateInfo, val file: File) : UpdateState
+
+    // The update failed, with the message
     data class Failed(@StringRes val messageRes: Int, val info: UpdateInfo? = null) : UpdateState
 }
 
+// The total of a percentage
 private const val PercentTotal = 100
 
-// The updater of the app, it looks at the last release on GitHub, downloads the file that fits the device and gives it to the installer of the system
+// The updater of the app: looks at the last release on GitHub, downloads the file that fits the device and gives it to the installer
 object Updates {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var job: Job? = null
@@ -60,9 +78,10 @@ object Updates {
     private val mutablePrompt = MutableStateFlow<UpdateInfo?>(null)
     val prompt: StateFlow<UpdateInfo?> = mutablePrompt.asStateFlow()
 
+    // Gives the version of the installed app
     fun installedVersion(context: Context): String = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
 
-    // Looks at the last release, a check that the user asked shows what it found and one that was not asked only asks when there is something new
+    // Looks at the last release, one the user asked showing what it found and another only asking when there is something new
     fun check(context: Context, isAsked: Boolean = true) {
         if (job?.isActive == true) return
         val app = context.applicationContext
@@ -90,7 +109,7 @@ object Updates {
         }
     }
 
-    // Says the question of the update was answered with later, so it is not asked again for this version, and its notice of the system goes away
+    // Says the question was answered with later, so it is not asked again for this version, and takes its notice away
     fun postpone(context: Context) {
         val info = mutablePrompt.value ?: return
         mutablePrompt.value = null
@@ -235,6 +254,7 @@ object Updates {
     // The file of a release, in the folder of the app that the system can clean
     private fun fileOf(context: Context, asset: UpdateAsset): File = File(File(context.cacheDir, FolderName).also { it.mkdirs() }, asset.name)
 
+    // Where the files are kept, the name of the session, the size of the buffer, how often progress shows, the timeout and the code OK
     private const val FolderName = "updates"
     private const val SessionFileName = "kaisou"
     private const val BufferSize = 64 * 1024

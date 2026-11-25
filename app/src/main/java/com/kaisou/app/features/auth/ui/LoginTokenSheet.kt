@@ -38,10 +38,7 @@ import com.kaisou.app.core.designsystem.components.QuietButton
 import com.kaisou.app.core.designsystem.components.SheetCloseButton
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 
-// Sheet from the bottom to sign in with a token of AniList: a field to paste it and how to get one. When the page of AniList that
-// shows the token was opened in the browser, the clipboard is looked at when the user comes back and the token that was made for this
-// app is used by itself, and a button pastes it by hand otherwise. What is typed is kept only while the sheet is open, never in the
-// state that survives a rotation
+// Sheet to sign in with a token: a field to paste it, how to get one, and the token made for this app used by itself on return
 @Composable
 fun LoginTokenSheet(
     onDismiss: () -> Unit,
@@ -69,8 +66,7 @@ fun LoginTokenSheet(
     KaisouSheet(onDismiss = onDismiss) {
         val close = LocalSheetClose.current
 
-        // The window loses focus when the browser opens, and when it has it back the token is looked for. A token that was already in
-        // the clipboard before the user left is never used, so signing out and in again is not instant
+        // When the window gets focus back after the browser, the token is looked for, never one that was in the clipboard before
         LaunchedEffect(focused) {
             if (!byBrowser) return@LaunchedEffect
             if (!focused) {
@@ -104,6 +100,7 @@ fun LoginTokenSheet(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
             // The token is hidden as it is typed or pasted, it is a key to the account
             OutlinedTextField(
                 value = token,
@@ -129,6 +126,7 @@ fun LoginTokenSheet(
                 },
                 enabled = token.isNotBlank()
             )
+
             // Without the page of AniList that shows the token, the user makes the client and the token by hand
             if (!byBrowser) {
                 Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)) {

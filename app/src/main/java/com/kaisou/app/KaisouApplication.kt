@@ -15,12 +15,14 @@ import kotlin.math.ceil
 
 // Sets up what has to be there before any screen
 class KaisouApplication : Application() {
+    // Starts what the whole app needs before the first screen opens
     override fun onCreate() {
         super.onCreate()
         AppStore.init(File(cacheDir, "store"))
         UpdateStore.init(this)
         ReleaseAlerts.init(this)
         TagOrderPreference.init(this)
+
         // When AniList asks the app to rest, the island says so and for how long, since pages would otherwise just take long or fail
         Gates.AniList.onRest = { millis ->
             val seconds = ceil(millis / MillisPerSecond).toInt().coerceAtLeast(1)
@@ -32,7 +34,9 @@ class KaisouApplication : Application() {
         }
     }
 
+    // Constants of the application
     private companion object {
+        // Milliseconds in a second, to say the rest of the limit in seconds
         const val MillisPerSecond = 1000.0
     }
 }

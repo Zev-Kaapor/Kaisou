@@ -1,17 +1,19 @@
 package com.kaisou.app.core.artwork
 
-// Chooses the logos of a title worth trying, in the order to try them: the language of the app first, since the name is
-// written on it, then English, then the ones with no language and, last, any other
+// Chooses the logos worth trying, in order: the app's language, English, no language, then any other
 object LogoPicker {
     // The narrowest logo that is still sharp at the size it is shown
     const val MinWidth = 400
-    // The ones that are not clearly wider than tall are left out: stacked or square they would come out tiny, and a square one is usually
-    // not the logo but a picture
+
+    // The logos that are not clearly wider than tall are left out, since they come out tiny or are not logos
     const val MinAspect = 1.5f
+
     // How many are kept, the first ones can be turned down when they are drawn in black
     const val MaxCandidates = 3
 
+    // Code of the English language
     private const val English = "en"
+
     // The vector ones cannot be decoded
     private const val Vector = ".svg"
 

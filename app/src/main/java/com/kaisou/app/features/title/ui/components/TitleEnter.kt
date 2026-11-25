@@ -10,10 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 
-// Wraps a list so that each of its items comes in with the progress it is given, from nothing to all: it fades in and slides in from the
-// side it is given. It is for the items of a section, which come in new when the section is changed, and the ones that scroll into view later
-// are already there
+// Wraps a list so each item fades and slides in with the progress given, for the items of a section that comes in new
 class EnterScope(private val delegate: LazyListScope, private val enterProgress: () -> Float, private val enterShift: () -> Float) : LazyListScope by delegate {
+    // Gives a single item the entering movement
     override fun item(key: Any?, contentType: Any?, content: @Composable LazyItemScope.() -> Unit) {
         val progress = enterProgress
         val shift = enterShift
@@ -23,6 +22,7 @@ class EnterScope(private val delegate: LazyListScope, private val enterProgress:
         }
     }
 
+    // Gives a group of items the entering movement
     override fun items(count: Int, key: ((index: Int) -> Any)?, contentType: (index: Int) -> Any?, itemContent: @Composable LazyItemScope.(index: Int) -> Unit) {
         val progress = enterProgress
         val shift = enterShift

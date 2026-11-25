@@ -13,6 +13,8 @@ val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) file.inputStream().use { load(it) }
 }
+
+// Reads a value from the environment, or from local.properties when the environment has none
 fun keyOf(env: String, property: String): String = System.getenv(env) ?: localProperties.getProperty(property).orEmpty()
 
 android {
@@ -25,20 +27,24 @@ android {
         applicationId = "com.kaisou.app"
         minSdk = 26
         targetSdk = 37
+
         // versionCode follows the version name, 0.7.0 becomes 700
         versionCode = appVersionName.split(".").let { (major, minor, patch) ->
             major.toInt() * 10000 + minor.toInt() * 100 + patch.toInt()
         }
         versionName = appVersionName
+
         // Keys of the sites that have the posters, empty when they are not set and the cover of AniList is shown
         buildConfigField("String", "TMDB_TOKEN", "\"${keyOf("TMDB_TOKEN", "tmdb.token")}\"")
         buildConfigField("String", "TVDB_KEY", "\"${keyOf("TVDB_KEY", "tvdb.key")}\"")
+
         // Client ID of MyAnimeList, which gives the rating of the titles the countries do not, empty when it is not set
         buildConfigField("String", "MAL_CLIENT_ID", "\"${keyOf("MAL_CLIENT_ID", "mal.clientId")}\"")
+
         // Id of the API client registered on AniList for this app, empty until it is set the login says so
         buildConfigField("String", "ANILIST_CLIENT_ID", "\"${keyOf("ANILIST_CLIENT_ID", "anilist.clientId")}\"")
-        // Id of a second API client of AniList whose redirect is the page that shows the token to copy, for the sign in with a token.
-        // Empty until it is set, the sheet of the token then asks for one made by the user
+
+        // Id of a second AniList client whose redirect shows the token to copy, empty until it is set
         buildConfigField("String", "ANILIST_PIN_CLIENT_ID", "\"${keyOf("ANILIST_PIN_CLIENT_ID", "anilist.pinClientId")}\"")
     }
 
@@ -71,6 +77,7 @@ android {
                 enable = true
             }
             isShrinkResources = true
+
             // Release key on the CI, debug key for local builds so the APK still installs
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
                 ?: signingConfigs.getByName("debug")
@@ -106,6 +113,7 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.youtube.player)
     testImplementation(libs.junit)
+
     // The JSON of Android is only a stub on the machine, the tests that read JSON need the real one
     testImplementation(libs.org.json)
     debugImplementation(libs.androidx.compose.ui.tooling)

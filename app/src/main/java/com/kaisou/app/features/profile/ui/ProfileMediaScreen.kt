@@ -114,14 +114,13 @@ fun ProfileMediaScreen(
     }
 }
 
-// The tabs of a person, as AniList has them: what a person voiced, the anime and the manga. Under them two things to choose: how the titles
-// are sorted, in a menu, and a box to show only what is on the list of the user. Then the titles in a grid that asks for more as it gets
-// to its end. Sorted by the newest or the oldest they are grouped by year, with how many there are in each year
+// The tabs of a person, with the sort in a menu and a box for the user's list, then the titles in a grid that asks for more
 @Composable
 fun ProfileMediaContent(viewModel: ProfileMediaViewModel, onOpenTitle: (Int) -> Unit, onOpenProfile: (ProfileRef) -> Unit) {
     val dimens = KaisouTheme.dimens
     val state by viewModel.state.collectAsState()
     val gridState = rememberLazyGridState(viewModel.scroll.index, viewModel.scroll.offset)
+
     // A character is in anime and in manga, a person of the staff also voices characters, a studio only makes anime
     val tabs = when (viewModel.ref.kind) {
         ProfileKind.Character -> listOf(MediaTab.Anime, MediaTab.Manga)
@@ -136,10 +135,12 @@ fun ProfileMediaContent(viewModel: ProfileMediaViewModel, onOpenTitle: (Int) -> 
             viewModel.scroll.offset = offset
         }
     }
+
     // A filter that changes starts the list again, and the grid goes back to its top
     LaunchedEffect(state.restarts) {
         if (state.restarts > 0) gridState.scrollToItem(0)
     }
+
     // The next page is asked for when the last rows are on the screen
     LaunchedEffect(gridState, state.items.size) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }.collect { last ->
@@ -156,6 +157,7 @@ fun ProfileMediaContent(viewModel: ProfileMediaViewModel, onOpenTitle: (Int) -> 
                 top = 0.dp
             )
         }
+
         // How the titles are sorted, in a sheet, and the capsule that shows only what is on the list of the user
         val sortTitle = stringResource(R.string.profile_sort)
         val sortLabels = MediaSort.entries.associateWith { stringResource(it.label) }
@@ -237,8 +239,7 @@ fun ProfileMediaContent(viewModel: ProfileMediaViewModel, onOpenTitle: (Int) -> 
     }
 }
 
-// The capsule that shows only what is on the list of the user. It has the icon of the list even when it is off, so it reads as something to
-// touch, with its fill like the others; on, it takes the color of the app and the words in the color over it. A touch anywhere on it turns it
+// The capsule that shows only what is on the user's list, with the icon of the list even when off, filled with the app color when on
 @Composable
 private fun OnListPill(checked: Boolean, onChange: (Boolean) -> Unit) {
     val dimens = KaisouTheme.dimens

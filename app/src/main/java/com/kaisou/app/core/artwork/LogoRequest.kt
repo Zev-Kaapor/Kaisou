@@ -7,8 +7,7 @@ import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.size.Size
 
-// The request of a logo, the page and the preload build it the same way so the one that is downloaded first is the one that
-// is found in the memory cache. Its pixels are read to turn down the black ones, which a hardware picture does not allow
+// The request of a logo, built the same way by the page and the preload, reading its pixels to turn down black ones
 fun logoRequest(context: Context, url: String, size: Size): ImageRequest =
     ImageRequest.Builder(context)
         .data(url)

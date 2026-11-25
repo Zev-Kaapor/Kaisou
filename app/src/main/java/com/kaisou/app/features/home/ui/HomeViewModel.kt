@@ -66,12 +66,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     // Where the Home was left, which stays when the phone is turned
     val scroll = ScrollPosition()
 
-    // The story that is open, the person and the activity that is on, kept here and not in the screen, so it stays where it was when the phone
-    // is turned and the screen is made again
+    // The story that is open, kept here so it stays when the phone is turned
     var openStory by mutableStateOf<Int?>(null)
     var storyItem by mutableStateOf<Int?>(null)
 
     private val repository = HomeRepository(application)
+
     // The list of the user is the one of the page of the title, so the editor is the same
     private val titles = TitleRepository(application)
     private val artwork = ArtworkRepository.Shared
@@ -86,9 +86,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     )
     val state: StateFlow<HomeUiState> = mutableState.asStateFlow()
 
-    // What the editor of the list needs for a title: the title with the entry of the user and how the account gives scores and keeps lists
+    // What the editor of the list needs for a title: the title with the user's entry and how the account scores and keeps lists
     class ListEditor(val title: TitleUi, val options: ListOptions?)
 
+    // Loads what the editor of the list needs for a title
     suspend fun listEditor(id: Int): ListEditor? = coroutineScope {
         val options = async { titles.listOptions(manga = false) }
         val title = titles.header(id) ?: return@coroutineScope null
@@ -124,14 +125,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // The request that is running, so a new one replaces it, the one that looks for news on its own, and when the Home was last asked for
+    // The request that is running, so a new one replaces it, the quiet one that looks for news, and when the Home was last asked for
     private var loadJob: Job? = null
     private var quietJob: Job? = null
+
     // What is known of what goes under the hero, which comes in four parts
     private var parts = HomeParts()
+
     // The activities whose like is going to AniList
     private val liking = mutableSetOf<Int>()
     private var loadedAt = 0L
+
     // The last change of the list that the shelves were asked again for
     private var seenListVersion = ListChanges.version.value
 
@@ -141,8 +145,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         load()
     }
 
-    // The heart of an activity: it changes at once and goes back if AniList does not take it, and when it does the count is the one
-    // AniList says. A second touch while the first is going is left out
+    // The heart of an activity: it changes at once, goes back if AniList does not take it, and ends with the count AniList says
     fun toggleLike(activityId: Int) {
         if (!liking.add(activityId)) return
         val before = findItem(activityId)
@@ -174,12 +177,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Closes the replies of an activity
     fun closeReplies() {
         mutableState.update { it.copy(replies = null) }
     }
 
-    // Writes a comment on the activity that is open, or saves the new text of the one that is being changed. It shows in the list when
-    // AniList takes it
+    // Writes a comment on the open activity, or saves the new text of the one being edited, showing it when AniList takes it
     fun sendReply(text: String) {
         val open = mutableState.value.replies ?: return
         val trimmed = text.trim()
@@ -234,10 +237,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         mutableState.update { state -> state.copy(replies = state.replies?.copy(editingId = replyId, failed = false)) }
     }
 
+    // Stops editing a reply
     fun cancelEditingReply() {
         mutableState.update { state -> state.copy(replies = state.replies?.copy(editingId = null, failed = false)) }
     }
 
+    // Changes one reply of the open activity
     private fun editReply(id: Int, change: (ReplyUi) -> ReplyUi) {
         mutableState.update { state ->
             val open = state.replies ?: return@update state
@@ -245,11 +250,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Finds a story item by its id, among the user's and the friends'
     private fun findItem(id: Int): StoryItemUi? {
         val state = mutableState.value
         return (state.ownStory + state.friends.flatMap { it.items }).firstOrNull { it.id == id }
     }
 
+    // Changes one story item wherever it is
     private fun editItem(id: Int, change: (StoryItemUi) -> StoryItemUi) {
         mutableState.update { state ->
             state.copy(
@@ -271,26 +278,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         mutableState.update { it.copy(heroIndex = index) }
     }
 
-    // Asks for the Home, the placeholders show until the titles come. The poster and the logo of each title are looked for at
-    // the same time as the others, and a title only shows when they are ready, so the picture never comes in low quality
+    // Asks for the Home with placeholders until the titles come, a title showing only when its pictures are ready
     fun load() {
         start(refreshing = false)
     }
 
-    // Asks again with what was asked before kept aside, since the point is to see what changed. The Home on the screen stays until the
-    // new one comes, and if it does not come it stays
+    // Asks again with the old answer kept aside, the Home on the screen staying until the new one comes or for good if it fails
     fun refresh() {
         val current = mutableState.value
         if (current.isRefreshing || current.status != HomeStatus.Content) return
         start(refreshing = true)
     }
 
-    // What is under the hero is asked for again by itself when the Home is older than the age given, so the news of the friends come
-    // without pulling. The hero stays, it only changes when asked, and nothing shows that it is asking. It does nothing while
-    // another request is running
+    // Asks again for what is under the hero when the Home is older than the age given, quietly and not while another request runs
     fun refreshIfStale(minAgeMillis: Long) {
         val current = mutableState.value
         if (current.status != HomeStatus.Content || current.isRefreshing || loadJob?.isActive == true || quietJob?.isActive == true) return
+
         // A change of the list is asked for whatever the time since the last question
         val listChanged = ListChanges.version.value != seenListVersion
         if (!listChanged && SystemClock.elapsedRealtime() - loadedAt < minAgeMillis) return
@@ -312,8 +316,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // The three lower parts of what is under the hero are asked for at the same time and each one goes into the page as it comes, none of
-    // them holds the page
+    // The three lower parts under the hero are asked at once, each going into the page as it comes, none holding it
     private fun CoroutineScope.askLower(userId: Int) {
         launch { repository.below(userId)?.let { parts = parts.copy(below = it); rebuild(userId) } }
         launch { repository.recommended(userId)?.let { parts = parts.copy(recommended = it); rebuild(userId) } }
@@ -334,8 +337,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         if (ids.isNotEmpty()) MangaAgeRepository.prefetch(ids)
     }
 
-    // Deletes an activity of the user. It goes from the stories at once, and when AniList has answered they are asked for again, so one
-    // that was not deleted comes back
+    // Deletes an activity of the user, which leaves the stories at once and comes back if AniList did not delete it
     fun deleteActivity(activityId: Int) {
         mutableState.update { state -> state.copy(ownStory = state.ownStory.filterNot { it.id == activityId }) }
         viewModelScope.launch {
@@ -344,16 +346,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Opens the screen to write a status
     fun openComposer() {
         mutableState.update { it.copy(composer = ComposerUi()) }
     }
 
+    // Closes the screen to write a status
     fun closeComposer() {
         mutableState.update { it.copy(composer = null) }
     }
 
-    // Posts the status the user wrote. When AniList takes it the sheet is told to close, and the stories are asked for again so the
-    // new one shows
+    // Posts the status the user wrote, closing the sheet and asking for the stories again when AniList takes it
     fun postStatus(text: String) {
         val open = mutableState.value.composer ?: return
         val trimmed = text.trim()
@@ -368,6 +371,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Starts a request for the Home, cancelling the one that was running
     private fun start(refreshing: Boolean) {
         quietJob?.cancel()
         loadJob?.cancel()
@@ -388,11 +392,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             val userId = AniListSession.viewer?.id
+
             // What was kept of what is lower on the page is shown at once, and the new answers take its place as they come
             if (userId != null && !refreshing) parts = repository.kept(userId)
-            // The top of the shelves is what the page waits for along with the hero, so it goes alone first, with nothing in its way in the queue
-            // of AniList. What is lower on the page is asked for when it has answered, and does not hold the page: each part comes into it
-            // when it is ready
+
+            // The top goes alone first, what the page waits for, and the lower parts are asked after it and do not hold the page
             val top = async { userId?.let { repository.top(it) } }
             if (userId != null) launch {
                 top.await()
@@ -404,6 +408,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 mutableState.update { if (refreshing) it.copy(isRefreshing = false) else it.copy(status = HomeStatus.Error) }
                 return@launch
             }
+
             // The other titles of the hero go on while the page waits for the first one
             heroes.drop(1).forEach { hero -> launch { loadArt(hero) } }
             loadArt(heroes.first())
@@ -425,18 +430,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Looks for the poster and the logo of a title and downloads them at the size of the page, translates its synopsis and finds its
-    // rating, all at once. Only then does the page get them, so the pictures come up whole and from memory and the text does not change after it
-    // shows. What is not found, or takes too long, is left out: the cover, the name in text and the synopsis as it came take its
-    // place. What is ready when the time ends is kept
+    // Looks for the poster, logo, translated synopsis and rating at once, so the page gets them ready, leaving out what is late
     private suspend fun loadArt(hero: HeroUi) {
         var posterUrl: String? = null
         var backdropUrl: String? = null
         var logoUrl: String? = null
         var synopsis: String? = null
         var rating: ContentRating? = null
-        // The season does not wait for the pictures, nor is it lost when one of the sites is slow: it goes on after the time of the pictures
-        // ends and is put in the title when it comes
+
+        // The season does not wait for the pictures, it goes on after their time ends and is put in the title when it comes
         val seasonJob = viewModelScope.async {
             SeasonNumber.of(hero.startDate, artwork.seasonStarts(hero.anilistId, hero.query), hero.seasonMarker, hero.hasPrequel, hero.isContinuation)
         }
@@ -445,13 +447,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val loader = SingletonImageLoader.get(context)
             val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
             coroutineScope {
-                // AniList gives the synopsis in English, so there is nothing to translate when the app is in English. It goes on
-                // from the start, it does not wait for the pictures to be found
+                // AniList gives the synopsis in English, so it is translated from the start only when the app is not in English
                 if (AppLanguage.needsTranslation) launch { synopsis = GoogleTranslator.translate(hero.synopsis.take(TranslatedCharacters), AppLanguage.translationCode) }
                 launch {
                     val found = artwork.art(hero.anilistId, hero.query, AppLanguage.code)
-                    // The picture of the way the screen is in is downloaded now, so it comes up whole. The other one is only known,
-                    // and comes when the screen turns
+
+                    // The picture for the way the screen is in is downloaded now, the other is only known until the screen turns
                     posterUrl = found.posterUrl
                     backdropUrl = found.backdropUrl
                     coroutineScope {
@@ -459,6 +460,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         launch {
                             if (landscape) {
                                 backdropUrl = found.backdropUrl?.takeIf { loader.execute(artRequest(context, it, mutableState.value.backdropSize)) is SuccessResult }
+
                                 // With no wide picture the poster takes its place
                                 if (backdropUrl == null) posterUrl = found.posterUrl?.takeIf { loader.execute(artRequest(context, it, mutableState.value.posterSize)) is SuccessResult }
                             } else {
@@ -489,6 +491,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Constants of the view model
     private companion object {
         // How long a title waits for its pictures before it shows with what it has
         const val ArtWaitMillis = 6_000L

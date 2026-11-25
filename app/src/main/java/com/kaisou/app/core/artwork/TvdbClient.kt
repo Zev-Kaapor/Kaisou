@@ -14,10 +14,12 @@ import java.net.URL
 import java.time.LocalDate
 import java.util.Locale
 
-// Second source of posters, logos and backdrops, TheTVDB, which has some that TMDB does not. Uses the v4 API, the key comes from local.properties
+// Second source of posters, logos and backdrops, TheTVDB, which has some that TMDB does not
 object TvdbClient {
+    // Address of the API and the time to wait for it
     private const val ApiUrl = "https://api4.thetvdb.com/v4"
     private const val TimeoutMillis = 8_000
+
     // The token lasts a month, it is asked again well before that
     private const val TokenMillis = 20L * 60L * 60L * 1000L
 
@@ -32,7 +34,9 @@ object TvdbClient {
     private const val OfficialOrder = "official"
     private const val MovieBackground = 15
 
+    // Name of the kind of a series
     private const val SeriesKind = "series"
+
     // How many pages of episodes are read at most, and how long a date written as 2026-10-03 is
     private const val MaxEpisodePages = 6
     private const val DateLength = 10
@@ -40,6 +44,7 @@ object TvdbClient {
     private const val SeasonCacheEntries = 100
     private const val MovieKind = "movies"
 
+    // A record of TheTVDB: its kind and its id
     private class Record(val kind: String, val id: Int)
 
     // The days the seasons first aired by series, so a series is not read again for each of its seasons
@@ -72,6 +77,7 @@ object TvdbClient {
     // The backdrops of a title, the wide pictures, found the same way. Blocks on the network
     fun backdrops(tvdbId: Int?, imdbId: String?): Artworks = artworks(tvdbId, imdbId, SeriesBackground, MovieBackground)
 
+    // The pictures of a title on TheTVDB, none when the key is not set
     private fun artworks(tvdbId: Int?, imdbId: String?, seriesType: Int, movieType: Int): Artworks {
         if (!isSet) return Artworks.None
         return try {
@@ -102,8 +108,7 @@ object TvdbClient {
         }
     }
 
-    // The posters and the backdrops of a season of a series, from the season in the official order. None when the series has no such season.
-    // Blocks on the network
+    // The posters and backdrops of a season, from the season in the official order, none when it does not exist
     fun seasonArt(tvdbId: Int, season: Int): SeasonArtwork {
         if (!isSet) return SeasonArtwork.None
         return try {
@@ -119,6 +124,7 @@ object TvdbClient {
         }
     }
 
+    // Reads the picture of a season when it is of the type asked
     private fun seasonPicture(json: JSONObject, type: Int): Artwork? {
         val image = if (json.isNull("image")) null else json.getString("image")
         if (image == null || json.optInt("type") != type) return null
@@ -131,8 +137,7 @@ object TvdbClient {
         )
     }
 
-    // The day each season of a series first aired, from its episodes in the official order. Specials, which are season 0, are left
-    // out. The episodes come in pages, a long series has a few. Blocks on the network
+    // The day each season first aired, from the episodes in the official order, leaving out specials
     fun seasonStarts(tvdbId: Int): SeasonStarts {
         if (!isSet) return SeasonStarts.None
         seasonCache.get(tvdbId)?.let { return SeasonStarts(it.value, failed = false) }
@@ -156,6 +161,7 @@ object TvdbClient {
         }
     }
 
+    // Finds the record of a title by its id on TheTVDB or its id on IMDB
     private fun resolve(tvdbId: Int?, imdbId: String?): Record? {
         if (tvdbId != null) return Record(SeriesKind, tvdbId)
         if (imdbId == null) return null
@@ -171,6 +177,7 @@ object TvdbClient {
     // Null when TheTVDB does not know what was asked
     private fun call(path: String): JSONObject? = Gates.Tvdb.run { callOnce(path) }
 
+    // Asks TheTVDB once and reads the answer
     private fun callOnce(path: String): JSONObject? {
         val connection = URL(ApiUrl + path).openConnection() as HttpURLConnection
         try {

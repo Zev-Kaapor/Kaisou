@@ -31,6 +31,7 @@ class HomeMapper(private val resources: Resources) {
     private val formatNames by lazy { names(R.array.format_keys, R.array.format_names) }
     private val genreNames by lazy { names(R.array.genre_keys, R.array.genre_names) }
 
+    // Builds the featured title, continuing from the next episode when the user is in the middle of it
     fun hero(media: AniMedia): HeroUi {
         val continuing = media.listStatus == WatchingStatus
         return HeroUi(
@@ -49,8 +50,7 @@ class HomeMapper(private val resources: Resources) {
             year = media.year,
             synopsis = synopsis(media.description),
             releaseDay = media.nextAiringAt?.let { Instant.ofEpochSecond(it).atZone(ZoneId.systemDefault()).dayOfWeek },
-            // A title the user is in the middle of continues from the episode after the last one they saw, the others
-            // start from the first
+            // A title in the middle continues after the last episode seen, the others start from the first
             nextEpisode = if (continuing) (media.listProgress ?: 0) + 1 else FirstEpisode,
             continuing = continuing,
             coverUrl = media.cover,
@@ -58,8 +58,7 @@ class HomeMapper(private val resources: Resources) {
         )
     }
 
-    // Everything under the hero in the order it shows. The user goes apart from the friends, the new episodes of what the user follows
-    // come first, then the others, and a shelf with nothing on it is left out
+    // Everything under the hero in order: the user apart from the friends, new episodes first, empty shelves left out
     fun shelves(source: AniShelves, userId: Int, recommended: AniRecommended?, sequels: List<AniCard>?, hideAdult: Boolean = false): HomeShelvesUi {
         val mine = (source.watching + source.plannedAnime).map { it.card.id }.toSet()
         val airing = source.airing.sortedByDescending { it.card.id in mine }
@@ -93,8 +92,7 @@ class HomeMapper(private val resources: Resources) {
         )
     }
 
-    // The activities of the last days grouped by person, the one who did something last first, each with what they did from the oldest
-    // to the newest, the way a story plays. The ones about adult titles are only left out when asked to
+    // The activities of the last days grouped by person, the latest first, each played oldest to newest, adult ones hidden when asked
     private fun stories(activities: List<AniActivity>, now: Long, hideAdult: Boolean): List<StoryUi> {
         val oldest = now / MillisPerSecond - StoryDays * SecondsPerDay
         return activities
@@ -108,6 +106,7 @@ class HomeMapper(private val resources: Resources) {
             .sortedByDescending { story -> story.items.maxOf { it.createdAt } }
     }
 
+    // Builds one item of a story from an activity
     private fun storyItem(activity: AniActivity): StoryItemUi {
         val line = line(activity)
         return StoryItemUi(
@@ -125,6 +124,7 @@ class HomeMapper(private val resources: Resources) {
         )
     }
 
+    // Builds a reply from its source
     fun reply(source: AniReply): ReplyUi = ReplyUi(source.id, source.userId, source.userName, source.avatar, source.text.trim(), source.createdAt, source.likeCount, source.isLiked)
 
     // Where the episodes or chapters are in the line, or the title, which ends it, when there are none
@@ -147,6 +147,7 @@ class HomeMapper(private val resources: Resources) {
         val progress = activity.progress.orEmpty()
         val range = RangeMark in progress
 
+        // Writes the line of an activity for a range or a single number
         fun of(single: Int, several: Int) = resources.getString(if (range) several else single, progress, card.title)
         return when {
             status.startsWith("rewatched") -> of(R.string.story_rewatched, R.string.story_rewatched_range)
@@ -162,12 +163,11 @@ class HomeMapper(private val resources: Resources) {
         }
     }
 
+    // Builds a shelf, none when it has no cards
     private fun shelf(id: ShelfId, shape: CardShape, cards: List<CardUi>): ShelfUi? =
         if (cards.isEmpty()) null else ShelfUi(id, shape, cards)
 
-    // The format and how long a title is, like TV and 12 episodes, or only what is known of them. A title that is not out yet says
-    // it is coming soon where its length would be, and one that is still going and has no total says how many aired so far, or that it
-    // is going on, since AniList only gives a total when there is an end
+    // The format and length of a title, like TV and 12 episodes, or coming soon, or how many aired for one still going
     fun size(card: AniCard): String {
         val format = card.format?.let { formatNames[it] }
         val length = when {
@@ -183,8 +183,7 @@ class HomeMapper(private val resources: Resources) {
         return listOfNotNull(format, length).joinToString(resources.getString(R.string.home_card_separator))
     }
 
-    // Every card has the score of its title on the scale of ten. The wide ones use the banner of the title when it has one, and the
-    // cover when it does not
+    // Builds a card with its score out of ten, using the banner for wide ones when there is one
     fun card(
         source: AniCard,
         details: String = "",
@@ -215,6 +214,7 @@ class HomeMapper(private val resources: Resources) {
         return listOf(base, lerp(base, Background, FadeToPage))
     }
 
+    // Pairs the keys of an array with its names
     private fun names(keys: Int, names: Int): Map<String, String> =
         resources.getStringArray(keys).zip(resources.getStringArray(names)).toMap()
 
@@ -222,15 +222,18 @@ class HomeMapper(private val resources: Resources) {
     private fun synopsis(raw: String?): String =
         raw?.let { Html.fromHtml(it, Html.FROM_HTML_MODE_COMPACT).toString().replace(Spaces, " ").trim() }.orEmpty()
 
+    // Constants of the mapper
     private companion object {
         // AniList scores go from 0 to 100, the shelves show them from 0 to 10
         const val ScoreScale = 10f
         const val MillisPerSecond = 1000L
+
         // How far back the stories go, in days, and how many seconds a day has
         const val StoryDays = 3L
         const val SecondsPerDay = 86_400L
         const val RangeMark = " - "
 
+        // The first episode and the names of the states a title can be in
         const val FirstEpisode = 1
         const val WatchingStatus = "CURRENT"
         const val NotYetReleased = "NOT_YET_RELEASED"
@@ -238,8 +241,11 @@ class HomeMapper(private val resources: Resources) {
         const val Hiatus = "HIATUS"
         const val Cancelled = "CANCELLED"
         const val MovieFormat = "MOVIE"
+
         // The formats that only a manga has
         val MangaFormats = setOf("MANGA", "NOVEL", "ONE_SHOT")
+
+        // How many genres a card shows and how much of its picture fades to the page
         const val MaxGenres = 3
         const val FadeToPage = 0.7f
         val Spaces = Regex("\\s+")

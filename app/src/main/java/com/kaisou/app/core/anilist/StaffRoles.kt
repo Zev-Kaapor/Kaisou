@@ -1,10 +1,10 @@
 package com.kaisou.app.core.anilist
 
-// The parts of the staff as AniList writes them, like Theme Song Performance (ED1) or Episode Director (ep 5): the part is put in the
-// language of the app when it is one that is known and what comes in parentheses stays as it came
+// The staff parts as AniList writes them, put in the language of the app, keeping what is in parentheses
 class StaffRoles(keys: Array<String>, names: Array<String>) {
     private val byKey = keys.map { it.lowercase() }.zip(names).toMap()
 
+    // Puts a part of the staff in the language of the app, unchanged when it is not known
     fun translate(raw: String): String {
         val base = raw.substringBefore(" (").trim()
         val translated = byKey[base.lowercase()] ?: return raw

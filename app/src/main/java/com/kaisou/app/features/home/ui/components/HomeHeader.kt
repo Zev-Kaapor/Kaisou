@@ -61,8 +61,7 @@ import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.core.designsystem.theme.textShadow
 import com.kaisou.app.features.home.ui.HomeDimens
 
-// Logo, the name of the account with what it watched and read, and on the right the notifications, the search and the
-// picture of the account. The room of the status bar stays even when it is hidden, so the header keeps clear of the camera
+// Logo, the account with what it watched and read, and on the right the notifications, search and the account picture
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeHeader(
@@ -80,7 +79,8 @@ fun HomeHeader(
             .fillMaxWidth()
             .background(containerColor)
             .windowInsetsPadding(WindowInsets.statusBarsIgnoringVisibility)
-            // The avatar sits inside a bigger touch area, so the edge gets less room to leave the avatar at the same margin as the logo
+
+            // The avatar sits in a bigger touch area, so the edge gets less room to keep the same margin as the logo
             .padding(
                 start = dimens.screenPadding,
                 end = dimens.screenPadding - (HomeDimens.HeaderAction - HomeDimens.Avatar) / 2,
@@ -172,7 +172,7 @@ private fun AccountInfo(viewer: AniViewer?, modifier: Modifier = Modifier) {
     }
 }
 
-// Plain round button with an icon and, when asked, the counter of what is new on its corner, and the icon in the accent while it is active
+// Round button with an icon, the counter of what is new on its corner when asked, and the icon in the accent while active
 @Composable
 fun HeaderAction(
     icon: ImageVector,
@@ -189,8 +189,7 @@ fun HeaderAction(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        // The shadow of the icon is the icon again, dark and blurred, a little lower. Before Android 12 the blur does nothing
-        // and the icon shows without it
+        // The shadow of the icon is the icon again, dark and blurred, a little lower, doing nothing before Android 12
         val dimens = KaisouTheme.dimens
         Icon(
             imageVector = icon,
@@ -232,8 +231,7 @@ private fun Counter(count: Int, modifier: Modifier = Modifier) {
     }
 }
 
-// Round picture of the account: a placeholder while the account or the picture is on the way, and the person icon when the
-// account has no picture or it could not be loaded
+// Round picture of the account: a placeholder while it comes, the person icon when it has no picture or it failed
 @Composable
 private fun Avatar(
     avatarUrl: String?,

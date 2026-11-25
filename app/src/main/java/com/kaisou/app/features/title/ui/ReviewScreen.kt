@@ -62,9 +62,7 @@ import com.kaisou.app.features.title.ui.components.DetailsSkeleton
 import com.kaisou.app.features.title.ui.components.RoundImage
 import com.kaisou.app.features.title.ui.components.ScoreMark
 
-// A review read whole, as AniList shows it: who wrote it, when, the score, the text, and how many people found it useful, with the thumbs to
-// vote. The text comes in the language of the app, a button of the bar turns that off, another shares the review. The spoilers of the text stay
-// covered until they are touched
+// A review read whole: author, day, score, text, helpful votes and the thumbs, translated unless turned off, with spoilers covered
 @Composable
 fun ReviewScreen(onBack: () -> Unit, modifier: Modifier = Modifier, viewModel: ReviewViewModel = viewModel()) {
     val dimens = KaisouTheme.dimens

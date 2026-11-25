@@ -44,8 +44,7 @@ import com.kaisou.app.features.title.ui.components.CastRowsSkeleton
 import com.kaisou.app.features.title.ui.components.DetailsError
 import androidx.compose.runtime.LaunchedEffect
 
-// All the voices of a character, in every language, as a list of cards like the ones of the characters of a title: the language of each voice
-// and the note of what part of the story it is beside it, and the beginning of what the person says of itself
+// All the voices of a character as cards: the language of each voice, the note of its part, and what the person says of itself
 @Composable
 fun ProfileVoicesScreen(onBack: () -> Unit, onOpenProfile: (ProfileRef) -> Unit, modifier: Modifier = Modifier, viewModel: ProfileViewModel = viewModel()) {
     val dimens = KaisouTheme.dimens

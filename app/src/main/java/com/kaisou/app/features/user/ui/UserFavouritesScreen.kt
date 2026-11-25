@@ -54,8 +54,7 @@ import com.kaisou.app.features.title.ui.components.DetailsError
 import com.kaisou.app.features.title.ui.components.SimpleCard
 import com.kaisou.app.features.user.data.FavouriteKind
 
-// All the favourites of one kind of a person, a page at a time: the next one is asked for when the list gets near its end. The titles are in a
-// grid of posters, the characters and the staff in the cards of the cast and the studios in lines. Each one opens its page
+// All the favourites of one kind a page at a time: posters in a grid, characters and staff in cast cards, studios in lines
 @Composable
 fun UserFavouritesScreen(
     onBack: () -> Unit,
@@ -77,6 +76,7 @@ fun UserFavouritesScreen(
             viewModel.scroll.offset = offset
         }
     }
+
     // The next page is asked for when the last rows are on the screen
     LaunchedEffect(gridState, count) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }.collect { last ->
@@ -149,7 +149,7 @@ fun UserFavouritesScreen(
     }
 }
 
-// How many rows before the end of the list the next page is asked for, and how many placeholders stand in for the first page and for the next ones
+// How many rows before the end the next page is asked, and how many placeholders stand in for the first page and the next
 private const val LoadAhead = 4
 private const val SkeletonRows = 8
 private const val SkeletonMore = 2

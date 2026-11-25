@@ -73,10 +73,7 @@ import com.kaisou.app.core.designsystem.theme.KaisouTheme
 // A picture of the viewer: where the whole one is, a small one that shows while it comes and the words that name it on top
 class ViewerImage(val url: String, val placeholder: String? = null, val title: String? = null)
 
-// The pictures over the whole screen on black, in the size they have, with no cut by the size of the screen. One slides to the next with a swipe,
-// and the one that is on shows its name and its place on top. It is zoomed with two fingers or with two touches, both with an animation, and
-// moved when it is zoomed. A touch hides or shows the buttons: the first closes and the other, when the pictures can be downloaded, saves the one
-// that is on. What the download says is shown over the picture, for a moment
+// The pictures over the whole screen on black, with swipe to slide, zoom, a touch to show or hide the buttons and a save button
 @Composable
 fun ImageViewer(
     images: List<ViewerImage>,
@@ -158,8 +155,7 @@ fun ImageViewer(
     }
 }
 
-// One picture of the viewer, which keeps its own zoom. The zoom and the move follow the fingers and the double touch and the end of a pinch that
-// ended too small go to their place with an animation. A touch with one finger on a picture that is not zoomed is left for the viewer to slide
+// One picture of the viewer with its own zoom and move, going back to its place with an animation
 @Composable
 private fun ViewerPage(image: ViewerImage, active: Boolean, onZoomed: (Boolean) -> Unit, onTap: () -> Unit) {
     val context = LocalContext.current
@@ -238,6 +234,7 @@ private fun ViewerPage(image: ViewerImage, active: Boolean, onZoomed: (Boolean) 
             .fillMaxSize()
             .graphicsLayer(scaleX = scale, scaleY = scale, translationX = offset.x, translationY = offset.y)
         image.placeholder?.let { AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Fit, modifier = layer) }
+
         // The whole size of the picture, so zooming shows detail and not a picture cut to the size of the screen
         AsyncImage(
             model = ImageRequest.Builder(context).data(image.url).size(Size.ORIGINAL).build(),
@@ -248,8 +245,7 @@ private fun ViewerPage(image: ViewerImage, active: Boolean, onZoomed: (Boolean) 
     }
 }
 
-// Follows two fingers, or one when the picture is zoomed, and tells how much they zoomed and moved and where the middle of them is. With one finger
-// on a picture that is not zoomed it leaves the touch alone, so the viewer can slide to the other picture. When the fingers go up it says it ended
+// Follows two fingers, or one when zoomed, telling the zoom, the move and the middle, and leaves a single finger alone otherwise
 private suspend fun PointerInputScope.detectZoomAndMove(
     isZoomed: () -> Boolean,
     onEnd: () -> Unit,
@@ -295,6 +291,7 @@ private fun ViewerButton(icon: ImageVector, description: String, onClick: () -> 
     }
 }
 
+// How far a picture can be zoomed out and in, the zoom of a double touch and how long the note stays
 private const val MinZoom = 0.8f
 private const val MaxZoom = 6f
 private const val DoubleTapZoom = 2.5f

@@ -83,8 +83,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.first
 
-// A row of titles that slides, as the cards of the Home, each one opens the page of its title. It can start at a card that is not the
-// first, like the place of this title in its series, and then that card is in the middle of the row, not at its start
+// A row of titles that slides, each opening its page, able to start at a card that is not the first, centered in the row
 @Composable
 fun CardsBlock(
     title: Int,
@@ -96,13 +95,14 @@ fun CardsBlock(
     shineCurrent: Boolean = false
 ) {
     val dimens = KaisouTheme.dimens
-    // With a page for all of them only a few are shown, around the one of the page when it is in the series, and the last card says there are more
+
+    // With a page for all of them only a few show, around the one of the page in the series, the last card saying there are more
     val from = if (onSeeAll != null) (startIndex - 2).coerceIn(0, (cards.size - TitleDimens.CardsShown).coerceAtLeast(0)) else 0
     val shown = if (onSeeAll != null) cards.drop(from).take(TitleDimens.CardsShown) else cards
     val rowState = rememberLazyListState(initialFirstVisibleItemIndex = (startIndex - from).coerceAtLeast(0))
     val density = LocalDensity.current
 
-    // The card of the title goes to the middle of the row once it is laid out and its width is known, as far as the cards before it allow
+    // The card of the title goes to the middle of the row once laid out, as far as the cards before it allow
     LaunchedEffect(startIndex, shown.size) {
         if (startIndex <= 0) return@LaunchedEffect
         val width = snapshotFlow { rowState.layoutInfo.viewportSize.width }.first { it > 0 }
@@ -150,9 +150,7 @@ fun CardsBlock(
     }
 }
 
-// A title in the style of the people: its picture, its name under it and, under that, what it is in the story, in two lines so it is not cut.
-// The age rating is at the start of the line under the name, and there is no score over the picture, since what matters here is how it is
-// tied to the title that is open
+// A title in the style of the people: its picture, its name and what it is in the story in two lines, the age rating and no score
 @Composable
 internal fun SimpleCard(card: CardUi, onClick: () -> Unit, badge: String? = null, shine: Boolean = false) {
     val dimens = KaisouTheme.dimens
@@ -166,12 +164,14 @@ internal fun SimpleCard(card: CardUi, onClick: () -> Unit, badge: String? = null
                 .background(KaisouTheme.colors.skeleton)
         ) {
             card.imageUrl?.let { AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize()) }
+
             // The place of the title in the series, when the cards are the order to take it
             badge?.let {
                 CornerTab(shape = RoundedCornerShape(bottomEnd = HomeDimens.TabCorner), modifier = Modifier.align(Alignment.TopStart)) {
                     Text(text = it, style = MaterialTheme.typography.labelSmall, color = KaisouTheme.colors.onAccentFill)
                 }
             }
+
             // Only what the user gave it is shown, with the person that says it is theirs
             card.userScore?.let { userScore ->
                 val format = rememberScoreFormat()
@@ -194,11 +194,12 @@ internal fun SimpleCard(card: CardUi, onClick: () -> Unit, badge: String? = null
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = dimens.spaceExtraSmall)
         )
-        // The rating of the title at the start of the line, looked for only while the card is on the screen, with its room kept meanwhile
+
+        // The rating of the title at the start of the line, looked for only while the card is on the screen, keeping its room
         val rating = rememberCardRating(card.rating)
         val showRating = !rating.loaded || rating.rating != null
-        // The room of two lines is kept under the line, so the shelf does not change its height when a card with two lines comes by,
-        // while what is in it stays at the top as it is with one line
+
+        // The room of two lines is kept under the line so the shelf does not change height, what is in it staying at the top
         val detailsStyle = MaterialTheme.typography.labelSmall.copy(fontSize = HomeDimens.CardDetailsSize)
         val detailsRoom = with(LocalDensity.current) { (detailsStyle.lineHeight * 2).toDp() + HomeDimens.CardDetailsTop }
         Box(modifier = Modifier.heightIn(min = detailsRoom)) {
@@ -224,7 +225,7 @@ internal fun SimpleCard(card: CardUi, onClick: () -> Unit, badge: String? = null
 // How many lines of what they do and of who voices them fit under the name of a person
 private const val PersonLines = 2
 
-// The button that opens a sheet to pick one of some: a capsule with its fill, the icon of what it picks when it has one, the one in use and the arrow
+// The button that opens a sheet to pick one of some: a capsule with its fill, the icon, the one in use and the arrow
 @Composable
 fun PickerPill(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null, fill: Color = KaisouTheme.colors.elevated) {
     val dimens = KaisouTheme.dimens
@@ -263,8 +264,7 @@ internal fun SeeAllArrow(onClick: () -> Unit) {
     }
 }
 
-// A row of people that slides, the characters with their voices or the staff with what they did, each one opens its page. When there is a way
-// to see all of them it is the last card of the row
+// A row of people that slides, characters with their voices or the staff with what they did, the last card opening all of them
 @Composable
 fun PeopleBlock(
     title: Int,
@@ -272,7 +272,7 @@ fun PeopleBlock(
     onOpen: (TitlePerson) -> Unit,
     onSeeAll: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
-    // Whether the room of two lines under each name is kept even when there is nothing to say, which a row of people with no part to tell leaves empty
+    // Whether the room of two lines under each name is kept even with nothing to say
     keepRoom: Boolean = true
 ) {
     val dimens = KaisouTheme.dimens
@@ -316,8 +316,8 @@ fun PeopleBlock(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(top = dimens.spaceExtraSmall)
                     )
-                    // What they do in the title, and who voices a character, in two lines together whose room is always kept, so the row
-                    // does not change its height when a person with more lines comes by
+
+                    // What they do and who voices a character, in two lines with room kept so the row keeps its height
                     val lineHeight = MaterialTheme.typography.labelSmall.lineHeight
                     val room = if (keepRoom) with(LocalDensity.current) { (lineHeight * PersonLines).toDp() } else 0.dp
                     Column(modifier = Modifier.heightIn(min = room)) {
@@ -330,7 +330,8 @@ fun PeopleBlock(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        // The voice in the original language of the title, and for a person that voices a character the language of the voice
+
+                        // The voice in the original language, and for a voice actor the language of the voice
                         (person.voice ?: person.language?.let { DubLanguage.nameOf(it) })?.let { line ->
                             Text(
                                 text = line,
@@ -383,9 +384,7 @@ fun RoundImage(url: String?, size: androidx.compose.ui.unit.Dp, modifier: Modifi
     }
 }
 
-// The covers of the volumes of a manga in a row that slides, each with its volume and its language under it, and a tap opens the picture
-// over the whole screen. When there are more than the row shows, it has the arrow and the last card for the page with
-// all of them
+// The covers of the volumes of a manga in a row that slides, with the arrow and last card to the page with all of them
 @Composable
 fun CoversBlock(covers: List<MangaCover>, onSeeAll: (() -> Unit)? = null) {
     val dimens = KaisouTheme.dimens
@@ -425,8 +424,7 @@ fun CoversBlock(covers: List<MangaCover>, onSeeAll: (() -> Unit)? = null) {
     }
 }
 
-// A cover of a volume: its picture and under it its volume and its language. A touch on it is left to the page, which opens the covers. It has
-// the width of the row unless the page gives it another
+// A cover of a volume: its picture and under it its volume and language, a touch being left to the page
 @Composable
 fun CoverTile(cover: MangaCover, onClick: () -> Unit, modifier: Modifier = Modifier.width(TitleDimens.CoverWidth)) {
     val dimens = KaisouTheme.dimens
@@ -453,8 +451,7 @@ fun CoverTile(cover: MangaCover, onClick: () -> Unit, modifier: Modifier = Modif
     }
 }
 
-// The covers over the whole screen, one that slides to the next, each with its name on top and the download of the one that is on. It starts on
-// the one with the place given in the list
+// The covers over the whole screen, sliding between them, each with its name and the download of the one that is on
 @Composable
 fun CoversViewer(covers: List<MangaCover>, startIndex: Int, onDismiss: () -> Unit) {
     val context = LocalContext.current
@@ -484,8 +481,7 @@ fun CoversViewer(covers: List<MangaCover>, startIndex: Int, onDismiss: () -> Uni
 private fun coverName(cover: MangaCover, separator: String): String =
     listOfNotNull(cover.volume?.let { stringResource(R.string.title_cover_volume, it) }, cover.language.uppercase().takeIf { it.isNotBlank() }).joinToString(separator)
 
-// The friends that have the title in a row that slides, the user first. Each has the picture with the score they gave on it, the name, where
-// the title is on their list and how far they are. A tap opens their page
+// The friends that have the title, the user first, each with the picture and score, name, place on their list and progress
 @Composable
 internal fun FriendsBlock(title: TitleUi) {
     val dimens = KaisouTheme.dimens
@@ -495,6 +491,7 @@ internal fun FriendsBlock(title: TitleUi) {
     val you = stringResource(R.string.title_friend_you)
     val total = (if (title.manga) title.chapters else title.episodes)?.takeIf { it > 0 }
     val entry = title.entry
+
     // The user is the first of them when the title is on their list
     val me = if (entry != null && viewer != null) {
         TitleFriend(
@@ -523,8 +520,7 @@ internal fun FriendsBlock(title: TitleUi) {
     }
 }
 
-// One friend: the picture with the score on its bottom, a ring in the accent when it is the user, the name, the state on the list and how far
-// they are, which says what it counts like the cards do
+// One friend: the picture with the score at its bottom, a ring in the accent for the user, the name, the state and the progress
 @Composable
 private fun FriendItem(friend: TitleFriend, total: Int?, manga: Boolean) {
     val dimens = KaisouTheme.dimens

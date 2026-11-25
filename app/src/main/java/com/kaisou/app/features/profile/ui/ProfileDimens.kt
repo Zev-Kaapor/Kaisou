@@ -8,6 +8,8 @@ object ProfileDimens {
     // Gradient ring around the avatar, the gap between the ring and the photo, and the icon as a share of the avatar
     val AvatarRing = 2.dp
     val AvatarRingGap = 2.dp
+
+    // How much of the avatar the icon takes
     const val AvatarIconFraction = 0.5f
 
     // Avatar in the header of the menu

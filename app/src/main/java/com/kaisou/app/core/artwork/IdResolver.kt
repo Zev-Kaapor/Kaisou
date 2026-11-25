@@ -13,21 +13,20 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
-// Finds the ids a title has on TMDB and TheTVDB from its id on AniList: ani.zip has them for most titles. For the ones it
-// does not know, the newest seasons, a search by name on TMDB is tried and then the season before the title, since the
-// seasons share the series. Blocks on the network, so it is called from a background thread
+// Finds the ids of a title on TMDB and TheTVDB from AniList, then by name on TMDB, then through the season before
 class IdResolver(private val anilist: AniListClient) {
 
-    // Null when nothing is known of the title. Throws when ani.zip cannot be reached, so the caller tries again later. A series that
-    // ani.zip gives no TheTVDB id for gets the one TMDB knows, since it is what the seasons and the other pictures are asked by
+    // Null when nothing is known, throws when ani.zip cannot be reached, and adds the TheTVDB id that TMDB knows
     fun resolve(anilistId: Int, query: ArtQuery): TitleIds? = resolveIds(anilistId, query)?.let(::withTvdbId)
 
+    // Adds the TheTVDB id that TMDB knows when the mappings have none
     private fun withTvdbId(ids: TitleIds): TitleIds {
         if (ids.tvdbId != null || ids.kind != "tv" || ids.tmdbId == null) return ids
         val tvdbId = TmdbClient.tvdbIdOf(ids.tmdbId) ?: return ids
         return TitleIds(ids.kind, ids.tmdbId, tvdbId, ids.imdbId)
     }
 
+    // Finds the ids of a title from the mappings, then by name, then through the season before it
     private fun resolveIds(anilistId: Int, query: ArtQuery): TitleIds? {
         val direct = mappingsOf(anilistId)
         if (direct?.tmdbId != null) return direct
@@ -67,9 +66,7 @@ class IdResolver(private val anilist: AniListClient) {
         return result.replace(Spaces, " ").trim().trimEnd(':', '-', '–', ' ')
     }
 
-    // A result is the title when its name holds the searched one, or the other way around, and the series started before
-    // the season and not long before. The first result is also taken when it is a known title of that time, since the site
-    // finds the name in other languages that the result does not show
+    // A result is the title when the names hold each other and the series started before the season and not long before
     private fun isSameTitle(hit: TmdbHit, searched: String, year: Int?, first: Boolean): Boolean {
         val wanted = normalize(searched)
         val similar = hit.names.any { name ->
@@ -81,11 +78,13 @@ class IdResolver(private val anilist: AniListClient) {
         return timeOk && (similar || (first && hit.votes >= MinSearchVotes))
     }
 
+    // Turns a text into lowercase letters and digits to compare names
     private fun normalize(text: String): String = text.lowercase().replace(NotLetterOrDigit, "")
 
     // The ids of ani.zip. Its answer can be huge because of the episodes, so it is read as a stream and only the mapping is kept
     private fun mappingsOf(anilistId: Int): TitleIds? = Gates.AniZip.run { mappingsOnce(anilistId) }
 
+    // Asks ani.zip once for the ids of a title
     private fun mappingsOnce(anilistId: Int): TitleIds? {
         val connection = URL("$MappingsUrl?anilist_id=$anilistId").openConnection() as HttpURLConnection
         try {
@@ -113,6 +112,7 @@ class IdResolver(private val anilist: AniListClient) {
         }
     }
 
+    // Reads the ids from the answer of ani.zip without loading all of it
     private fun readMappings(reader: JsonReader): TitleIds? {
         var type: String? = null
         var tmdbId: Int? = null
@@ -133,6 +133,7 @@ class IdResolver(private val anilist: AniListClient) {
         return TitleIds(if (type == MovieType) "movie" else "tv", tmdbId, tvdbId, imdbId)
     }
 
+    // Reads a text, null when it is a null
     private fun nextStringOrNull(reader: JsonReader): String? =
         if (reader.peek() == JsonToken.NULL) {
             reader.nextNull()
@@ -152,10 +153,13 @@ class IdResolver(private val anilist: AniListClient) {
             }
         }
 
+    // Constants of the resolver
     private companion object {
+        // Address of the mappings, the time to wait for it and the type of a movie
         const val MappingsUrl = "https://api.ani.zip/mappings"
         const val TimeoutMillis = 8_000
         const val MovieType = "MOVIE"
+
         // How many seasons back are followed to find the series, and how far a search by name may go from the year of a title
         const val MaxPrequelHops = 2
         const val SearchYearSpan = 15

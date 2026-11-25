@@ -9,9 +9,9 @@ import org.json.JSONObject
 // Project resources
 import com.kaisou.app.core.cache.AppStore
 
-// The openings and the endings of an anime as MyAnimeList lists them, which Jikan gives with the page of the anime: which one it is, the
-// song, who sings it and the episodes it plays in. Each one comes as a line of text, like: 1: "Song" by Artist (eps 1-12)
+// The openings and endings of an anime as MyAnimeList lists them through Jikan, each a line like 1: "Song" by Artist (eps 1-12)
 object ThemeClient {
+    // Where themes are kept, how long, the empty answer, and the labels of an opening and an ending
     private const val StoreSpace = "themes2"
     private const val StoreMillis = 24L * 60L * 60L * 1000L
     private const val EmptyAnswer = "{\"data\":{}}"
@@ -34,12 +34,14 @@ object ThemeClient {
         runCatching { parse(body) }.getOrNull()
     }
 
+    // Reads the openings and endings from the answer of Jikan
     internal fun parse(body: String): List<TitleTheme> {
         val theme = JSONObject(body).optJSONObject("data")?.optJSONObject("theme") ?: return emptyList()
         return lines(theme.optJSONArray("openings")).mapNotNull { line(it, OpeningLabel) } +
             lines(theme.optJSONArray("endings")).mapNotNull { line(it, EndingLabel) }
     }
 
+    // Turns a list of JSON texts into lines
     private fun lines(list: JSONArray?): List<String> = if (list == null) emptyList() else (0 until list.length()).map { list.optString(it) }
 
     // A line that does not follow the form is kept whole as the song, so nothing that MyAnimeList lists is lost

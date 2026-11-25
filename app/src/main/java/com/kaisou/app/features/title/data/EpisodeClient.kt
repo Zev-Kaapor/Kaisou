@@ -19,10 +19,9 @@ import com.kaisou.app.core.cache.AppStore
 import com.kaisou.app.core.net.Gates
 import com.kaisou.app.core.net.TooManyRequests
 
-// The episodes of an anime as ani.zip knows them: the name of each in the language of the app, a picture, how long it is and the day it
-// aired. AniList only has them for a few titles. Its answer can be huge for a long series, so it is read as a stream and only what is
-// needed is kept, and what was kept goes on the disk for a while, since an episode does not change
+// The episodes of an anime as ani.zip knows them, read as a stream, keeping only what is needed, and kept on the disk for a while
 object EpisodeClient {
+    // Address of the mappings, the time to wait, where and how long episodes are kept, and the codes of English and romaji
     private const val MappingsUrl = "https://api.ani.zip/mappings"
     private const val TimeoutMillis = 15_000
     private const val StoreSpace = "episodes5"
@@ -30,8 +29,7 @@ object EpisodeClient {
     private const val EnglishCode = "en"
     private const val RomajiCode = "x-jat"
 
-    // The episodes in order and the id of the series on TMDB, with no episodes when ani.zip does not know the title, null when it could not be
-    // reached, which is not kept
+    // The episodes in order and the id of the series on TMDB, none when ani.zip does not know the title, null when it failed
     suspend fun episodes(anilistId: Int, language: String, region: String): EpisodeSet? = withContext(Dispatchers.IO) {
         val key = "$anilistId $language $region"
         AppStore.get(StoreSpace, key, StoreMillis)?.let { kept -> read(kept)?.let { return@withContext it } }
@@ -44,6 +42,7 @@ object EpisodeClient {
         }
     }
 
+    // Asks ani.zip for the episodes of a title and reads them from the stream
     private fun fetch(anilistId: Int, language: String, region: String): EpisodeSet {
         val connection = URL("$MappingsUrl?anilist_id=$anilistId").openConnection() as HttpURLConnection
         try {
@@ -110,7 +109,7 @@ object EpisodeClient {
         reader.endObject()
     }
 
-    // The number is the one of the key, which is the one in the order of the title, while the one inside is the one in the season of TheTVDB
+    // The number is the one of the key, in the order of the title, while the one inside is the one in the season of TheTVDB
     private fun readEpisode(reader: JsonReader, number: Int, language: String, region: String): TitleEpisode {
         var titles = emptyMap<String, String>()
         var image: String? = null
@@ -131,11 +130,13 @@ object EpisodeClient {
             }
         }
         reader.endObject()
+
         // The name in the language of the app with its country, then without it, then English, then the romaji
         val title = listOf("$language-$region", language, EnglishCode, RomajiCode).firstNotNullOfOrNull { titles[it]?.takeIf { name -> name.isNotBlank() } }
         return TitleEpisode(number, title?.replace('`', '\''), image, minutes, aired, overview, null, season)
     }
 
+    // Reads the names of an episode by language
     private fun readTitles(reader: JsonReader): Map<String, String> {
         if (reader.peek() != JsonToken.BEGIN_OBJECT) {
             reader.skipValue()
@@ -151,6 +152,7 @@ object EpisodeClient {
         return titles
     }
 
+    // Reads a text, null when it is a null
     private fun nextString(reader: JsonReader): String? =
         if (reader.peek() == JsonToken.NULL) {
             reader.nextNull()
@@ -159,6 +161,7 @@ object EpisodeClient {
             reader.nextString()
         }
 
+    // Reads a number that may come as a text, null when it is a null
     private fun nextInt(reader: JsonReader): Int? =
         when (reader.peek()) {
             JsonToken.NUMBER, JsonToken.STRING -> reader.nextString().toDoubleOrNull()?.toInt()
@@ -168,6 +171,7 @@ object EpisodeClient {
             }
         }
 
+    // Writes the episodes as text to keep them
     private fun write(found: EpisodeSet): String =
         JSONObject().put("t", found.tmdbId ?: JSONObject.NULL).put("i", found.imdbId ?: JSONObject.NULL).put("m", found.malId ?: JSONObject.NULL)
             .put("v", found.tvdbId ?: JSONObject.NULL).put("e", JSONArray().apply {
@@ -180,6 +184,7 @@ object EpisodeClient {
             }
         }).toString()
 
+    // Reads the episodes that were kept, null when the text is broken
     private fun read(text: String): EpisodeSet? =
         try {
             val kept = JSONObject(text)

@@ -22,8 +22,7 @@ import com.kaisou.app.core.designsystem.components.KaisouSheet
 import com.kaisou.app.core.designsystem.components.SheetCloseButton
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 
-// Sheet from the bottom that explains the login in full: what happens to the password, what the app can do with the
-// account, where the key stays and how to take the access back
+// Sheet from the bottom that explains the login: the password, what the app can do, where the key stays and how to take it back
 @Composable
 fun LoginInfoSheet(onDismiss: () -> Unit) {
     val dimens = KaisouTheme.dimens

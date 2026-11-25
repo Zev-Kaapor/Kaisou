@@ -39,6 +39,7 @@ internal fun NewsBlock(news: List<TitleNews>, onOpenAll: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop)) {
         BlockTitle(stringResource(R.string.title_section_news))
         news.take(TitleDimens.NewsPreview).forEach { NewsCard(it, modifier = Modifier.padding(top = dimens.spaceSmall)) }
+
         // A gray line under the last one with an arrow says there are more and opens all of them
         if (more) {
             Row(

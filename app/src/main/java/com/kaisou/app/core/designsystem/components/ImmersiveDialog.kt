@@ -11,9 +11,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
-// A dialog is a window of its own, and it brings the bars of the system back over the app, which is immersive. Called inside the
-// content of a dialog, it hides them again in that window, the way the main screen does: they come back for a moment with a swipe
-// from the edge, and the dialog gives the window back to the app when it closes
+// Hides the bars of the system again inside a dialog, which brings them back, the way the main screen does
 @Composable
 fun ImmersiveDialogEffect() {
     val view = LocalView.current

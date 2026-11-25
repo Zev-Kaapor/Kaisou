@@ -36,6 +36,7 @@ import com.kaisou.app.core.designsystem.theme.KaisouTheme
 private const val BandWidthFraction = 0.6f
 private const val BandTilt = 0.4f
 
+// Nanoseconds in a millisecond
 private const val NanosPerMilli = 1_000_000L
 
 // Flat placeholder shape, the light comes from the SkeletonHost around it
@@ -63,8 +64,7 @@ private fun rememberSweepProgress(
     return progress
 }
 
-// A light that passes over the content now and then, as the one of the placeholders does, to call the eye to what is on it. It only lights
-// what is drawn, so over a text it lights the letters
+// A light that passes over the content now and then to call the eye, lighting only what is drawn
 @Composable
 fun Modifier.shine(enabled: Boolean = true): Modifier {
     if (!enabled) return this
@@ -95,8 +95,8 @@ fun SkeletonHost(
 ) {
     val highlight = KaisouTheme.colors.skeletonHighlight
     val clear = highlight.copy(alpha = 0f)
-    // The light follows the clock of the frames, not the moment this placeholder came up: it keeps its pace when one
-    // placeholder gives way to another, and every placeholder on the screen has the light in the same place
+
+    // The light follows the clock of the frames, so it keeps its pace and every placeholder has it in the same place
     val progress by rememberSweepProgress()
 
     Column(

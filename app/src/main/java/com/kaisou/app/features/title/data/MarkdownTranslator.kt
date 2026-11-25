@@ -7,26 +7,23 @@ import kotlinx.coroutines.coroutineScope
 // Project resources
 import com.kaisou.app.core.translation.GoogleTranslator
 
-// Puts a long text of AniList, a review or a thread, in the language of the app without losing its marks. Each line goes apart from what makes it a heading, a quote or
-// an item, and the marks inside it, the pictures, the links, the bold and the spoilers, are changed for a sign that the translator leaves as it
-// is, and put back after. The lines go in groups, several groups at once, and the text is given as each group comes back so it can be shown at
-// once. A group that does not come back line by line is cut in two, a line that loses a sign stays as it was written
+// Puts a long text of AniList in the language of the app keeping its marks, by lines in groups, giving each group as it comes back
 object MarkdownTranslator {
     // How many characters and how many lines go in one request, which has to fit in an address
     private const val GroupCharacters = 2_500
     private const val GroupLines = 40
     private const val SignOpen = '⟦'
     private const val SignClose = '⟧'
+
     // What makes a line a heading, a quote or an item, which stays out of the translation
     private val lead = Regex("""^\s*(?:#{1,6}\s+|>\s*|[-*+]\s+|\d+[.)]\s+)*""")
-    // The marks inside a line: pictures and videos, the address of a link, bare addresses, the center, the spoiler, the strike, the bold, the
-    // italic and the tags
+
+    // The marks inside a line: pictures, videos, links, addresses, center, spoiler, strike, bold, italic and tags
     private val marks = Regex("""(?i)(?:img\d*%?|youtube|webm)\([^)]*\)|!\[[^\]]*]\([^)]*\)|]\([^)]*\)|https?://\S+|~~~|~!|!~|~~|__|\*\*|\*|(?<![\p{L}\p{N}])_|_(?![\p{L}\p{N}])|</?[a-z][^>]*>""")
     private val signs = Regex("""$SignOpen\s*(\d+)\s*$SignClose""")
     private val letters = Regex("""\p{L}""")
 
-    // Short texts of one line each, as the titles of a list, in the language given, all in one go. They stay as they were written when they do not
-    // come back one by one
+    // Short texts of one line each in the language given, staying as written if they do not come back one by one
     suspend fun translateLines(texts: List<String>, language: String): List<String> {
         if (texts.isEmpty()) return texts
         val lines = translate(texts.joinToString("\n") { it.replace('\n', ' ') }, language).lines()
@@ -36,11 +33,12 @@ object MarkdownTranslator {
     // The line that sets one text apart from the next when several go together. It has no words, so it is not sent to be translated
     private const val Separator = "\u27E6\u00B6\u27E7"
 
-    // Several texts in the language given, together, which takes fewer requests than one for each. onPartial is called with the texts each time
-    // a group is done. When the texts do not come back apart they stay as they were written
+    // Several texts in the language given, together, calling onPartial per group, unchanged if they do not come back apart
     suspend fun translateAll(texts: List<String>, language: String, onPartial: (List<String>) -> Unit = {}): List<String> {
         if (texts.isEmpty()) return texts
         val glue = "\n$Separator\n"
+
+        // Splits a joined translation back into the texts, null when the count differs
         fun apart(joined: String): List<String>? = joined.split(glue).takeIf { it.size == texts.size }
         val done = translate(texts.joinToString(glue), language) { partial -> apart(partial)?.let(onPartial) }
         return apart(done) ?: texts
@@ -105,7 +103,7 @@ object MarkdownTranslator {
         }
     }
 
-    // The signs of a translated line changed for the marks they stood for, null when one of them was lost or changed, so the line is not used
+    // Puts the marks back in a translated line, null when one was lost or changed so the line is not used
     private fun putBack(body: String, marks: List<String>): String? {
         val seen = HashSet<Int>()
         var broken = false

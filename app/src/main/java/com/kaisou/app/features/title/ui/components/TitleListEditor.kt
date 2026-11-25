@@ -92,16 +92,13 @@ import com.kaisou.app.features.title.data.ScoreFormat
 import com.kaisou.app.features.title.data.TitleUi
 import com.kaisou.app.features.title.ui.TitleDimens
 
-// The editor of the list, as AniList has it, small and with the weight of the rest of the app: the title with its cover on top, the status
-// in pills with their icons, three in each line, the progress and the score written over a line, with a bar under the progress that fills in
-// the violet, the two days side by side, and under More what is not asked every time. Putting the progress at the end makes the title done,
-// and making it done fills the progress and the days. A title that is not on the list starts as the one being watched or read, or the
-// planned one when it is not out
+// The editor of the list: title, status pills, progress and score with steps, the days and more, full progress finishes it
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -> Unit, onRemove: () -> Unit, onDismiss: () -> Unit) {
     val dimens = KaisouTheme.dimens
     val entry = title.entry
+
     // What the account says: how the score is given and the lists of the user. Until it is known the score is from 0 to 10
     val account = options ?: ListOptions()
     val format = account.scoreFormat
@@ -132,6 +129,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
         animationSpec = tween(KaisouMotion.ExpandMillis, easing = FastOutSlowInEasing),
         label = "listMore"
     )
+
     // What was there before the title was made done, to put back when the user changes their mind
     var backup by remember { mutableStateOf<Backup?>(null) }
     val names = stringArrayResource(if (title.manga) R.array.title_list_names_manga else R.array.title_list_names_anime)
@@ -146,6 +144,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
         ended = today
     }
 
+    // Chooses a status, completing the entry when it is the completed one
     fun choose(option: ListStatus) {
         if (option == ListStatus.Completed && status != ListStatus.Completed) {
             complete()
@@ -161,9 +160,11 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
         status = option
     }
 
+    // Moves the progress by a step within its limits
     fun move(step: Int) {
         val next = (progress + step).coerceIn(0, totalUnits ?: MaxUnits)
         progress = next
+
         // The first one makes a planned title one that is being watched, and the last one makes it done
         if (step > 0 && status == ListStatus.Planning) status = ListStatus.Current
         if (step > 0 && totalUnits != null && next == totalUnits && status != ListStatus.Completed) {
@@ -220,6 +221,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                     }
                 }
             }
+
             // The progress is the big thing: the number between one less and one more, and the bar under it filling as far as it goes
             Column(
                 modifier = Modifier
@@ -261,6 +263,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                     }
                 }
             }
+
             // The score in the way the user chose on AniList: a number to write, five stars or three faces
             ScoreRow(
                 format = format,
@@ -268,11 +271,13 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                 value = score,
                 onValueChange = { score = it }
             )
+
             // The two days side by side
             Row(horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
                 DayPill(label = stringResource(R.string.title_list_started), ask = stringResource(R.string.title_list_started_ask), day = started, onChange = { started = it }, modifier = Modifier.weight(1f))
                 DayPill(label = stringResource(R.string.title_list_ended), ask = stringResource(R.string.title_list_ended_ask), day = ended, onChange = { ended = it }, modifier = Modifier.weight(1f))
             }
+
             // What is not asked every time stays under a line that opens
             Row(
                 modifier = Modifier
@@ -294,8 +299,8 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                     modifier = Modifier.size(TitleDimens.ListIcon)
                 )
             }
-            // The box has the height of what is inside it while it is open and none while it is closed, and the height is what moves, so the
-            // end of the movement is the place it was going to
+
+            // The box has the height of its content while open and none while closed, so the end of the movement is its destination
             Box(modifier = Modifier.fillMaxWidth().height(with(density) { moreHeight.toDp() }).clipToBounds()) {
                 Column(
                     modifier = Modifier
@@ -446,8 +451,7 @@ private fun StatusPill(icon: ImageVector, text: String, selected: Boolean, onCli
     }
 }
 
-// The bar of the progress: a track that is filled in the violet as far as the fraction goes, which moves smoothly when it changes, with how
-// much it is in percent at its end. Without a total there is nothing to fill
+// The bar of the progress: a violet track filled to the fraction, moving smoothly, with the percent at its end, empty without a total
 @Composable
 private fun ProgressBar(fraction: Float?) {
     val colors = KaisouTheme.colors
@@ -480,7 +484,7 @@ private fun ProgressBar(fraction: Float?) {
     }
 }
 
-// A number that is written over a line, with how many there are in all after it when there is a total, big when it is the one that matters
+// A number written over a line, with the total after it when there is one, big when it is the one that matters
 @Composable
 private fun NumberInput(value: Int, max: Int, onValueChange: (Int) -> Unit, suffix: String?) {
     val dimens = KaisouTheme.dimens
@@ -529,6 +533,7 @@ private fun WriteBox(value: String, onValueChange: (String) -> Unit, placeholder
     )
 }
 
+// A button of a step that moves a number up or down
 @Composable
 private fun StepButton(symbol: String, onClick: () -> Unit) {
     Box(
@@ -673,8 +678,7 @@ private fun scoreMax(format: ScoreFormat): Float =
         else -> MaxScore
     }
 
-// The text of a score being written: nothing, or a number up to the highest of the way to give it, with one decimal at most and with a dot
-// or a comma only when the way allows it
+// The text of a score being written: nothing or a number up to the highest, with at most one decimal where the way allows
 private fun isScoreText(format: ScoreFormat, text: String): Boolean {
     if (text.isEmpty()) return true
     val pattern = if (format == ScoreFormat.Point10Decimal) Regex("""\d{1,2}([.,]\d?)?""") else Regex("""\d{1,3}""")
@@ -682,8 +686,7 @@ private fun isScoreText(format: ScoreFormat, text: String): Boolean {
     return (text.replace(',', '.').toFloatOrNull() ?: return false) <= scoreMax(format)
 }
 
-// The score one step up or down by the way to give it, a few points at a time on the scale of a hundred and half a point with decimals,
-// and nothing when it goes down to zero
+// The score one step up or down in the way it is given, nothing when it goes to zero
 private fun stepScore(format: ScoreFormat, text: String, direction: Int): String {
     val step = when (format) {
         ScoreFormat.Point100 -> ScorePointsStep
@@ -726,6 +729,7 @@ private fun ScoreRow(format: ScoreFormat, label: String, value: String, onValueC
                         .clickable(role = Role.Button) { onValueChange(if (number == chosen) "" else number.toString()) }
                 )
             }
+
             // Three faces, the sad one, the neutral one and the happy one
             ScoreFormat.Point3 -> listOf(KaisouIcons.Frown, KaisouIcons.Meh, KaisouIcons.Smile).forEachIndexed { index, face ->
                 val number = index + 1
@@ -739,6 +743,7 @@ private fun ScoreRow(format: ScoreFormat, label: String, value: String, onValueC
                         .clickable(role = Role.Button) { onValueChange(if (number == chosen) "" else number.toString()) }
                 )
             }
+
             // A number: the same buttons, number and sizes as the progress, so both rows go together
             else -> Row(verticalAlignment = Alignment.CenterVertically) {
                 StepButton(symbol = MinusSymbol, onClick = { onValueChange(stepScore(format, value, -1)) })
@@ -775,9 +780,11 @@ private fun advancedLabel(name: String): String {
     return names.getOrNull(keys.indexOf(name)) ?: name
 }
 
+// Writes a score without a useless decimal
 private fun scoreText(score: Float): String =
     if (score % 1f == 0f) score.toInt().toString() else String.format(Locale.getDefault(), "%.1f", score)
 
+// The symbols of the steps, the most units, the first year and the most repeats
 private const val MinusSymbol = "−"
 private const val PlusSymbol = "+"
 private const val EmptyValue = "—"
@@ -788,6 +795,7 @@ private const val MaxDigits = 4
 private const val MaxScore = 10f
 private const val ScorePointsStep = 5f
 private const val ScoreDecimalStep = 0.5f
+
 // What the total says when it is not known
 private const val UnknownTotal = "??"
 private const val StarCount = 5

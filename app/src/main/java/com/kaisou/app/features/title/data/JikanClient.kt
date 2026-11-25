@@ -6,21 +6,21 @@ import java.io.IOException
 import com.kaisou.app.core.net.Gates
 import com.kaisou.app.core.net.HttpText
 
-// Asks Jikan, the open door to the data of MyAnimeList. Its own address is often out of reach, so the same question is made to the public
-// mirrors that give the same answers, one after the other, and the one that answered is the first to be asked next time
+// Asks Jikan, the open door to MyAnimeList, trying the public mirrors in turn, the one that answered being asked first next
 object JikanClient {
     private val Addresses = listOf(
         "https://api.jikan.moe/v4",
         "https://jikanfortheweebs.midnightignite.me/v4",
         "https://api.tenrai.org/v1"
     )
+
+    // How long each address has to answer
     private const val TryMillis = 4_000
 
     @Volatile
     private var first = 0
 
-    // The text of the answer for a path, null when MyAnimeList does not know it, and an IOException when no address could answer. The
-    // request blocks the thread, so it is made from a background one
+    // The text of the answer for a path, null when unknown, IOException when no address answered, blocking the thread
     fun get(path: String): String? {
         var failure: Exception? = null
         for (step in Addresses.indices) {

@@ -84,8 +84,7 @@ import com.kaisou.app.features.home.data.StoryUi
 import com.kaisou.app.features.home.data.ShelfUi
 import com.kaisou.app.features.home.ui.HomeDimens
 
-// The user and the people they follow, as on Dantotsu: a round picture inside a ring with one piece for each thing the person did
-// lately, gray for what was already seen, and the name under it. The user comes first, with a plus where a status will be posted
+// The user and the people they follow, as on Dantotsu: a picture in a ring with a piece for each activity, gray when seen
 @Composable
 fun HomeFriends(own: StoryUi, friends: List<StoryUi>, seen: Set<Int>, onOpen: (StoryUi) -> Unit, onAdd: () -> Unit, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
@@ -104,6 +103,7 @@ fun HomeFriends(own: StoryUi, friends: List<StoryUi>, seen: Set<Int>, onOpen: (S
     }
 }
 
+// One person of the row of stories, with its ring and name, and a plus where the user posts a status
 @Composable
 private fun FriendStory(story: StoryUi, name: String, seen: Set<Int>, isOwn: Boolean, onClick: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modifier) {
     val colors = KaisouTheme.colors
@@ -149,8 +149,7 @@ private fun FriendStory(story: StoryUi, name: String, seen: Set<Int>, isOwn: Boo
     }
 }
 
-// The ring around a picture, with a piece for each activity from the oldest, gray when it was seen. One activity or none is a whole
-// circle, more are split with a gap between the pieces that shrinks as they grow in number, so the gaps never take more than a share
+// The ring around a picture, a piece for each activity from the oldest, gray when seen, the gaps shrinking as the pieces grow
 @Composable
 private fun StoryRing(seen: List<Boolean>, unseenColor: Color, seenColor: Color) {
     Canvas(modifier = Modifier.size(HomeDimens.FriendRing)) {
@@ -171,11 +170,11 @@ private fun StoryRing(seen: List<Boolean>, unseenColor: Color, seenColor: Color)
     }
 }
 
-// A shelf of the Home: its name and a row of cards that slides sideways, the first one at the margin of the screen and the last
-// one cut by the edge so it shows there is more. Lying down more of them fit in the row
+// A shelf of the Home: its name and a row of cards that slides sideways, the last one cut by the edge to show there is more
 @Composable
 fun HomeShelf(shelf: ShelfUi, onOpenTitle: (Int) -> Unit, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
+
     // The wide cards change their picture together, on the clock of the shelf
     var showWide by remember { mutableStateOf(false) }
     if (shelf.shape == CardShape.Wide) {
@@ -212,9 +211,7 @@ fun HomeShelf(shelf: ShelfUi, onOpenTitle: (Int) -> Unit, modifier: Modifier = M
     }
 }
 
-// A title on a shelf: its picture with the tab of the score, and of the episode that aired when it is a new one, at the bottom corner,
-// a thin line around it so dark covers do not melt into the page, then its name and a line with how far the user is in it, the part
-// done in the violet of the app, or the details of the title
+// A title on a shelf: its picture with the tab of the score and of the new episode, then its name and how far the user is in it
 @Composable
 fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, detailsLines: Int = 2) {
     val dimens = KaisouTheme.dimens
@@ -260,10 +257,11 @@ fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, onClick:
             buildAnnotatedString { append(card.details) }
         }
         val rating = rememberCardRating(card.rating)
+
         // The room of the rating is kept while it is looked for, so the line does not move when it comes up
         val showRating = !rating.loaded || rating.rating != null
-        // The room of two lines is kept under the line, so the shelf does not change its height when a card with two lines comes by,
-        // while what is in it stays at the top as it is with one line
+
+        // The room of two lines is kept under the line so the shelf does not change height, what is in it staying at the top
         val detailsStyle = MaterialTheme.typography.labelSmall.copy(fontSize = HomeDimens.CardDetailsSize)
         val detailsRoom = with(LocalDensity.current) { (detailsStyle.lineHeight * detailsLines).toDp() + HomeDimens.CardDetailsTop }
         Box(modifier = Modifier.heightIn(min = detailsRoom)) {
@@ -286,8 +284,7 @@ fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, onClick:
     }
 }
 
-// The signature of the cards: a tab in the violet of the buttons that sits in a corner of the picture, round only on its free
-// corner. The score has it at the bottom and a new episode at the top
+// The signature of the cards: a violet tab in a corner of the picture, round only on its free corner
 @Composable
 fun CornerTab(shape: Shape, modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     val dimens = KaisouTheme.dimens
@@ -304,8 +301,7 @@ fun CornerTab(shape: Shape, modifier: Modifier = Modifier, content: @Composable 
     )
 }
 
-// The tab of a card: the episode that aired, if it is a new one, a line, and the score with its star, like E7 | 6,2 *. A title with
-// no score yet has dashes in its place, since zero would say people did not like it
+// The tab of a card: the new episode, a line, and the score with its star, like E7 | 6,2, with dashes when there is no score
 @Composable
 private fun CardTab(episode: Int?, score: Float?, userScore: Float?, modifier: Modifier = Modifier) {
     val colors = KaisouTheme.colors
@@ -322,6 +318,7 @@ private fun CardTab(episode: Int?, score: Float?, userScore: Float?, modifier: M
                     .background(colors.onAccentFill.copy(alpha = HomeDimens.MetaDividerAlpha))
             )
         }
+
         // What the user gave it comes first with a person, and the score of AniList after it with its star
         if (userScore != null) {
             Text(text = format.format(userScore), style = MaterialTheme.typography.labelSmall, color = colors.onAccentFill)
@@ -365,15 +362,14 @@ internal fun rememberCardRating(query: RatingQuery): CardRatingState {
     val region = AppLanguage.region
     val kept = RatingRepository.known(region, query)
     val state by produceState(CardRatingState(kept.first, kept.second), query.anilistId, region) {
-        // A card that passes by while the list goes fast leaves before it is asked, so a long row does not ask for each one that went by
+        // A card that passes by while the list goes fast leaves before it is asked, so a long row does not ask for each one
         if (!kept.first) delay(HomeDimens.CardRatingDelayMillis)
         value = CardRatingState(loaded = true, rating = RatingRepository.forCard(region, query))
     }
     return state
 }
 
-// The square of the rating at the start of the line under a card, a gray square of the placeholder while it is looked for, that gives
-// way to it softly when found
+// The square of the rating at the start of the line under a card, a gray placeholder that gives way softly when found
 @Composable
 internal fun CardRating(rating: ContentRating?) {
     val alpha by animateFloatAsState(
@@ -391,8 +387,7 @@ internal fun CardRating(rating: ContentRating?) {
     }
 }
 
-// The picture of a card. A new episode shows the picture it has and the wide picture of its title, found the way the hero finds its
-// own, in turn, all the cards of the shelf at the same moment. The second one is only shown once it is downloaded
+// The picture of a card: a new episode alternates its picture and the wide one of its title, all the cards at the same moment
 @Composable
 private fun CardPicture(card: CardUi, showWide: Boolean) {
     val query = card.query
@@ -408,6 +403,7 @@ private fun CardPicture(card: CardUi, showWide: Boolean) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         AsyncImage(model = card.imageUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize())
+
         // It loads behind the first one, with no opacity, and shows when it is ready
         wide?.let { url ->
             AsyncImage(
@@ -425,11 +421,10 @@ private fun CardPicture(card: CardUi, showWide: Boolean) {
 private const val RingStart = -90f
 private const val FullCircle = 360f
 
-// The shelves of the placeholder, in the shapes of the cards of the shelves that come: posters, and wide ones where the new episodes go
+// The shelves of the placeholder, in the shapes of the cards of the shelves that come
 private val SkeletonShelves = listOf(CardShape.Poster, CardShape.Poster, CardShape.Wide, CardShape.Poster, CardShape.Poster)
 
-// Placeholder of what is under the hero while nothing has arrived, each block where the friends and the cards of the shelves go, in the
-// sizes of the real ones, so nothing moves when they arrive. The light is the same that sweeps the hero
+// Placeholder of what is under the hero, each block where the friends and the cards go, swept by the same light as the hero
 fun LazyListScope.homeShelvesSkeleton() {
     item(key = "skeleton-friends") { FriendsSkeleton() }
     itemsIndexed(SkeletonShelves, key = { index, _ -> "skeleton-shelf-$index" }) { _, shape -> ShelfSkeleton(shape) }

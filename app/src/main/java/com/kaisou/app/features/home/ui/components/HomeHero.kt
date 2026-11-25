@@ -92,6 +92,7 @@ fun HomeHeroCarousel(
 ) {
     val swipeThreshold = with(LocalDensity.current) { HomeDimens.HeroSwipeThreshold.toPx() }
     val currentIndexChange by rememberUpdatedState(onIndexChange)
+
     // The pictures are looked for while the first title waits, a title is only shown when they are ready
     val currentArt by rememberUpdatedState(art)
 
@@ -144,8 +145,7 @@ fun HomeHeroCarousel(
     }
 }
 
-// One featured title: the art fading into the page, with the name and the details anchored to its bottom, on the left
-// side when lying down
+// One featured title: the art fading into the page, with the name and details at its bottom, on the left when lying down
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HomeHero(
@@ -164,14 +164,15 @@ private fun HomeHero(
     Box(modifier = modifier) {
         // The poster is asked the way the preload did, so it comes from memory. Until it is ready the cover shows
         val context = LocalContext.current
+
         // Lying down the picture is the wide one, with the poster as the second choice. Standing up it is the poster
         val hasBackdrop = landscape && art?.backdropUrl != null
         val model = remember(art, hero.coverUrl, landscape) {
             val backdrop = if (landscape) art?.backdropUrl?.let { artRequest(context, it, backdropSize) } else null
             backdrop ?: art?.posterUrl?.let { artRequest(context, it, posterSize) } ?: hero.coverUrl
         }
-        // Standing up the art fills the hero. Lying down it is on the right, the wide picture takes most of the width and a poster
-        // less, and its left edge melts into the page, so the details are over the page and not over the faces
+
+        // Standing up the art fills the hero, lying down it is on the right and its left edge melts into the page
         Box(
             modifier = (if (landscape) {
                 Modifier
@@ -194,8 +195,8 @@ private fun HomeHero(
             }
             if (landscape) HeroArtEdgeFade()
         }
-        // Veil only as tall as the header and a little more, from the top of the screen to just under the numbers, so the
-        // texts read and the rest of the art stays clear
+
+        // Veil only as tall as the header and a little more, so the texts read and the rest of the art stays clear
         val black = KaisouTheme.colors.veil
         val veilHeight = WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding() +
             HomeDimens.HeaderAction + HomeDimens.HeroVeilExtra
@@ -235,6 +236,7 @@ private fun HomeHero(
             ) {
                 art?.rating?.let { AgeRatingBadge(it) }
                 hero.releaseDay?.let { WeeklyReleaseBadge(it) }
+
                 // Year and format, then a faint divider and the genres, as in 2026 • TV | Action, Mystery
                 val details = if (hero.year != null) stringResource(R.string.home_hero_meta, hero.year, hero.format) else hero.format
                 val divider = stringResource(R.string.home_hero_meta_divider)
@@ -288,6 +290,7 @@ private fun HomeHero(
                     leading = { ButtonIcon(icon = KaisouIcons.Info, tint = KaisouTheme.colors.onAccentFill) },
                     grouped = true
                 )
+
                 // The list of the user: it opens the editor, and the icon says if the title is on it, a plus when it is not
                 OutlineIconButton(
                     icon = listStatusIcon(if (hero.continuing) ListStatus.Current else null, manga = false),

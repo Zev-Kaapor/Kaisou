@@ -8,17 +8,21 @@ import androidx.core.graphics.get
 object LogoCheck {
     // How many points are looked at, across and down
     private const val Samples = 64
-    // A point is part of the drawing when it is at least this opaque, and it is dark when its brightness, from 0 to 255, is under the level
+
+    // A point is part of the drawing when it is at least this opaque, and it is dark under this brightness
     private const val OpaqueAlpha = 128
     private const val DarkLevel = 60
+
     // The logo is turned down when this share of its drawing is dark
     private const val DarkShare = 0.9f
 
+    // The weights of red, green and blue in the brightness, which add up to the total
     private const val RedWeight = 2126
     private const val GreenWeight = 7152
     private const val BlueWeight = 722
     private const val WeightTotal = 10000
 
+    // Tells whether a logo can be seen over the dark of the app
     fun isVisibleOnDark(bitmap: Bitmap): Boolean =
         isVisibleOnDark(
             IntArray(Samples * Samples) { index ->

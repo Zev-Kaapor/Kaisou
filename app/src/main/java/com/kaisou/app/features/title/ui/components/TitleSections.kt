@@ -153,7 +153,7 @@ internal fun Chip(
     }
 }
 
-// The facts of the title that matter to who is deciding, in a row that slides: where it is, how long it is, when it came out and who made it
+// The facts of the title that matter to who is deciding, in a row that slides: where it is, how long, when it came out and who made it
 @Composable
 fun TitleFacts(title: TitleUi, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
@@ -216,10 +216,10 @@ fun NextEpisodeCard(next: NextAiring, modifier: Modifier = Modifier) {
     }
 }
 
+// Milliseconds in a second
 private const val MillisPerSecond = 1000L
 
-// The tabs under the facts, the one that is on has the name in white and a line in the accent under it, over a thin line that goes all the
-// way across
+// The tabs under the facts, the open one with a white name and an accent line over a thin line across
 @Composable
 fun TitleTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier, top: Dp = TitleDimens.BlockTop) {
     val dimens = KaisouTheme.dimens
@@ -257,9 +257,7 @@ fun TitleTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, modi
     }
 }
 
-// The blocks of the tab of the details, one under the other: the places the title has among the best, the prequel and the sequel, the data,
-// the tags, the trailer, the titles that are tied to this one, the whole series in order, the characters, the staff, what people
-// recommend and the links. Each part comes in apart, so while one is not there a placeholder takes its place and the others show
+// The blocks of the details tab one under the other, each part coming apart with a placeholder while it is missing
 fun LazyListScope.titleDetailsItems(
     details: Load<TitleDetails>,
     watchOrder: Load<TitleWatchOrder>,
@@ -284,17 +282,20 @@ fun LazyListScope.titleDetailsItems(
         is Load.Done -> {
             val value = details.value
             if (value.rankings.isNotEmpty()) item(key = "details-rankings") { RankingsBlock(value.rankings) }
+
             // The next episode is in the card on top, the ones after it are here
             if (value.schedule.size > 1) item(key = "details-schedule") { ScheduleBlock(value.schedule) }
             if (value.data.isNotEmpty()) item(key = "details-data") { DataBlock(value.data, onOpenProfile) }
             if (value.tags.isNotEmpty()) item(key = "details-tags") { TagsBlock(value.tags) }
-            // The friends that have it, the user first, where the facts end and what is around the title begins. With no friend there is no row
+
+            // The friends that have it, the user first, with no row when there is none
             if (title.friends.isNotEmpty()) item(key = "details-friends") { FriendsBlock(title) }
             val prequel = value.relations.firstOrNull { it.type == PrequelType }
             val sequel = value.relations.firstOrNull { it.type == SequelType }
             if (prequel != null || sequel != null) item(key = "details-series") { SeriesBlock(prequel, sequel, onOpenTitle) }
             value.trailer?.let { trailer -> item(key = "details-trailer") { TrailerBlock(trailer) } }
             (themes as? Load.Done)?.value?.takeIf { it.isNotEmpty() }?.let { list -> item(key = "details-themes") { ThemesBlock(list) } }
+
             // The news come right under the openings and the endings, and are left out while they are on the way
             when {
                 news is Load.Done && news.value.isNotEmpty() -> item(key = "details-news") { NewsBlock(news.value, onOpenAll = onOpenNews) }
@@ -406,8 +407,7 @@ private fun RankingsBlock(rankings: List<TitleRanking>) {
     }
 }
 
-// The color of the star of a place: gold, silver and bronze for the first three, one for the top 10, one for the top 50, one for the top
-// 100, and the violet of the app for the rest
+// The color of the star of a place: gold, silver and bronze, then the top 10, 50 and 100, and the violet for the rest
 @Composable
 private fun rankColor(rank: Int): Color {
     val colors = KaisouTheme.colors
@@ -422,12 +422,12 @@ private fun rankColor(rank: Int): Color {
     }
 }
 
+// The ranks that count as the top ten, fifty and hundred
 private const val RankTopTen = 10
 private const val RankTopFifty = 50
 private const val RankTopHundred = 100
 
-// The prequel and the sequel as two wide pictures side by side, each opens its page, with the name of the tie in the tab of the cards at
-// the top corner and the title at the bottom. When there is only one it keeps the height of one half, a little longer, in the middle
+// The prequel and the sequel as two wide pictures side by side, each opening its page, with the tie in a tab and the title below
 @Composable
 private fun SeriesBlock(prequel: TitleRelation?, sequel: TitleRelation?, onOpenTitle: (Int) -> Unit) {
     val dimens = KaisouTheme.dimens
@@ -498,6 +498,7 @@ private fun ThemesBlock(themes: List<TitleTheme>) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = dimens.spaceSmall)
+
                     // The song is looked for on YouTube, with who sings it, in the browser that stays over the app
                     .clickable(role = Role.Button) { InAppBrowser.open(context, themeSearch(theme)) },
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium),
@@ -541,7 +542,7 @@ private fun ThemesBlock(themes: List<TitleTheme>) {
 private fun themeSearch(theme: TitleTheme): String =
     "https://www.youtube.com/results?search_query=" + URLEncoder.encode(listOfNotNull(theme.song, theme.artist).joinToString(" "), Charsets.UTF_8.name())
 
-// The order of the tags in use, which opens the menu of the two: alphabetical and by the percentage. What is chosen is kept on the phone
+// The order of the tags in use, which opens the menu of alphabetical or by percentage, kept on the phone
 @Composable
 private fun TagOrderMenu(selected: TagOrder) {
     val dimens = KaisouTheme.dimens
@@ -604,8 +605,7 @@ private fun TagOrderMenu(selected: TagOrder) {
 // What shows that a value of data is written in the markdown of AniList: a link, bold or italic
 private val MarkdownMark = Regex("\\[[^\\]]+]\\([^)]+\\)|\\*\\*|__")
 
-// A small question mark next to the name of a datum: a touch opens the page that explains it and pressing and holding says in a few words
-// what it is
+// A small question mark next to a datum: a touch opens the page that explains it and holding says what it is in a few words
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HintIcon(help: DatumHelp) {
@@ -655,11 +655,12 @@ private fun ScheduleBlock(schedule: List<NextAiring>) {
     }
 }
 
+// The pattern of the day and hour of a schedule
 private const val SchedulePattern = "EEE, d MMM · HH:mm"
 
 // How many people a page of the characters or of the staff has
 
-// The data of the title in lines: what it is on the left and what it says on the right, one under the other when it says several things
+// The data of the title in lines, what it is on the left and what it says on the right, several things one under the other
 @Composable
 internal fun DataBlock(data: List<TitleDatum>, onOpen: (ProfileRef) -> Unit = {}) {
     val dimens = KaisouTheme.dimens
@@ -716,8 +717,7 @@ internal fun DataBlock(data: List<TitleDatum>, onOpen: (ProfileRef) -> Unit = {}
     }
 }
 
-// All the tags with how much of each the title has, in alphabetical order. The ones that give away the story are covered, like the spoilers
-// of the text of AniList, and each one shows itself, in the accent, when it is touched
+// All the tags with how much of each the title has, the spoilers covered until touched
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TagsBlock(tags: List<TitleTag>) {
@@ -750,6 +750,7 @@ private fun TagsBlock(tags: List<TitleTag>) {
                         onClick = if (covered) { { shown = shown + tag.name } } else null
                     )
                 }
+
                 // What a tag is says in a tip over it while it is pressed, and a covered one does not give itself away
                 if (covered || tag.description.isNullOrBlank()) chip() else TagTip(tag.description, chip)
             }
@@ -757,8 +758,7 @@ private fun TagsBlock(tags: List<TitleTag>) {
     }
 }
 
-// The words of a tag over it while it is pressed, in the language of the app: the ones of AniList show first and are changed when the
-// translation arrives
+// The words of a tag over it while it is pressed in the language of the app, the AniList ones first and then the translation
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TagTip(description: String, content: @Composable () -> Unit, modifier: Modifier = Modifier, translate: Boolean = true) {
@@ -777,8 +777,7 @@ internal fun TagTip(description: String, content: @Composable () -> Unit, modifi
     ) { content() }
 }
 
-// The picture of the trailer with a play over it. A trailer of YouTube plays right there, and when it cannot, or it is of another site, it
-// opens on the site that has it, in the browser that stays over the app
+// The picture of the trailer with a play over it, playing in place on YouTube or opening the site in the browser over the app
 @Composable
 private fun TrailerBlock(trailer: TitleTrailer) {
     val dimens = KaisouTheme.dimens
@@ -854,6 +853,7 @@ private fun TrailerBlock(trailer: TitleTrailer) {
     }
 }
 
+// The shape of the trailer
 private const val TrailerRatio = 16f / 9f
 
 // The links to other sites, each one opens in the browser that stays over the app
@@ -899,10 +899,10 @@ internal fun DetailsSkeleton() {
     }
 }
 
+// How much of the width the title of the details placeholder takes
 private const val DetailsSkeletonTitle = 0.3f
 
-// The placeholder of the page of a character, a person of the staff or a studio: the picture with three bars of its name beside it, some
-// lines of data and of what it says, and a row of people and a row of titles
+// The placeholder of the page of a character, staff or studio: picture, name, data and text lines, and rows of people and titles
 @Composable
 internal fun ProfileSkeleton() {
     val dimens = KaisouTheme.dimens
@@ -946,8 +946,7 @@ private fun DetailsInfoLinesSkeleton() {
     }
 }
 
-// The placeholder of the page of all the titles tied to a title, posters in the same grid as the page, with the bar of the kind of tie on
-// top when they come in groups
+// The placeholder of the page of all the titles tied to a title, posters in the grid of the page, with the kind bar when grouped
 @Composable
 internal fun CardsGridSkeleton(grouped: Boolean) {
     val dimens = KaisouTheme.dimens
@@ -995,8 +994,7 @@ internal fun PostersRowSkeleton() {
     }
 }
 
-// The placeholder of the page of all the people of a title: the cards of the list, each with the picture on the start and the bars of its
-// text beside it
+// The placeholder of the page of all the people of a title: cards with the picture at the start and the bars of the text
 @Composable
 internal fun CastRowsSkeleton(rows: Int) {
     val dimens = KaisouTheme.dimens
@@ -1025,8 +1023,7 @@ internal fun CastRowsSkeleton(rows: Int) {
     }
 }
 
-// The placeholder of the data and the tags: the lines of data with a name at the start and a value, then the name of the tags with the
-// button of the order at its end and some pills
+// The placeholder of the data and tags: lines of data with a name and a value, then the tags name with the order button and some pills
 @Composable
 internal fun DetailsInfoSkeleton() {
     val dimens = KaisouTheme.dimens
@@ -1054,10 +1051,10 @@ internal fun DetailsInfoSkeleton() {
     }
 }
 
+// How much of the width the name of a datum placeholder takes
 private const val DataNameFraction = 0.6f
 
-// The placeholder of what is under the hero before the details: the synopsis with its name and some lines, the strip of facts as pills and
-// the tabs with the line under them
+// The placeholder of what is under the hero before the details: the synopsis, the strip of facts as pills and the tabs
 @Composable
 internal fun TitleBodySkeleton() {
     val dimens = KaisouTheme.dimens
@@ -1079,10 +1076,10 @@ internal fun TitleBodySkeleton() {
     }
 }
 
+// How many tabs the placeholder has
 private const val TabsSkeletonCount = 3
 
-// The placeholder of a row of cards that slide, with the name of the block, as the ones of the relations, of the order and of what is
-// recommended: a picture, a bar for the name and under it the square of the rating with a bar for the line
+// The placeholder of a row of cards that slide: a picture, a bar for the name and the rating square with a bar for the line
 @Composable
 internal fun CardsRowSkeleton() {
     val dimens = KaisouTheme.dimens

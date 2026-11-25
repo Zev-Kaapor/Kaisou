@@ -128,19 +128,18 @@ fun KaisouApp(authViewModel: AuthViewModel = viewModel()) {
     }
 }
 
-// The tabs with the navigation bar below them, or the rail on the side in landscape. The app opens on the start tab, which
-// is the Home until the user can choose it, and back from any other tab returns to it before the app closes. The menu of the
-// account, the sheets that the screens ask for and the question of a newer version are drawn over everything
+// The tabs with the bar below, or the rail on the side in landscape, and over them the menu, the sheets and the update question
 @Composable
 private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: MainTab = MainTab.Home) {
     val context = LocalContext.current
     val navController = rememberNavController()
     var profileOpen by remember { mutableStateOf(false) }
     val backStackEntry by navController.currentBackStackEntryAsState()
+
     // The bar shows the tab of the screen that is on, the start tab while there is none yet
     val selected = MainTab.entries.firstOrNull { it.route == backStackEntry?.destination?.route } ?: startTab
-    // The pages that open over the tabs have the whole screen, with no bar and no rail, except the page of a title, which keeps the bar with
-    // its own sections in place of the destinations
+
+    // Pages that open over the tabs use the whole screen, but the page of a title keeps the bar with its own sections
     val route = backStackEntry?.destination?.route
     val fullScreen = route.let { it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute || it == ReviewsRoute || it == ReviewRoute || it == ThreadsRoute || it == ThreadRoute || it == UserActivityRoute || it == UserFavouritesRoute }
     val titleSections by NavSectionsHost.sections.collectAsState()
@@ -186,8 +185,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
                     exit = slideOutHorizontally(tween(KaisouMotion.ExpandMillis)) { -it }
                 ) { KaisouNavRail(selected = selected, onSelect = onSelect, sections = sections) }
 
-                // The rail already makes room for the camera cutout on its side, the content keeps away from it on the other. Without
-                // the rail it keeps away from both
+                // The rail clears the cutout on its side, so the content keeps away from the other, or from both without the rail
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -245,7 +243,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
         // The notices of the app, as an island at the top, over everything
         ToastHost(modifier = Modifier.align(Alignment.TopCenter))
 
-        // The question when the app opens and there is a newer version, it goes to the screen of the updates to show how the download goes
+        // The question when there is a newer version, which goes to the updates screen to show the download
         val updatePrompt by Updates.prompt.collectAsState()
         updatePrompt?.let { info ->
             ConfirmDialog(
@@ -265,8 +263,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
     }
 }
 
-// The four tabs and the screens of the settings. Switching slides the screens a little to the side the destination is on and fades
-// them, a screen that is not a tab counts as the one after, and the back gesture plays the same movement following the finger
+// The four tabs and the settings screens, sliding and fading as you switch, with the back gesture following the finger
 @Composable
 private fun MainNavHost(
     navController: NavHostController,
@@ -294,6 +291,7 @@ private fun MainNavHost(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
         // The page of a title opens over the tabs, with no bar, and back returns to where it was opened
         composable(
             route = TitleRoute,
@@ -314,6 +312,7 @@ private fun MainNavHost(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
         // A character, a person of the staff or a studio open over the title, with no bar
         composable(
             route = ProfileRoute,
@@ -338,6 +337,7 @@ private fun MainNavHost(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
         // The page of a person of AniList opens over the page it came from, with no bar
         composable(route = UserRoute, arguments = listOf(navArgument(UserNameArg) { type = NavType.StringType })) {
             UserScreen(
@@ -349,6 +349,7 @@ private fun MainNavHost(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
         // The whole list of one kind of favourites of a person opens over their page, with no bar
         composable(
             route = UserFavouritesRoute,
@@ -361,6 +362,7 @@ private fun MainNavHost(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
         // Everything a person did lately opens over their page, with no bar
         composable(
             route = UserActivityRoute,
@@ -368,6 +370,7 @@ private fun MainNavHost(
         ) {
             UserActivityScreen(onBack = { navController.popBackStack() }, onOpenTitle = { navController.navigate(titleRoute(it)) }, modifier = Modifier.fillMaxSize())
         }
+
         // All the voices of a character, in every language
         composable(
             route = ProfileVoicesRoute,
@@ -379,6 +382,7 @@ private fun MainNavHost(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
         // All the titles of a character, a person of the staff or a studio
         composable(
             route = ProfileMediaRoute,
@@ -395,6 +399,7 @@ private fun MainNavHost(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
         // All the characters or all the staff of a title
         composable(
             route = CastRoute,
@@ -406,6 +411,7 @@ private fun MainNavHost(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
         // All the reviews of a title, and one of them read whole, open over it with no bar
         composable(route = ReviewsRoute, arguments = listOf(navArgument(TitleIdArg) { type = NavType.IntType })) {
             ReviewsScreen(
@@ -417,6 +423,7 @@ private fun MainNavHost(
         composable(route = ReviewRoute, arguments = listOf(navArgument(ReviewIdArg) { type = NavType.IntType })) {
             ReviewScreen(onBack = { navController.popBackStack() }, modifier = Modifier.fillMaxSize())
         }
+
         // All the threads of a title, and one of them read whole, open over it with no bar
         composable(route = ThreadsRoute, arguments = listOf(navArgument(TitleIdArg) { type = NavType.IntType })) {
             ThreadsScreen(
@@ -428,10 +435,12 @@ private fun MainNavHost(
         composable(route = ThreadRoute, arguments = listOf(navArgument(ThreadIdArg) { type = NavType.IntType })) {
             ThreadScreen(onBack = { navController.popBackStack() }, onOpenTitle = { navController.navigate(titleRoute(it)) }, modifier = Modifier.fillMaxSize())
         }
+
         // All the covers of the volumes of a manga, open over it with no bar
         composable(route = CoversRoute, arguments = listOf(navArgument(TitleIdArg) { type = NavType.IntType })) {
             TitleCoversScreen(onBack = { navController.popBackStack() }, modifier = Modifier.fillMaxSize())
         }
+
         // All the titles tied to a title, or its whole series in order, open over it with no bar
         composable(
             route = CardsRoute,
@@ -447,6 +456,7 @@ private fun MainNavHost(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
         // All the news of a title open over it, with no bar
         composable(
             route = NewsRoute,
@@ -458,6 +468,7 @@ private fun MainNavHost(
         ) {
             NewsScreen(onBack = { navController.popBackStack() }, modifier = Modifier.fillMaxSize())
         }
+
         // The other tabs have no screen yet
         composable(MainTab.Explore.route) { Box(modifier = Modifier.fillMaxSize()) }
         composable(MainTab.Calendar.route) { Box(modifier = Modifier.fillMaxSize()) }
@@ -489,11 +500,13 @@ private fun MainNavHost(
 // The place in the bar of the tab that is going away and of the one that is coming, which tells to which side the screens move
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.initialIndex(): Int = indexOf(initialState)
 
+// Gives the index of the screen being gone to
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.targetIndex(): Int = indexOf(targetState)
 
 // What the place of a screen is when it is not one of the tabs
 private const val NotATab = -1
 
+// Gives the place of a screen among the tabs
 private fun indexOf(entry: NavBackStackEntry): Int =
     MainTab.entries.indexOfFirst { it.route == entry.destination.route }
 

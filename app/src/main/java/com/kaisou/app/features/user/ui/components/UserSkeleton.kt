@@ -31,8 +31,7 @@ import com.kaisou.app.features.home.ui.HomeDimens
 import com.kaisou.app.features.title.ui.TitleDimens
 import com.kaisou.app.features.user.ui.UserDimens
 
-// The placeholder of the page of a person, only in the places of what comes: the banner with the picture and the name, with the button to follow
-// at its end when the page is of someone else, some lines of what they say and a card for the totals, one for the genres and one for the days
+// The placeholder of the page of a person in the places of what comes: banner, name, follow button, lines of text and three cards
 @Composable
 internal fun UserSkeleton(bannerTop: Dp, showFollow: Boolean) {
     val dimens = KaisouTheme.dimens
@@ -45,7 +44,8 @@ internal fun UserSkeleton(bannerTop: Dp, showFollow: Boolean) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(modifier = Modifier.size(UserDimens.Avatar).background(KaisouTheme.colors.skeletonHighlight, CircleShape))
-                // The name, the year they joined and how many follow them and are followed, in the places of the lines of the real header
+
+                // The name, the year they joined and the follow counts, in the places of the lines of the real header
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(modifier = Modifier.weight(1f)) {
@@ -88,8 +88,7 @@ internal fun UserRecentSkeleton() {
     }
 }
 
-// A card of what a person did, in the place of what it has: the cover, two lines of what they did and, when it has the buttons, the bell, the
-// three dots, the comments and the heart at the end of the line under them
+// A card of what a person did, in the place of what it has: the cover, two lines and, with the buttons, the actions at the end
 @Composable
 internal fun ActivityCardSkeleton(actions: Boolean) {
     val dimens = KaisouTheme.dimens

@@ -99,8 +99,7 @@ import com.kaisou.app.features.user.data.UserTotals
 import com.kaisou.app.features.user.data.UserUi
 import com.kaisou.app.features.user.ui.UserDimens
 
-// The overview of a person: what they say of themselves, their totals, the genres they like, the days they were active, the last things they
-// did and their favourites
+// The overview of a person: what they say, totals, genres, active days, the last things they did and their favourites
 @OptIn(ExperimentalLayoutApi::class)
 fun LazyListScope.userOverviewItems(
     user: UserUi,
@@ -118,6 +117,7 @@ fun LazyListScope.userOverviewItems(
     else if (recent.isNotEmpty()) item(key = "recent") { RecentBlock(recent, onOpenTitle, onOpenActivity) }
 
     val favourites = user.favourites
+
     // A kind that has more than came has the arrow to its whole list
     fun seeAll(kind: FavouriteKind, shown: Int): (() -> Unit)? = { onOpenFavourites(kind) }.takeIf { kind in favourites.more || shown > TitleDimens.CardsShown }
     if (favourites.anime.isNotEmpty()) {
@@ -178,7 +178,7 @@ private fun AboutBlock(text: String) {
     }
 }
 
-// The totals of anime and of manga, one card for each with its name over three numbers: how many titles, how much of them and the mean score
+// The totals of anime and manga, one card each with its name over three numbers: titles, amount and mean score
 @Composable
 private fun TotalsBlock(anime: UserTotals, manga: UserTotals) {
     val dimens = KaisouTheme.dimens
@@ -208,8 +208,7 @@ private fun TotalsBlock(anime: UserTotals, manga: UserTotals) {
     }
 }
 
-// A card as AniList has it: three numbers in the accent side by side, each over what it counts, and under them a darker strip with a scale
-// and a bar that fills as far as the second number goes on it
+// A card as AniList has it: three numbers in the accent over what they count, and a darker strip with a scale and a bar
 @Composable
 private fun TotalsCard(first: Pair<Int, String>, second: Pair<Int, String>, third: Pair<Int, String>, amount: Double) {
     val dimens = KaisouTheme.dimens
@@ -226,7 +225,7 @@ private fun TotalsCard(first: Pair<Int, String>, second: Pair<Int, String>, thir
             }
         }
         Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background.copy(alpha = UserDimens.ScaleShade))) {
-            // The three marks of the scale sit in the middle of three equal parts, and the bar reaches the last one when the number is the top
+            // The three marks of the scale sit in the middle of three equal parts, the bar reaching the last at the top number
             Row(modifier = Modifier.fillMaxWidth().padding(top = dimens.spaceSmall)) {
                 ScaleMarks.forEach { share ->
                     Text(
@@ -238,6 +237,7 @@ private fun TotalsCard(first: Pair<Int, String>, second: Pair<Int, String>, thir
                     )
                 }
             }
+
             // A small line under each number, in the middle of its part, joins it to the bar
             Row(modifier = Modifier.fillMaxWidth().padding(top = dimens.spaceExtraSmall)) {
                 ScaleMarks.forEach { _ ->
@@ -266,7 +266,7 @@ private fun TotalsCard(first: Pair<Int, String>, second: Pair<Int, String>, thir
 // The marks of the scale as shares of its top
 private val ScaleMarks = listOf(0.5, 0.75, 1.0)
 
-// The top of the scale for a number: the first of 1, 2 and 5 times a power of ten that is not under it, like 100 for 99.6 and 10000 for 8981
+// The top of the scale for a number: the first of 1, 2 and 5 times a power of ten not under it, like 100 for 99.6
 private fun scaleTop(amount: Double): Double {
     var base = 1.0
     while (true) {
@@ -275,8 +275,7 @@ private fun scaleTop(amount: Double): Double {
     }
 }
 
-// The genres of what the person watched or read, in a card: the first ones named, each in its color with how many titles it has, and under
-// them a bar split in the pieces of the most of them. Anime and manga each have their own, both always in view
+// The genres of what the person watched or read in a card: the first named with colors and counts, and a bar split in pieces
 @Composable
 private fun GenresBlock(anime: List<UserGenre>, manga: List<UserGenre>) {
     val dimens = KaisouTheme.dimens
@@ -297,8 +296,8 @@ private fun GenresCard(kind: Int, genres: List<UserGenre>) {
     val titles = stringResource(R.string.user_titles)
     val pieces = genres.take(UserDimens.GenreBarPieces)
     val total = pieces.sumOf { it.count.coerceAtLeast(1) }.toFloat()
-    // The piece of the bar that is held, which is said in a card of its color over the bar, as high as the tip of a tag, so the finger does not
-    // cover it
+
+    // The piece of the bar that is held, named in a card of its color as high as a tag tip, so the finger does not cover it
     var held by remember { mutableStateOf<Int?>(null) }
     val gap = TitleDimens.TagTipGap
 
@@ -348,6 +347,7 @@ private fun GenresCard(kind: Int, genres: List<UserGenre>) {
                 }
             }
         }
+
         // Holding a piece of the bar says which genre it is and how many titles it has
         Row(modifier = Modifier.fillMaxWidth().height(UserDimens.GenreBarHeight)) {
             pieces.forEachIndexed { index, genre ->
@@ -387,8 +387,7 @@ private fun GenresCard(kind: Int, genres: List<UserGenre>) {
     }
 }
 
-// The days AniList keeps of the person, about half a year, as a grid of weeks in a card as wide as the page, each day painted as strong as it
-// was busy, with the names of the months over it. A touch picks a day and the line over the grid says what happened on it
+// The days AniList keeps of the person as a grid of weeks in a card, each day as strong as it was busy, a touch saying what happened
 @Composable
 private fun ActivityBlock(days: List<ActivityDay>) {
     val dimens = KaisouTheme.dimens
@@ -396,10 +395,12 @@ private fun ActivityBlock(days: List<ActivityDay>) {
     val shortDay = rememberShortDay()
     val monthName = remember { DateTimeFormatter.ofPattern("MMM", Locale.getDefault()) }
     val today = remember { LocalDate.now() }
+
     // The grid starts on the first day of the week of the language, as many weeks back as it shows
     val start = remember { today.with(TemporalAdjusters.previousOrSame(WeekFields.of(Locale.getDefault()).firstDayOfWeek)).minusWeeks((UserDimens.ActivityWeeks - 1).toLong()) }
     val byDay = remember(days) { days.associateBy { it.date } }
     val total = remember(days) { days.filter { !it.date.isBefore(start) }.sumOf { it.amount } }
+
     // The weeks where a month begins carry its name, the first one only when the next month is not too close to it
     val months = remember(start) {
         (0 until UserDimens.ActivityWeeks).filter { week ->
@@ -516,8 +517,7 @@ class ActivityActions(
     val onDelete: (Int) -> Unit
 )
 
-// Something the person did, in a card: the cover of the title with what they did to it, which opens the title, or the beginning of a text
-// they wrote, with when it was. When the actions are given there is a line under it with the bell, the menu, the comments and the heart
+// Something the person did, in a card: the cover with what they did, or the start of a text, and when, with actions under it
 @Composable
 internal fun UserActivityCard(item: UserActivity, onOpenTitle: (Int) -> Unit, modifier: Modifier = Modifier, actions: ActivityActions? = null) {
     val dimens = KaisouTheme.dimens

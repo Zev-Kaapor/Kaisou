@@ -89,8 +89,7 @@ import com.kaisou.app.features.title.ui.TitleDimens
 import androidx.compose.ui.res.stringArrayResource
 import com.kaisou.app.features.home.ui.components.rememberScoreFormat
 
-// The top of the page of a title: the art fading into the page, with the name, the details, the score and the buttons anchored to its
-// bottom, on the left side when lying down. Prototype, built on the same look as the hero of the Home
+// The top of the page of a title: the art fading into the page with the name, details, score and buttons at its bottom, a prototype
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TitleHero(
@@ -109,6 +108,7 @@ fun TitleHero(
     Box(modifier = modifier) {
         // The picture is asked the way the preload did, so it comes from memory. Until it is ready the cover shows
         val context = LocalContext.current
+
         // Lying down the picture is the wide one, with the poster as the second choice. Standing up it is the poster
         val hasBackdrop = landscape && art?.backdropUrl != null
         val model = remember(art, title.coverUrl, landscape) {
@@ -137,6 +137,7 @@ fun TitleHero(
             }
             if (landscape) HeroArtEdgeFade()
         }
+
         // Veil only as tall as the bar and a little more, so the icons read and the rest of the art stays clear
         val black = KaisouTheme.colors.veil
         val veilHeight = WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding() +
@@ -170,8 +171,8 @@ fun TitleHero(
                 maxHeight = if (landscape) HomeDimens.HeroLandscapeTitleHeight else ComponentDimens.TitleLogoMaxHeight,
                 modifier = Modifier.fillMaxWidth()
             )
-            // Which season or part of the series this is, under the logo, since the logo hides the name that says it and the pictures are the
-            // same for all of them. Only a title that is not the first of its series has it, and it comes in when the season is known
+
+            // Which season or part of the series this is, under the logo, only for a title that is not the first, once known
             val season = art?.season
             val part = title.partMarker
             val where = when {
@@ -200,6 +201,7 @@ fun TitleHero(
                 ScoreChip(score = title.score, userScore = title.entry?.scoreOutOfTen?.takeIf { it > 0f })
                 art?.rating?.let { AgeRatingBadge(it) }
                 title.releaseDay?.let { WeeklyReleaseBadge(it) }
+
                 // Year and format, then a faint divider and the genres, as in 2026 • TV | Action, Mystery
                 val details = if (title.year != null) stringResource(R.string.home_hero_meta, title.year, title.format) else title.format
                 val divider = stringResource(R.string.home_hero_meta_divider)
@@ -226,7 +228,7 @@ fun TitleHero(
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // The list of the user: it opens the editor, says where the title is on it and has the icon of that place, a plus when it is not on it
+                // The list of the user: opens the editor, says where the title is and shows its icon, a plus when it is not on it
                 OutlineButton(
                     // Lying down the button is not stretched over the whole column
                     modifier = if (landscape) {
@@ -249,8 +251,7 @@ fun TitleHero(
     }
 }
 
-// The score of the title with its star, first on the line of details, and before it the one the user gave with a person when they did. A
-// title with no score yet has dashes in its place, since zero would say people did not like it
+// The score of the title with its star, first on the line, and before it the one the user gave, dashes when there is none
 @Composable
 private fun ScoreChip(score: Float?, userScore: Float?, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
@@ -290,7 +291,7 @@ private fun ScoreChip(score: Float?, userScore: Float?, modifier: Modifier = Mod
     }
 }
 
-// What the big button of the list says: where the title is on the list of the user, in the names of the editor, and to add it when it is not
+// What the big button of the list says: where the title is on the user's list, or to add it
 @Composable
 private fun listButtonText(title: TitleUi): String {
     val entry = title.entry ?: return stringResource(R.string.title_cta_add_to_list)
@@ -299,8 +300,7 @@ private fun listButtonText(title: TitleUi): String {
     return names.getOrNull(keys.indexOf(entry.status.apiName)) ?: stringResource(R.string.title_cta_add_to_list)
 }
 
-// The icon of the list for where the title is on it: a plus when it is not on the list, then watching or reading, planned, done, done again,
-// paused and dropped
+// The icon of the list for where the title is on it: a plus, watching or reading, planned, done, done again, paused, dropped
 internal fun listStatusIcon(status: ListStatus?, manga: Boolean): ImageVector =
     when (status) {
         null -> KaisouIcons.ListPlus
@@ -312,15 +312,14 @@ internal fun listStatusIcon(status: ListStatus?, manga: Boolean): ImageVector =
         ListStatus.Dropped -> KaisouIcons.CircleX
     }
 
-// The synopsis under the top, with its name, in the small text of the app and with the formats and the breaks that AniList wrote. A few
-// lines of it show, and a link in the accent opens all of it, which is only there when there is more to show. The text is always laid out
-// whole inside a box whose height is what moves, so it opens and closes the same way
+// The synopsis under the top, a few lines with a link that opens all of it, laid out whole inside a box whose height moves
 @Composable
 fun TitleSynopsis(text: String, modifier: Modifier = Modifier, @StringRes heading: Int = R.string.title_synopsis, hideSpoilers: Boolean = false) {
     val dimens = KaisouTheme.dimens
     val density = LocalDensity.current
     val style = MaterialTheme.typography.bodySmall
     var expanded by rememberSaveable { mutableStateOf(false) }
+
     // How tall all the text is once laid out, which it is whatever room the box gives it
     var fullHeight by remember { mutableIntStateOf(0) }
     val lineHeight = with(density) { style.lineHeight.toPx() }
@@ -332,6 +331,7 @@ fun TitleSynopsis(text: String, modifier: Modifier = Modifier, @StringRes headin
         animationSpec = tween(KaisouMotion.ExpandMillis),
         label = "synopsisHeight"
     )
+
     // The end of the last line fades out into the page while it is closed
     val fade by animateFloatAsState(
         targetValue = if (expanded) 0f else 1f,

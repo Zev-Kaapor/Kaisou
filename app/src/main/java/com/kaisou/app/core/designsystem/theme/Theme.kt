@@ -4,7 +4,6 @@ package com.kaisou.app.core.designsystem.theme
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-// Compose layouts and foundations
 // Material 3 components
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme

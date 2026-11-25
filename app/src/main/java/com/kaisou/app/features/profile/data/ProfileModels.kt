@@ -8,17 +8,18 @@ import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.title.data.TitleDatum
 import com.kaisou.app.features.title.data.TitlePerson
 
-// What a page of a person can be about: a character, a person of the staff or a studio. The path is how the address of the page names it
+// What a page of a person can be about: a character, a person of the staff or a studio, the path being how the address names it
 enum class ProfileKind(val path: String) {
     Character("character"), Staff("staff"), Studio("studio");
 
+    // Finds a kind by its path
     companion object {
+        // Gives the kind of a path, a character when it is not known
         fun of(path: String?): ProfileKind = entries.firstOrNull { it.path == path } ?: Character
     }
 }
 
-// How the titles of a person are sorted, the same ways AniList has: the most popular, the best rated, the most favourited, the newest, the
-// oldest and by the name. The newest and the oldest are grouped by year
+// How the titles of a person are sorted, as AniList does, the newest and the oldest grouped by year
 enum class MediaSort(val apiName: String, @StringRes val label: Int, val byYear: Boolean = false) {
     Popular("POPULARITY_DESC", R.string.profile_sort_popular),
     Score("SCORE_DESC", R.string.profile_sort_score),
@@ -28,20 +29,20 @@ enum class MediaSort(val apiName: String, @StringRes val label: Int, val byYear:
     Title("TITLE_ROMAJI", R.string.profile_sort_title)
 }
 
-// The kinds of titles of a person, as the tabs of their page: the characters a person voiced, and the anime and the manga they are in or
-// worked on. The path is how the address of the page names it
+// The kinds of titles of a person, as the tabs of their page, the path being how the address names it
 enum class MediaTab(val path: String, val apiType: String?, @StringRes val label: Int) {
     Voices("voices", null, R.string.profile_tab_voices),
     Anime("anime", "ANIME", R.string.profile_type_anime),
     Manga("manga", "MANGA", R.string.profile_type_manga);
 
+    // Finds a tab by its path
     companion object {
+        // Gives the tab of a path, anime when it is not known
         fun of(path: String?): MediaTab = entries.firstOrNull { it.path == path } ?: Anime
     }
 }
 
-// An item of the page of all the titles of a person: a title, or a character a person voiced with the title it is in. The key is what
-// tells it apart from the others and the year is the one the title started
+// An item of the page of all the titles of a person: a title, or a character they voiced with its title, with a key and a year
 class ProfileMediaItem(val key: String, val card: CardUi?, val person: TitlePerson?, val year: Int?)
 
 // A page of the titles of a person and whether there are more
@@ -60,8 +61,7 @@ class ProfileSection(
     val more: Boolean = false
 )
 
-// The page of a character, a person of the staff or a studio: who it is, its picture, what is known of it, what it says of itself, whether
-// the user has it as a favourite, and the rows of titles and people
+// The page of a character, a person of the staff or a studio: who it is, its picture, what it says, the favourite and the rows
 data class ProfileUi(
     val ref: ProfileRef,
     val name: String,

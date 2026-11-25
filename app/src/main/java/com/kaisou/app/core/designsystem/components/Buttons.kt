@@ -34,8 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 // Project resources
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 
-// Main pill button filled with the violet of the brand, with something at its start: an icon, a badge or a spinner. The icon stays
-// at the start and the label in the middle, or both go together in the middle when grouped
+// Main pill button in the violet of the brand with something at its start, or all in the middle when grouped
 @Composable
 fun PrimaryButton(
     text: String,
@@ -152,8 +151,7 @@ fun OutlineIconButton(
     }
 }
 
-// Pill with a label and an optional icon at its start: the icon at the start and the label centered, or together in the middle when
-// grouped. The caller gives the background
+// Pill with a label and an optional icon at its start, on a background the caller gives
 @Composable
 private fun PillButton(
     text: String,
@@ -181,6 +179,7 @@ private fun PillButton(
                 leading()
                 Spacer(modifier = Modifier.width(dimens.spaceExtraSmall))
             }
+
             // A long label gives way before it runs under the icon or out of the button
             Text(
                 text = text,

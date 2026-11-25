@@ -57,9 +57,7 @@ import com.kaisou.app.features.title.ui.components.PickerPill
 import androidx.compose.ui.platform.LocalDensity
 import kotlinx.coroutines.flow.first
 
-// All the titles tied to a title, or its whole series in the order to take it, in a grid. The relations can be told apart by the kind of tie
-// with the buttons over the grid, and the order of the series has the place of each title on its picture and opens where the title of the
-// page is
+// All the titles tied to a title, or its series in order, in a grid, filtered by tie, opening at the title of the page
 @Composable
 fun TitleCardsScreen(onBack: () -> Unit, onOpenTitle: (Int) -> Unit, modifier: Modifier = Modifier, viewModel: TitleCardsViewModel = viewModel()) {
     val dimens = KaisouTheme.dimens
@@ -75,7 +73,8 @@ fun TitleCardsScreen(onBack: () -> Unit, onOpenTitle: (Int) -> Unit, modifier: M
             viewModel.scroll.offset = offset
         }
     }
-    // The order of the series opens where the title of the page is, the first time, with its card in the middle of the screen and not at its top
+
+    // The order of the series opens the first time at the title of the page, its card in the middle of the screen
     val density = LocalDensity.current
     LaunchedEffect(loaded) {
         if (loaded != null && viewModel.order && viewModel.scroll.index == 0 && loaded.current > 0) {
@@ -109,6 +108,7 @@ fun TitleCardsScreen(onBack: () -> Unit, onOpenTitle: (Int) -> Unit, modifier: M
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(horizontal = dimens.spaceSmall)
             )
+
             // The kind of tie that is shown, in the line of the title at its end, only when there is more than one
             if (groups.size > 1) {
                 val allLabel = stringResource(R.string.title_cards_all)
@@ -133,6 +133,7 @@ PickerPill(
             is Load.Failed -> DetailsError(onRetry = viewModel::load)
             is Load.Done -> {
                 val shown = loaded?.items?.filter { state.group == null || it.group == state.group }.orEmpty()
+
                 // With no filter on, the relations come in groups, each with the name of its kind over it
                 val grouped = !viewModel.order && state.group == null && groups.size > 1
                 Box(modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds()) {

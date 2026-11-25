@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+// Tests of the reading of the answer of IMDb
 class ImdbClientTest {
     // What the open door of IMDb answers for the episodes of a series, as far as the parts that are read
     private val answer = """{"data":{"title":{"episodes":{"episodes":{
@@ -15,6 +16,7 @@ class ImdbClientTest {
             {"node":{"releaseDate":null,"ratingsSummary":{"aggregateRating":8.4,"voteCount":120},"series":{"episodeNumber":{"episodeNumber":4,"seasonNumber":1}}}}
         ]}}}}}"""
 
+    // The episodes with a score from enough people are kept
     @Test
     fun theEpisodesWithAScoreFromEnoughPeopleAreKept() {
         val page = ImdbClient.parsePage(answer)
@@ -22,6 +24,7 @@ class ImdbClientTest {
         assertEquals(7.6f, page?.episodes?.first()?.rating ?: 0f, 0.001f)
     }
 
+    // The day comes from the year, the month and the day
     @Test
     fun theDayComesFromTheYearTheMonthAndTheDay() {
         val page = ImdbClient.parsePage(answer)
@@ -29,6 +32,7 @@ class ImdbClientTest {
         assertNull(page?.episodes?.last()?.released)
     }
 
+    // The page says whether there is another and where it begins
     @Test
     fun thePageSaysWhetherThereIsAnotherAndWhereItBegins() {
         val page = ImdbClient.parsePage(answer)
@@ -36,6 +40,7 @@ class ImdbClientTest {
         assertEquals("abc", page?.cursor)
     }
 
+    // The question asks for the page that the tested one did
     @Test
     fun theQuestionAsksForThePageThatTheTestedOneDid() {
         // The text that worked when it was tried by hand, with its variables, its page size and the fields that are read
@@ -45,6 +50,7 @@ class ImdbClientTest {
         )
     }
 
+    // An answer that is not one of episodes is left out
     @Test
     fun anAnswerThatIsNotOneOfEpisodesIsLeftOut() {
         assertNull(ImdbClient.parsePage("""{"errors":[{"message":"x"}]}"""))

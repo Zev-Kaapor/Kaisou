@@ -4,9 +4,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+// Tests of the scores of the episodes
 class EpisodeRatingsTest {
+    // Builds an episode with the day it aired
     private fun episode(number: Int, aired: String?) = TitleEpisode(number, null, null, null, aired)
 
+    // Each episode takes the first source that has it
     @Test
     fun eachEpisodeTakesTheFirstSourceThatHasIt() {
         val merged = EpisodeRatings.merge(
@@ -19,11 +22,13 @@ class EpisodeRatingsTest {
         assertEquals(mapOf(1 to 8.1f, 2 to 7.4f, 3 to 7.8f), merged)
     }
 
+    // An episode no source scored has none
     @Test
     fun anEpisodeNoSourceScoredHasNone() {
         assertNull(EpisodeRatings.merge(listOf(emptyMap(), mapOf(1 to 7f)))[2])
     }
 
+    // The scores of MyAnimeList go from five to ten
     @Test
     fun theScoresOfMyAnimeListGoFromFiveToTen() {
         val answer = EpisodeRatings.parseMal(
@@ -34,11 +39,13 @@ class EpisodeRatingsTest {
         assertEquals(true, answer?.second)
     }
 
+    // An answer that is not one of episodes is left out
     @Test
     fun anAnswerThatIsNotOneOfEpisodesIsLeftOut() {
         assertNull(EpisodeRatings.parseMal("""{"error":"x"}"""))
     }
 
+    // The day pairs episodes whose seasons are not the same
     @Test
     fun theDayPairsEpisodesWhoseSeasonsAreNotTheSame() {
         val episodes = listOf(episode(1, "2017-10-03"), episode(2, "2017-10-10"), episode(3, null))
@@ -49,6 +56,7 @@ class EpisodeRatingsTest {
         assertNull(pairs[3])
     }
 
+    // Two episodes on the same day are given in order
     @Test
     fun twoEpisodesOnTheSameDayAreGivenInOrder() {
         val episodes = listOf(episode(1, "2020-01-01"), episode(2, "2020-01-01"))
@@ -58,6 +66,7 @@ class EpisodeRatingsTest {
         assertEquals(9f, pairs[2]?.rating ?: 0f, 0.001f)
     }
 
+    // Episodes that do not match one to one are left out
     @Test
     fun episodesThatDoNotMatchOneToOneAreLeftOut() {
         val episodes = listOf(episode(1, "2020-01-01"), episode(2, "2020-01-01"))

@@ -27,8 +27,7 @@ data class Dimens(
     // Soft shadow of the texts over pictures: how far it falls and how much it spreads
     val textShadowOffset: Dp = 1.dp,
     val textShadowBlur: Dp = 6.dp,
-    // Soft shadow of the icons over pictures, which are drawn twice, the shadow behind blurred and the icon: how far it falls
-    // and how much it spreads
+    // Soft shadow of the icons over pictures, drawn twice, a blurred one behind and the icon: how far it falls and spreads
     val iconShadowOffset: Dp = 1.dp,
     val iconShadowBlur: Dp = 3.dp,
     // Height of the pill buttons

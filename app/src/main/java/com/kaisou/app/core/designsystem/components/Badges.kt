@@ -40,6 +40,7 @@ fun WeeklyReleaseBadge(
 ) {
     val dimens = KaisouTheme.dimens
     val colors = KaisouTheme.colors
+
     // The days run from Monday to Sunday, the same order as the resources
     val label = stringArrayResource(R.array.weekday_short)[day.ordinal]
     val description = stringResource(
@@ -71,8 +72,7 @@ fun WeeklyReleaseBadge(
     }
 }
 
-// Advisory rating of a title as a square: the official symbol in Brazil, and in every other country the square with the age and a
-// plus. A title with no age has its own symbol, RP or NR. A rating that is only an approximation says so to the screen readers
+// Advisory rating of a title as a square: the symbol of Brazil, the age with a plus elsewhere, RP or NR with no age
 @Composable
 fun AgeRatingBadge(
     rating: ContentRating,

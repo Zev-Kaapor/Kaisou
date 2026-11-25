@@ -8,7 +8,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+// Tests of the rendering of the formats of a text of AniList
 class StatusMarkdownTest {
+    // A text with a picture and a video is cut in their places
     @Test
     fun aTextWithAPictureAndAVideoIsCutInTheirPlaces() {
         val blocks = StatusMarkdown.blocks("before img220(https://x/a.png) middle\nyoutube(https://y/b) webm(https://z/c.webm) after")
@@ -25,11 +27,13 @@ class StatusMarkdownTest {
         )
     }
 
+    // A text with no picture is one part with its lines kept
     @Test
     fun aTextWithNoPictureIsOnePartWithItsLinesKept() {
         assertEquals(listOf<MarkdownBlock>(MarkdownBlock.Text("one\ntwo")), StatusMarkdown.blocks("one\ntwo"))
     }
 
+    // An italic that begins in a line and ends in the next one is resolved
     @Test
     fun anItalicThatBeginsInALineAndEndsInTheNextOneIsResolved() {
         val rendered = StatusMarkdown.render("_first line\nsecond line_\n\nplain _one_", Color.Blue, 16.sp)
@@ -38,6 +42,7 @@ class StatusMarkdownTest {
         assertEquals(listOf(0 to 22, 30 to 33), italic.sortedBy { it.first })
     }
 
+    // A format wraps the selection and puts the cursor inside when nothing is selected
     @Test
     fun aFormatWrapsTheSelectionAndPutsTheCursorInsideWhenNothingIsSelected() {
         val selected = StatusMarkdown.apply(TextFieldValue("a word here", TextRange(2, 6)), MarkdownFormat.Bold)
@@ -47,6 +52,7 @@ class StatusMarkdownTest {
         assertEquals(3, empty.selection.start)
     }
 
+    // The lists number and mark each line of the selection
     @Test
     fun theListsNumberAndMarkEachLineOfTheSelection() {
         val numbered = StatusMarkdown.apply(TextFieldValue("x\ny", TextRange(0, 3)), MarkdownFormat.OrderedList)
@@ -55,6 +61,7 @@ class StatusMarkdownTest {
         assertEquals("- x\n- y", bulleted.text)
     }
 
+    // A format that asks for an address puts it in the syntax
     @Test
     fun aFormatThatAsksForAnAddressPutsItInTheSyntax() {
         val linked = StatusMarkdown.apply(TextFieldValue("", TextRange(0)), MarkdownFormat.Link, "https://anilist.co")

@@ -9,12 +9,10 @@ object PosterPicker {
     const val SeasonMinWidth = 600
     const val MinHeightRatio = 1.2f
 
+    // Code of the English language
     private const val English = "en"
 
-    // The small and the ones that are not standing up are left out. Of the rest, the ones with no language come first, since
-    // the picture is clean, then the ones in the language of the app, then the English ones and, when there are none of
-    // those, the ones in any other language, since a sharp poster is better than the cover. In each group the one with the
-    // most pixels wins, the rating of the site settles a tie. Null when no poster is good enough
+    // Leaves out the small and the lying ones, then prefers no language, the app's, English, any other, then the most pixels
     fun pick(posters: List<Artwork>, language: String, minWidth: Int = MinWidth): Artwork? {
         val sharp = posters.filter { it.width >= minWidth && it.height >= it.width * MinHeightRatio }
         val groups = listOf<(Artwork) -> Boolean>(

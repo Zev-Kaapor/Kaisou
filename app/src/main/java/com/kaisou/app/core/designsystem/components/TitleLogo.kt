@@ -19,9 +19,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 
-// Name of a title. With a logo it is the image, as big as fits inside a share of the width and a height, keeping its shape, so
-// a long logo is held by the width and a tall one by the height. Without one it is the name in text, with the size picked by
-// the length of the name and the width of the screen, up to a few lines
+// Name of a title: its logo as big as fits keeping its shape, or the name in text sized by its length and the screen
 @Composable
 fun TitleLogo(
     title: String,

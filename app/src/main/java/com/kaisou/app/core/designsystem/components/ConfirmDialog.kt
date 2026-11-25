@@ -29,8 +29,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-// A question with two buttons of the same width side by side, the one that cancels and the one that goes on, which stands out
-// It is white on the dark theme, the same as the play button of Wavvy. It can end its text with a link, in the violet of the app
+// A question with two buttons side by side, the one that goes on standing out, which can end its text with a link
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfirmDialog(
@@ -63,6 +62,7 @@ fun ConfirmDialog(
                 Text(
                     text = buildAnnotatedString {
                         append(text)
+
                         // The link goes on the same paragraph, right after the last word
                         if (linkLabel != null) {
                             append(" ")

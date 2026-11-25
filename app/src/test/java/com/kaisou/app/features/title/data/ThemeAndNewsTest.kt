@@ -5,7 +5,9 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+// Tests of the themes and the news of a title
 class ThemeAndNewsTest {
+    // The openings come before the endings with their songs and episodes
     @Test
     fun theOpeningsComeBeforeTheEndingsWithTheirSongsAndEpisodes() {
         val body = """{"data":{"theme":{
@@ -19,6 +21,7 @@ class ThemeAndNewsTest {
         assertEquals("Yorushika (ヨルシカ)", themes[1].artist)
     }
 
+    // A line that does not follow the form is kept whole
     @Test
     fun aLineThatDoesNotFollowTheFormIsKeptWhole() {
         val themes = ThemeClient.parse("""{"data":{"theme":{"openings":["Some song"],"endings":[]}}}""")
@@ -28,11 +31,13 @@ class ThemeAndNewsTest {
         assertNull(themes[0].artist)
     }
 
+    // A title without themes has none
     @Test
     fun aTitleWithoutThemesHasNone() {
         assertTrue(ThemeClient.parse("{\"data\":{}}").isEmpty())
     }
 
+    // The news of an anime come newest first with their marks undone
     @Test
     fun theNewsOfAnAnimeComeNewestFirstWithTheirMarksUndone() {
         val body = """{"news":[

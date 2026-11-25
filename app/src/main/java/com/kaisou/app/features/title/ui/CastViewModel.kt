@@ -18,8 +18,7 @@ import com.kaisou.app.core.navigation.TitleIdArg
 import com.kaisou.app.features.title.data.TitlePerson
 import com.kaisou.app.features.title.data.TitleRepository
 
-// What the page of all the characters or all the staff of a title shows: the people that came, whether there are more to ask for, and
-// whether the ones of a page are being asked for
+// What the page of all the characters or staff shows: the people that came, whether there are more, and whether a page is coming
 data class CastUi(val people: List<TitlePerson> = emptyList(), val hasMore: Boolean = true, val loading: Boolean = false, val failed: Boolean = false)
 
 // Asks for the characters or the staff of a title a page at a time, the next one when the list gets to its end
@@ -38,6 +37,7 @@ class CastViewModel(application: Application, savedStateHandle: SavedStateHandle
         loadMore()
     }
 
+    // Asks for the next page when there is one and none is being asked
     fun loadMore() {
         val now = mutableState.value
         if (now.loading || !now.hasMore) return

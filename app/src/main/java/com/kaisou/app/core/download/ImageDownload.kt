@@ -6,9 +6,9 @@ import android.content.Context
 import android.os.Environment
 import androidx.core.net.toUri
 
-// Saves a picture of the internet in the folder Kaisou of the pictures of the phone, where the gallery shows it, through the downloader of the
-// system, which shows its own notice while it goes and when it ends and keeps going if the app is closed
+// Saves a picture in the Kaisou folder of the pictures through the system downloader, which shows its own notice
 object ImageDownload {
+    // Name of the folder of the pictures
     private const val Folder = "Kaisou"
 
     // Starts the download of the picture with the name given for the file, true when the system took it

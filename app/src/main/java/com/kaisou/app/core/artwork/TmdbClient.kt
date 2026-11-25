@@ -17,16 +17,17 @@ import java.time.LocalDate
 // A result of a search by name: its id, the names it goes by, the year it started and how many people rated it
 class TmdbHit(val id: Int, val names: List<String>, val year: Int?, val votes: Int)
 
-// An episode of a season of a series on TMDB: its number in the season, the day it aired, its name and what it tells, in the language asked,
-// and what the people of TMDB scored it, from 0 to 10, with how many people did
+// An episode of a season on TMDB: its number, day, name, what it tells and how it was scored by how many people
 class TmdbEpisode(val number: Int, val airDate: String?, val name: String, val overview: String, val vote: Float, val votes: Int)
 
 // First source of posters and logos, the images and the search of TMDB. The token comes from local.properties
 object TmdbClient {
+    // Addresses of the API and of its images, the time to wait and the length of a year in a date
     private const val ApiUrl = "https://api.themoviedb.org/3"
     private const val ImageUrl = "https://image.tmdb.org/t/p/original"
     private const val TimeoutMillis = 8_000
     private const val YearLength = 4
+
     // The code TMDB sometimes uses for a picture that has no language
     private const val NoLanguageCode = "xx"
     private const val LanguageLength = 2
@@ -34,7 +35,7 @@ object TmdbClient {
 
     val isSet: Boolean get() = BuildConfig.TMDB_TOKEN.isNotEmpty()
 
-    // The posters, the logos and the backdrops of a title, in every language they have: asking for some languages hides the others. Blocks on the network
+    // The posters, logos and backdrops of a title in every language, since asking for some hides the others
     fun images(kind: String, id: Int): SiteImages {
         if (!isSet) return SiteImages.None
         return try {
@@ -45,7 +46,7 @@ object TmdbClient {
         }
     }
 
-    // The poster of a season of a series and the day the season first aired, none when TMDB does not have the season. Blocks on the network
+    // The poster of a season and the day it first aired, none when TMDB does not have the season
     fun seasonArt(id: Int, season: Int): SeasonArtwork {
         if (!isSet) return SeasonArtwork.None
         return try {
@@ -58,8 +59,7 @@ object TmdbClient {
         }
     }
 
-    // The id on YouTube of the trailer TMDB has for a title, the official ones first and then the newest. Empty when TMDB has none, and null
-    // when the answer failed, so only the first is kept. Blocks on the network
+    // The id on YouTube of the trailer of a title, the official ones first, null when the answer failed
     fun trailer(kind: String, id: Int): String? {
         if (!isSet) return null
         return try {
@@ -73,8 +73,7 @@ object TmdbClient {
         }
     }
 
-    // The episodes of a season of a series in a language, empty when TMDB does not have the season and null when the answer failed. Blocks on
-    // the network
+    // The episodes of a season in a language, empty when there is no season and null when the answer failed
     fun season(id: Int, season: Int, language: String): List<TmdbEpisode>? {
         if (!isSet) return null
         return try {
@@ -114,6 +113,7 @@ object TmdbClient {
         }
     }
 
+    // The ratings of the countries of a series
     private fun seriesCertifications(id: Int): Certified {
         val list = get("/tv/$id/content_ratings")?.optJSONArray("results") ?: return Certified.None
         return Certified(
@@ -125,12 +125,14 @@ object TmdbClient {
         )
     }
 
+    // The ratings of the countries of a movie
     private fun movieCertifications(id: Int): Certified {
         val list = get("/movie/$id/release_dates")?.optJSONArray("results") ?: return Certified.None
         return Certified(
             byCountry = (0 until list.length()).mapNotNull { index ->
                 val item = list.getJSONObject(index)
                 val dates = item.optJSONArray("release_dates") ?: return@mapNotNull null
+
                 // A country has one for each release, the first that is filled is the one
                 (0 until dates.length()).firstNotNullOfOrNull { dates.getJSONObject(it).optString("certification").trim().takeIf { c -> c.isNotEmpty() } }
                     ?.let { item.getString("iso_3166_1") to it }
@@ -139,6 +141,7 @@ object TmdbClient {
         )
     }
 
+    // Reads the pictures of a list
     private fun artworks(list: JSONArray?): Artworks {
         if (list == null) return Artworks.None
         return Artworks(
@@ -188,6 +191,7 @@ object TmdbClient {
     // Null when TMDB does not know what was asked, anything else that is not an answer is an error
     private fun get(path: String): JSONObject? = Gates.Tmdb.run { getOnce(path) }
 
+    // Asks TMDB once and reads the answer
     private fun getOnce(path: String): JSONObject? {
         val connection = URL(ApiUrl + path).openConnection() as HttpURLConnection
         try {

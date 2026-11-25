@@ -36,9 +36,7 @@ class ThreadTranslated(val title: String, val text: String)
 // The screen of writing a comment: the comment it answers, none for one on the thread itself, and how it is going
 class ThreadComposer(val parentId: Int?, val state: ComposerUi = ComposerUi())
 
-// What the page of a thread shows: the thread, whether it is shown translated, which is on until the user turns it off, and the translation when
-// it is there, the comments that came, whether there are more to ask for, and whether a page of them is being asked for, the titles that the
-// texts link to, to show as cards, and the screen of writing when it is open
+// What the page of a thread shows: the thread, its translation, the comments, more to ask, linked titles and the writing screen
 data class ThreadUi(
     val thread: Load<ThreadBody> = Load.Loading,
     val translate: Boolean = true,
@@ -53,8 +51,7 @@ data class ThreadUi(
     val commentTexts: Map<Int, String> = emptyMap()
 )
 
-// Asks for a thread of the forum with its text, puts it in the language of the app, and asks for its comments a page at a time. The hearts of the
-// thread and of its comments, the bell and the comments the user writes go to AniList
+// Asks for a thread with its text, puts it in the language of the app and asks for the comments a page at a time
 class ThreadViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
     private val id: Int = checkNotNull(savedStateHandle[ThreadIdArg])
     private val repository = TitleRepository(application)
@@ -74,6 +71,7 @@ class ThreadViewModel(application: Application, savedStateHandle: SavedStateHand
         load()
     }
 
+    // Asks for the thread and its comments
     fun load() {
         mutableState.update { it.copy(thread = Load.Loading) }
         viewModelScope.launch {
@@ -156,7 +154,7 @@ class ThreadViewModel(application: Application, savedStateHandle: SavedStateHand
         }
     }
 
-    // The heart of the thread: it changes at once and goes back if AniList does not take it, and when it does the count is the one AniList says
+    // The heart of the thread changes at once and goes back if AniList does not take it, ending with the count AniList says
     fun toggleLike() {
         val body = (mutableState.value.thread as? Load.Done)?.value ?: return
         if (likingThread) return
@@ -220,12 +218,12 @@ class ThreadViewModel(application: Application, savedStateHandle: SavedStateHand
         mutableState.update { it.copy(composer = ThreadComposer(parentId)) }
     }
 
+    // Closes the screen of writing
     fun closeComposer() {
         mutableState.update { it.copy(composer = null) }
     }
 
-    // Posts what the user wrote, and shows it in its place when AniList takes it: at the end of the comments, or at the end of the answers of the
-    // comment it answers
+    // Posts what the user wrote, placing it at the end of the comments or of the answers of the comment it answers
     fun postComment(text: String) {
         val open = mutableState.value.composer ?: return
         val trimmed = text.trim()
@@ -242,6 +240,7 @@ class ThreadViewModel(application: Application, savedStateHandle: SavedStateHand
         }
     }
 
+    // Shows a failure notice
     private fun failed(message: Int) {
         Toasts.show(getApplication<Application>().getString(message), isError = true)
     }

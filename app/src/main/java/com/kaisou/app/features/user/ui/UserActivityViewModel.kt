@@ -25,8 +25,7 @@ import com.kaisou.app.features.home.data.ReplyUi
 import com.kaisou.app.features.user.data.UserActivity
 import com.kaisou.app.features.user.data.UserRepository
 
-// What the page of all the activity of a person shows: what came, whether there is more to ask for, whether a page is being asked for, and the
-// comments of the activity that is open
+// What the page of all the activity shows: what came, whether there is more, whether a page is coming, and the open comments
 data class UserActivityUi(
     val items: List<UserActivity> = emptyList(),
     val hasMore: Boolean = true,
@@ -35,8 +34,7 @@ data class UserActivityUi(
     val replies: RepliesUi? = null
 )
 
-// Asks for what a person did a page at a time, the newest first, the next page when the list gets to its end, and does what the buttons of an
-// activity ask: the heart, the bell, the comments and the delete
+// Asks for what a person did a page at a time and does what the buttons of an activity ask: heart, bell, comments and delete
 class UserActivityViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
     private val id: Int = checkNotNull(savedStateHandle[UserIdArg])
     private val repository = UserRepository(application)
@@ -44,6 +42,7 @@ class UserActivityViewModel(application: Application, savedStateHandle: SavedSta
     private val mutableState = MutableStateFlow(UserActivityUi())
     val state: StateFlow<UserActivityUi> = mutableState.asStateFlow()
     private var page = 0
+
     // The hearts that are going to AniList, a comment counted as the negative of its id
     private val liking = mutableSetOf<Int>()
 
@@ -57,6 +56,7 @@ class UserActivityViewModel(application: Application, savedStateHandle: SavedSta
         loadMore()
     }
 
+    // Asks for the next page when there is one and none is being asked
     fun loadMore() {
         val now = mutableState.value
         if (now.loading || !now.hasMore) return
@@ -73,7 +73,7 @@ class UserActivityViewModel(application: Application, savedStateHandle: SavedSta
         }
     }
 
-    // The heart of an activity changes at once and goes back if AniList does not take it, and when it does the count is the one AniList says
+    // The heart of an activity changes at once and goes back if AniList does not take it, ending with the count AniList says
     fun toggleLike(activityId: Int) {
         val before = mutableState.value.items.firstOrNull { it.id == activityId } ?: return
         if (!liking.add(activityId)) return
@@ -137,11 +137,12 @@ class UserActivityViewModel(application: Application, savedStateHandle: SavedSta
         }
     }
 
+    // Closes the replies of an activity
     fun closeReplies() {
         mutableState.update { it.copy(replies = null) }
     }
 
-    // Writes a comment on the activity that is open, or saves the new text of the one that is being changed. It shows in the list when AniList takes it
+    // Writes a comment on the open activity or saves the new text of the one being edited, showing it when AniList takes it
     fun sendReply(text: String) {
         val open = mutableState.value.replies ?: return
         val trimmed = text.trim()
@@ -197,6 +198,7 @@ class UserActivityViewModel(application: Application, savedStateHandle: SavedSta
         mutableState.update { state -> state.copy(replies = state.replies?.copy(editingId = replyId, failed = false)) }
     }
 
+    // Stops editing a reply
     fun cancelEditingReply() {
         mutableState.update { state -> state.copy(replies = state.replies?.copy(editingId = null, failed = false)) }
     }
@@ -207,10 +209,12 @@ class UserActivityViewModel(application: Application, savedStateHandle: SavedSta
         Toasts.show(message = text, isError = isError, icon = icon)
     }
 
+    // Changes one activity of the list
     private fun edit(activityId: Int, change: (UserActivity) -> UserActivity) {
         mutableState.update { state -> state.copy(items = state.items.map { if (it.id == activityId) change(it) else it }) }
     }
 
+    // Changes one reply of the open activity
     private fun editReply(replyId: Int, change: (ReplyUi) -> ReplyUi) {
         mutableState.update { state ->
             val open = state.replies ?: return@update state

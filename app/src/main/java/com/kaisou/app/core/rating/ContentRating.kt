@@ -12,15 +12,14 @@ enum class Unrated(@DrawableRes val symbol: Int, @StringRes val description: Int
     NotRated(R.drawable.ic_rating_not_rated, R.string.age_rating_not_rated)
 }
 
-// The advisory rating of a title as it is shown. It is official when the country of the user gives it, and an approximation when
-// it was worked out from another source. The symbol is the Brazilian one in Brazil, and the global square with the age in every
-// other country. A title with none of them says why in unrated, and has no age
+// The advisory rating of a title as shown, official or an approximation, with the symbol of the country or the global square
 class ContentRating(
     val group: AgeGroup,
     val official: Boolean,
     val symbol: Boolean,
     val unrated: Unrated? = null
 ) {
+    // The ratings for a title still pending and for one that has none
     companion object {
         val Pending = ContentRating(AgeGroup.All, official = true, symbol = false, unrated = Unrated.Pending)
         val NotRated = ContentRating(AgeGroup.All, official = true, symbol = false, unrated = Unrated.NotRated)

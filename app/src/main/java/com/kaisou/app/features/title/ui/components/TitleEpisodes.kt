@@ -75,11 +75,7 @@ import com.kaisou.app.features.title.data.TitleUi
 import com.kaisou.app.features.title.data.upNext
 import com.kaisou.app.features.title.ui.TitleDimens
 
-// The tab of the episodes of an anime, or of the chapters of a manga. A manga only has how many it has, the chapters themselves come with
-// the sources of reading. The anime has, in the way of Dantotsu: the block of the source, the name of the list with how far the user is and
-// the order, the card to go on from the episode that comes next, the seasons or ranges as chips, and the episodes in a plain list. Each has
-// its picture with its number on a tab, its name in full and a line with its score, the day it aired and how long it is. What it tells opens
-// under it with a touch, and a long touch marks how far the user is, up to that episode or, when it was done, back to the one before it
+// The tab of the episodes of an anime or the chapters of a manga, as Dantotsu has it, with source, list, card, ranges and list
 fun LazyListScope.titleEpisodesItems(
     title: TitleUi,
     episodes: Load<List<TitleEpisode>>,
@@ -104,13 +100,15 @@ fun LazyListScope.titleEpisodesItems(
                 item(key = "episodes-empty") { EpisodesMessage(R.string.title_episodes_empty) }
                 return
             }
+
             // What the user already did: all of it when the title is done, up to the last one done when it is going
             val watched = when (title.listStatus) {
                 ListStatus.Completed -> Int.MAX_VALUE
                 ListStatus.Current, ListStatus.Repeating, ListStatus.Paused, ListStatus.Dropped -> title.nextUnit - 1
                 else -> 0
             }
-            // The one that comes next, only for a title that is being done, and whether the user can mark how far they are, which is only on the list
+
+            // The one that comes next, only for a title being done, and whether the user can mark progress, which needs the list
             val next = title.upNext
             val canMark = title.entry != null
             val selected = EpisodeGroups.open(groups, group, next)
@@ -167,6 +165,7 @@ private fun ChaptersSoon(title: TitleUi) {
     }
 }
 
+// The message of the episodes tab
 @Composable
 private fun EpisodesMessage(text: Int) {
     Text(
@@ -178,10 +177,7 @@ private fun EpisodesMessage(text: Int) {
     )
 }
 
-// An episode, plain: its picture on the left with its number on a tab, and on the right its name in full and under it its score, the day it
-// aired and how long it is. A touch opens what it tells, which is only there when it has something to open, and a long touch marks how far the
-// user is, when they can. When the episode is done it fades, and comes back as it was when it is not, and when it comes next it has a ring in
-// the accent
+// An episode, plain: its picture and number on the left, its name, score, day and length on the right, with touches to open and mark
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun EpisodeRow(episode: TitleEpisode, watched: Boolean, isNext: Boolean, onMark: ((Int) -> Unit)?) {
@@ -230,8 +226,8 @@ private fun EpisodeRow(episode: TitleEpisode, watched: Boolean, isNext: Boolean,
                 episode.image?.let {
                     AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize().alpha(fade))
                 }
-                // The number on a tab that sticks to the corner of the picture, light with the number in the color of the page, and in the accent
-                // when the episode comes next
+
+                // The number on a tab stuck to the corner of the picture, in the accent when the episode comes next
                 Text(
                     text = episode.number.toString(),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -267,7 +263,7 @@ private fun EpisodeRow(episode: TitleEpisode, watched: Boolean, isNext: Boolean,
     }
 }
 
-// The line under the name of an episode: its score with a star, in the accent, then the day it aired and how long it is, with a dot between
+// The line under the name of an episode: its score with a star, the day it aired and how long it is
 @Composable
 private fun EpisodeMeta(episode: TitleEpisode) {
     val dimens = KaisouTheme.dimens
@@ -315,5 +311,6 @@ private fun EpisodesSkeleton() {
     }
 }
 
+// How long the long and the short placeholder lines of an episode are
 private const val EpisodeLineLong = 0.8f
 private const val EpisodeLineShort = 0.4f

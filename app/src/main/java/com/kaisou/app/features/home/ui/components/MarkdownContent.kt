@@ -46,8 +46,7 @@ import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.ui.HomeDimens
 
-// A text of AniList on a screen: the text with its markers resolved and its links that open when touched, a picture as a picture
-// that opens at full size outside the app when touched, and a video as a card that opens it outside the app
+// A text of AniList on a screen, with its markers resolved, links, pictures and videos that open outside the app when touched
 @Composable
 fun MarkdownContent(text: String, style: TextStyle, color: Color, modifier: Modifier = Modifier, textAlign: TextAlign? = null, hideSpoilers: Boolean = false) {
     val dimens = KaisouTheme.dimens
@@ -68,8 +67,8 @@ fun MarkdownContent(text: String, style: TextStyle, color: Color, modifier: Modi
                     val rendered = remember(block.text, link) { StatusMarkdown.render(block.text, link, HomeDimens.StatusHeadingSize) }
                     Text(text = rendered, style = style, color = color, textAlign = textAlign, modifier = Modifier.fillMaxWidth())
                 }
-                // A picture has the width it was asked: pixels, as far as the line allows, or a share of the line. One that was not asked
-                // any takes the line, and stands at the start of it unless it was in a centered part
+
+                // A picture has the width it was asked, in pixels or in a share of the line, taking the line when none was asked
                 is MarkdownBlock.Image -> Box(modifier = Modifier.fillMaxWidth(), contentAlignment = if (block.centered) Alignment.TopCenter else Alignment.TopStart) {
                     val sized = block.width != null
                     AsyncImage(

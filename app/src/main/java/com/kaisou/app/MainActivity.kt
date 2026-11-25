@@ -22,16 +22,18 @@ import com.kaisou.app.features.auth.ui.AuthViewModel
 
 // Single activity of the app, immersive with the content under the cutout
 class MainActivity : ComponentActivity() {
+    // Draws the app edge to edge and handles the return of the login
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         // Transparent bars with light icons, the app is dark only
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
         )
         setupImmersiveMode()
-        // The login can start the app, when it was closed while the user was in the browser. A rebuilt activity
-        // already handled it, so it does not do it twice
+
+        // Handles the login that started the app, once, since a rebuilt activity already did
         if (savedInstanceState == null) handleLoginRedirect(intent)
         setContent {
             KaisouTheme {
@@ -47,6 +49,7 @@ class MainActivity : ComponentActivity() {
         handleLoginRedirect(intent)
     }
 
+    // Hands the address the browser came back with to the login
     private fun handleLoginRedirect(intent: Intent?) {
         ViewModelProvider(this)[AuthViewModel::class.java].handleRedirect(intent?.data)
     }

@@ -19,6 +19,7 @@ object OverlaySheet {
         mutableContent.value = content
     }
 
+    // Closes the sheet
     fun dismiss() {
         mutableContent.value = null
     }

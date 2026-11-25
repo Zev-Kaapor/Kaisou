@@ -4,7 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+// Tests of the keeping of the art of a title as text
 class TitleArtJsonTest {
+    // The art comes back as it was kept
     @Test
     fun theArtComesBackAsItWasKept() {
         val art = TitleArt(
@@ -24,6 +26,7 @@ class TitleArtJsonTest {
         assertEquals(art.tmdbId, back.tmdbId)
     }
 
+    // A title with nothing is kept too
     @Test
     fun aTitleWithNothingIsKeptToo() {
         val back = TitleArtJson.read(TitleArtJson.write(TitleArt.None))!!
@@ -31,6 +34,7 @@ class TitleArtJsonTest {
         assertEquals(emptyList<String>(), back.logos)
     }
 
+    // A text that is not one of these is nothing
     @Test
     fun aTextThatIsNotOneOfTheseIsNothing() {
         assertNull(TitleArtJson.read("not json"))

@@ -25,8 +25,7 @@ import androidx.compose.ui.unit.TextUnit
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import androidx.compose.ui.text.style.TextOverflow
 
-// A text of AniList in which what gives away the story, between ~! and !~, is covered: it shows as a block of its own color and shows its
-// words when it is touched, and covers again when it is touched again. The rest of the text has its markers resolved as everywhere else
+// A text of AniList with the spoilers between ~! and !~ covered until touched, the rest having its markers resolved
 @Composable
 fun SpoilerText(
     text: String,
@@ -40,6 +39,7 @@ fun SpoilerText(
 ) {
     val cover = KaisouTheme.colors.skeleton
     val parts = remember(text) { split(text) }
+
     // The covers that were opened, by their place in the text, which stay when the phone is turned
     var opened by rememberSaveable { mutableStateOf(listOf<Int>()) }
 
@@ -62,6 +62,7 @@ fun SpoilerText(
     Text(text = rendered, style = style, color = color, textAlign = textAlign, maxLines = maxLines, overflow = TextOverflow.Ellipsis, modifier = modifier.fillMaxWidth())
 }
 
+// A part of a text, with whether it is a spoiler
 private class Part(val text: String, val spoiler: Boolean)
 
 private val Spoiler = Regex("~!(.+?)!~", RegexOption.DOT_MATCHES_ALL)

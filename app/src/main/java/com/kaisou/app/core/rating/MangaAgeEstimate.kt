@@ -1,15 +1,11 @@
 package com.kaisou.app.core.rating
 
-// A tag of a title as AniList gives it: its name in English, how much of it people say the title has, from 0 to 100, whether it gives away the
-// story and whether AniList marks it as adult
+// A tag of a title as AniList gives it: its name, how much people say it applies, whether it spoils and whether it is adult
 class AgeTag(val name: String, val rank: Int, val spoiler: Boolean, val adult: Boolean)
 
-// The age a manga is for, worked out from what AniList says it has, since no source rates a manga. The tag that weighs most sets the floor,
-// but only when enough people voted on it, and the public the series is for, a few tags together and the adult mark of AniList move it. The
-// ages are the steps of the Brazilian rating, L, 10, 12, 14, 16 and 18, and each means what its guide says: 10 is mild fear or magic with no
-// one really hurt, 12 is violence with someone hurt, 14 is intense violence or a harder theme, 16 is blood, a body torn or sex that is not
-// shown whole, and 18 is explicit sex or violence that is the point
+// The age a manga is for, worked out from its tags and genres, in the steps of the Brazilian rating: L, 10, 12, 14, 16 and 18
 object MangaAgeEstimate {
+    // The thresholds of the estimate of the age of a manga
     private const val SpoilerShare = 0.9
     private const val AdultMinRank = 30
     private const val ShounenDark = 62
@@ -36,7 +32,7 @@ object MangaAgeEstimate {
         "Human Pet" to 16, "Pet Play" to 16, "Masochism" to 16, "Sadism" to 16, "Amputation" to 16, "Asphyxiation" to 16, "Omegaverse" to 16
     )
 
-    // How much of the votes a tag needs for its age to count, by the age, and the tags that need more because a few votes on them are common
+    // How much of the votes a tag needs for its age to count, by age, more for the tags where a few votes are common
     private val MinRank = mapOf(10 to 60, 12 to 40, 14 to 40, 16 to 30, 18 to 50)
     private val MinRankOf = mapOf(
         "Bullying" to 70, "Tragedy" to 65, "Martial Arts" to 60, "Drugs" to 70, "Gore" to 60, "Body Horror" to 75, "Battle Royale" to 60,
@@ -47,8 +43,7 @@ object MangaAgeEstimate {
     // What is graphic: with two of them together a series is 16, and with two that nearly everyone votes on it is 18
     private val Graphic = setOf("Gore", "Body Horror", "Human Experimentation", "Torture", "Cannibalism", "Suicide")
 
-    // The genres that take a series out of the L, and the tags of mild fear, magic or teasing that do it with fewer votes. The ones of a hard theme
-    // count at 10 with fewer votes than they need for their own age
+    // The genres and tags that take a series out of the L, the hard themes counting at 10 with fewer votes
     private val OutOfL = setOf("Fantasy", "Supernatural", "Romance", "Mystery", "Mahou Shoujo", "Sci-Fi", "Adventure", "Mecha", "Psychological")
     private val MildTags = setOf(
         "Youkai", "Ghost", "Demons", "Curses", "Exorcism", "Monster Girl", "Monster Boy", "Super Power", "Magic", "Henshin", "Love Triangle",
@@ -63,6 +58,7 @@ object MangaAgeEstimate {
         return AgeGroup.of(age(tags, genres, adult))
     }
 
+    // Works out the age of a manga from its tags, its genres and whether AniList marks it as adult
     internal fun age(tags: List<AgeTag>, genres: List<String>, adult: Boolean): Int {
         val shounen = tags.any { it.name == "Shounen" && it.rank >= 50 }
         val kind = if ("Ecchi" in genres && shounen) genres.filter { it != "Ecchi" } + "Ecchi12" else genres
@@ -82,11 +78,11 @@ object MangaAgeEstimate {
         }
 
         var base = 0
+
         // The public of an action series sets how low it can go
         if ("Action" in kind && tags.any { (it.name == "Shounen" || it.name == "Seinen") && it.rank >= 50 }) base = 12
 
-        // Out of L: a genre that is not of everyday life, or a tag of mild fear, magic or teasing. A series for kids, or one about calm, stays at
-        // L unless its tags say more
+        // A genre not of everyday life, or a tag of mild fear, magic or teasing, takes it out of L, unless it is for kids or calm
         val kids = tags.any { it.name == "Kids" && it.rank >= 50 }
         val calm = tags.any { it.name == "Iyashikei" && it.rank >= 60 }
         if (!kids && base < Light) {

@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 private const val IconGrid = 24f
 private const val IconStroke = 2f
 
+// Builds an icon of lines from paths
 private fun strokeIcon(name: String, vararg paths: String): ImageVector =
     ImageVector.Builder(
         name = name,
@@ -44,8 +45,7 @@ private fun fillIcon(name: String, path: String, grid: Float = IconGrid): ImageV
         addPath(pathData = PathParser().parsePathString(path).toNodes(), fill = SolidColor(Color.Black))
     }.build()
 
-// The person and the round badge of the icons to follow: the head, the shoulders with the room of the badge cut out of them, and the badge. What
-// is cut out of the badge goes the other way round, so it is empty
+// The person and the round badge of the follow icons: the head, the shoulders with the badge cut out, and the badge
 private const val UserBadgePath =
     "M7.7 4.3A4.3 4.3 0 1 1 16.3 4.3A4.3 4.3 0 1 1 7.7 4.3Z" +
         "M3.5 17.8A8.5 8.5 0 0 1 20.5 17.8V18.4Q20.5 19.2 19.7 19.2H17.035A5.06 5.06 0 0 0 6.965 19.2H4.3Q3.5 19.2 3.5 18.4Z" +
@@ -55,10 +55,15 @@ private const val UserBadgePath =
 private const val BellRingingBodyPath =
     "M12,4.4 C10.9,4.4 10,5.2 9.9,6.2 C7.6,7 6.1,9.2 6.1,12 V15.5 L4.7,18.4 C4.5,18.8 4.8,19.2 5.2,19.2 H18.8 C19.2,19.2 19.5,18.8 19.3,18.4 L17.9,15.5 V12 C17.9,9.2 16.4,7 14.1,6.2 C14,5.2 13.1,4.4 12,4.4 Z" +
         "M9,20.6 H15 C14.5,21.7 13.4,22.3 12,22.3 C10.6,22.3 9.5,21.7 9,20.6 Z"
+
+// The waves of the ringing bell
 private const val BellRingingWavesPath =
     "M4,2.1 Q0.7,5.6 0.7,10.5 M6.3,4.3 Q3.5,6.7 3.5,10.5 M20,2.1 Q23.3,5.6 23.3,10.5 M17.7,4.3 Q20.5,6.7 20.5,10.5"
+
+// Width of the line of the waves
 private const val BellWaveStroke = 1.5f
 
+// Builds the bell that rings, with its body, its clapper and its waves
 private fun ringingBellIcon(): ImageVector =
     ImageVector.Builder(
         name = "BellRinging",
@@ -126,6 +131,7 @@ object KaisouIcons {
     )
     val Close = strokeIcon("Close", "M18 6 6 18", "m6 6 12 12")
     val Plus = strokeIcon("Plus", "M5 12h14", "M12 5v14")
+
     // The three dots as Wavvy draws them, on a grid of 960
     val More = fillIcon(
         "More",
@@ -190,7 +196,8 @@ object KaisouIcons {
         "m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5",
         "M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"
     )
-    // The state of a title on the list of the user: not on it, being watched, being read, planned, done, done again, paused and dropped
+
+    // The icons of the state of a title on the list of the user, from not on it to dropped
     val ListPlus = strokeIcon("ListPlus", "M11 12H3", "M16 6H3", "M16 18H3", "M18 9v6", "M21 12h-6")
     val ListVideo = strokeIcon(
         "ListVideo",
@@ -242,6 +249,7 @@ object KaisouIcons {
         "M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z",
         grid = 512f
     )
+
     // The two ways to order the tags: by the letters, with an A over a Z and an arrow down, and by the percentage
     val SortAlphabetical = strokeIcon(
         "SortAlphabetical",
@@ -260,7 +268,8 @@ object KaisouIcons {
     val SortDescending = strokeIcon("SortDescending", "M3 7h14", "M3 12h11", "M3 17h8", "M18 11v8", "m15 16 3 3 3-3")
     val ChevronRight = strokeIcon("ChevronRight", "m9 18 6-6-6-6")
     val Check = strokeIcon("Check", "M20 6 9 17l-5-5")
-    // A person, filled, with a round badge at its foot that has a plus or a tick cut out of it, to follow someone and to say they are followed
+
+    // A person with a round badge at its foot with a plus or a tick cut out of it, to follow someone and say they are followed
     val UserPlus = fillIcon("UserPlus", UserBadgePath + "M11.45 16.8V19.15H8.9V20.25H11.45V22.6H12.55V20.25H15.1V19.15H12.55V16.8Z")
     val UserCheck = fillIcon("UserCheck", UserBadgePath + "M8.911 20.189L11.321 22.598L15.309 18.168L14.491 17.432L11.279 21.002L9.689 19.411Z")
     val Info = strokeIcon(

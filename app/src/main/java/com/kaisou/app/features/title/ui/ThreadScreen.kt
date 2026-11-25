@@ -79,10 +79,7 @@ import com.kaisou.app.features.title.ui.components.RoundImage
 import com.kaisou.app.features.title.ui.components.relativeTime
 import com.kaisou.app.features.title.ui.components.ThreadTags
 
-// A thread of the forum read whole: its tags, its title, who wrote it and when, its text, and under it the comments with their answers, a page
-// at a time. Under the thread and under each comment are the buttons: the heart, to answer, to copy and to report, and the thread also has the
-// bell. The text comes in the language of the app, a button of the bar turns that off, another shares the thread. The spoilers of the texts stay
-// covered until they are touched, and a link to a title that stands alone in a line is a card of it
+// A thread read whole: tags, title, author, text, and the comments with their answers a page at a time, with the buttons under each
 @Composable
 fun ThreadScreen(onBack: () -> Unit, onOpenTitle: (Int) -> Unit, modifier: Modifier = Modifier, viewModel: ThreadViewModel = viewModel()) {
     val dimens = KaisouTheme.dimens
@@ -90,6 +87,7 @@ fun ThreadScreen(onBack: () -> Unit, onOpenTitle: (Int) -> Unit, modifier: Modif
     val state by viewModel.state.collectAsState()
     val listState = rememberKeptListState(viewModel.scroll)
     val loaded = (state.thread as? Load.Done)?.value
+
     // The comments and their answers in one list, each with how deep it is
     val rows = remember(state.comments) { state.comments.flatMap(::flatten) }
     val copied = stringResource(R.string.thread_copied)
@@ -278,8 +276,7 @@ private fun ThreadContent(
     }
 }
 
-// A comment of the thread with no card of its own: who wrote it and when in one line, its text, and the small buttons of the heart, of answering,
-// of copying and of reporting. An answer is moved in and has a line at its side, and a comment of the first level is set apart by a line over it
+// A comment of the thread with no card: author, day, text and buttons, an answer moved in with a line at its side
 @Composable
 private fun CommentRow(
     comment: ThreadComment,

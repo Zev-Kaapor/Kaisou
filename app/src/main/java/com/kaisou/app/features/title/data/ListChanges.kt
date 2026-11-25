@@ -10,13 +10,12 @@ import kotlinx.coroutines.withContext
 // Project resources
 import com.kaisou.app.core.cache.AppStore
 
-// A sign that the list of the user changed on AniList. What was kept of the cards of the titles is taken away, so the score and the place
-// on the list they show are not behind, and the screens that show what is on the list, like the Home, ask again when they come back instead
-// of waiting for the time between two questions
+// A sign that the list of the user changed: the cards kept are taken away and the screens that show the list ask again
 object ListChanges {
     private val mutableVersion = MutableStateFlow(0)
     val version: StateFlow<Int> = mutableVersion.asStateFlow()
 
+    // Announces the change of the list, forgetting what was kept of the cards
     suspend fun changed() {
         withContext(Dispatchers.IO) {
             AppStore.clear(TitleRepository.ExtrasSpace)

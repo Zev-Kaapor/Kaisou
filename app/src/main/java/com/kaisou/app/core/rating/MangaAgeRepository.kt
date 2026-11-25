@@ -17,11 +17,9 @@ import com.kaisou.app.core.auth.AniListSession
 import com.kaisou.app.core.cache.AppStore
 import com.kaisou.app.core.cache.TimedCache
 
-// The age of the manga on the cards. A card knows only the id of its manga, and the age comes from its tags and genres, so they are asked of AniList,
-// but not one by one: the ones that ask in the same moment are put together and go in one question of up to 50 titles. A shelf says all its manga
-// at once as soon as it is there, so the cards find the age ready and none asks. What is found is kept in memory and on the phone, since the tags of
-// a manga change slowly, so a manga is asked once, and one that is already being asked is not asked again
+// The age of the manga on the cards, asked of AniList in batches of up to 50 and kept in memory and on the phone
 object MangaAgeRepository {
+    // The region of Brazil, how long a batch waits and how big it is, the mark of no age, and where and how long ages are kept
     private const val BrazilRegion = "BR"
     private const val BatchWaitMillis = 250L
     private const val BatchSize = 50
@@ -42,6 +40,7 @@ object MangaAgeRepository {
 
     // The titles that wait for the next question, with who waits for each. The question goes when the wait of a moment is over
     private val waiting = LinkedHashMap<Int, CompletableDeferred<Int?>>()
+
     // The titles of the question that went and has no answer yet, so whoever asks for one of them waits for that answer
     private val asking = HashMap<Int, CompletableDeferred<Int?>>()
     private var running = false
@@ -54,15 +53,16 @@ object MangaAgeRepository {
         scope.launch { ids.distinct().forEach { id -> launch { ageOf(id) } } }
     }
 
-    // The rating of a manga for the country: the age worked out from its tags, or not rated when it has nothing to say it by. Null when AniList could
-    // not be reached, which is not kept, so it is asked again
+    // The rating of a manga for the country from its tags, not rated when it has none, null when AniList failed, which is not kept
     suspend fun rating(id: Int, region: String): ContentRating? {
         return made(ageOf(id) ?: return null, region)
     }
 
+    // Builds the rating of a manga from an age
     private fun made(age: Int, region: String): ContentRating =
         if (age == NoAge) ContentRating.NotRated else ContentRating(AgeGroup.of(age), official = false, symbol = region == BrazilRegion)
 
+    // Gives the age of a manga from memory, the disk or AniList, null when it could not be asked
     private suspend fun ageOf(id: Int): Int? {
         memory.get(id)?.let { return it.value }
         withContext(Dispatchers.IO) { AppStore.get(StoreSpace, id.toString(), StoreMillis) }?.let { kept ->
@@ -116,6 +116,7 @@ object MangaAgeRepository {
             val group = MangaAgeEstimate.of(tags, genres, media.optBoolean("isAdult"))
             ages[media.getInt("id")] = group?.minAge ?: NoAge
         }
+
         // The ones AniList did not answer for are kept as nothing to say them by, since asking again would be the same
         ids.forEach { ages.putIfAbsent(it, NoAge) }
         withContext(Dispatchers.IO) {

@@ -21,8 +21,7 @@ import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.title.data.Load
 import com.kaisou.app.features.title.data.TitleRepository
 
-// A title of the list with the kind of tie it has to the one of the page, which is what the filter of the relations picks by. The order of
-// the series has no kind
+// A title of the list with the kind of tie it has to the one of the page, which the filter picks by, none in the order of the series
 data class CardsItem(val card: CardUi, val group: String?)
 
 // The titles that came, and the place in them of the one of the page, which the order of the series opens on
@@ -31,8 +30,7 @@ class CardsList(val items: List<CardsItem>, val current: Int)
 // What the page of all the titles tied to a title shows: whether they came and the kind of tie that is chosen
 data class CardsUi(val list: Load<CardsList> = Load.Loading, val group: String? = null)
 
-// Asks for all the titles tied to a title, or for the whole series of it in the order to take it. Both come from what the page of the title
-// already kept, so opening this page asks AniList for nothing when the title was opened a moment ago
+// Asks for all the titles tied to a title, or its whole series in order, from what the title page kept, asking AniList for nothing
 class TitleCardsViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
     private val id: Int = checkNotNull(savedStateHandle[TitleIdArg])
     val order: Boolean = savedStateHandle.get<String>(CardsKindArg) == CardsOrder
@@ -48,6 +46,7 @@ class TitleCardsViewModel(application: Application, savedStateHandle: SavedState
         load()
     }
 
+    // Asks for the list
     fun load() {
         mutableState.update { it.copy(list = Load.Loading) }
         viewModelScope.launch {

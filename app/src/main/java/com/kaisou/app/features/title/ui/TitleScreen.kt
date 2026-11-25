@@ -86,8 +86,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// The page of a title, anime or manga. Prototype, to be thrown away when the look is decided: for now it has the top and the synopsis,
-// the rest comes part by part
+// The page of a title, anime or manga, a prototype to be thrown away when the look is decided, coming part by part
 @Composable
 fun TitleScreen(
     onBack: () -> Unit,
@@ -109,15 +108,19 @@ fun TitleScreen(
     var tab by viewModel::tab
     var newestFirst by viewModel::newestFirst
     val scope = rememberCoroutineScope()
+
     // How far the items of the section that was just opened have come in, from nothing to all, and how far to the side they start
     var enter by remember { mutableFloatStateOf(1f) }
     var enterShift by remember { mutableFloatStateOf(0f) }
+
     // The sections go to the bar of the app while the page is there, and are taken from it when the page goes
     val barOwner = remember { Any() }
     DisposableEffect(barOwner) { onDispose { NavSectionsHost.clear(barOwner) } }
+
     // The tabs that ask for their own data do it when they are opened
     LaunchedEffect(tab, state.status) { if (state.status == TitleStatus.Content) viewModel.openTab(tab) }
     val alerts by ReleaseAlerts.titles.collectAsState()
+
     // The tabs of a manga have chapters where an anime has episodes
     val tabLabels = listOf(
         stringResource(R.string.title_tab_details),
@@ -132,8 +135,7 @@ fun TitleScreen(
         KaisouIcons.Comment
     )
 
-    // Each time the page comes back to the screen what AniList says is asked again, so the heart and the list are never behind, and every
-    // few minutes while it is open, so the friends are not either. Nothing is asked while the app is in the background
+    // The page asks AniList again each time it returns to the screen and every few minutes, never in the background
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner, viewModel) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -150,6 +152,7 @@ fun TitleScreen(
         val landscape = maxWidth > maxHeight
         val density = LocalDensity.current
         val shiftPx = with(density) { maxWidth.toPx() } * TitleDimens.SectionShift
+
         // Opens a section: its items slide in from the side it is on, the page stays where it is
         val openTab: (Int) -> Unit = { index ->
             if (index != tab.ordinal) {
@@ -161,12 +164,12 @@ fun TitleScreen(
         }
         SideEffect { NavSectionsHost.show(barOwner, NavSections(tabLabels, tabIcons, tab.ordinal), openTab) }
 
-        // Standing up the art is a poster as tall as the screen is wide times a ratio, lying down it takes a share of the height, so
-        // the synopsis shows under it
+        // Standing up the art is a poster as tall as the screen is wide times a ratio, lying down it takes a share of the height
         val heroHeight = if (landscape) maxHeight * HomeDimens.HeroLandscapeHeightFraction else maxWidth * HomeDimens.HeroAspect
 
         // The bar is clear over the art and turns solid, with the name of the title, before the details get under it
         val solidOffset = with(LocalDensity.current) { heroHeight.toPx() } * HomeDimens.HeaderSolidFraction
+
         // How far along the fade is: none at the top, all of it where the details get under the bar, in between it follows the scroll
         val barProgress by remember(solidOffset) {
             derivedStateOf {
@@ -177,6 +180,7 @@ fun TitleScreen(
         when (state.status) {
             TitleStatus.Loading -> LazyColumn(modifier = Modifier.fillMaxSize(), userScrollEnabled = false) {
                 item(key = "hero-skeleton") { HomeHeroSkeleton(height = heroHeight, landscape = landscape) }
+
                 // Under it the rest of the page, as the real one has it, so the placeholder fills the screen as the one of the Home
                 item(key = "body-skeleton") { TitleBodySkeleton() }
                 item(key = "details-skeleton") { DetailsInfoSkeleton() }
@@ -215,6 +219,7 @@ fun TitleScreen(
                     if (synopsis.isNotBlank()) item(key = "synopsis") { TitleSynopsis(text = synopsis) }
                     item(key = "facts") { TitleFacts(title = title) }
                     title.nextAiring?.let { next -> item(key = "next-episode") { NextEpisodeCard(next = next) } }
+
                     // Each tab shows its own blocks, which come in as the tab is opened
                     with(EnterScope(this, { enter }, { enterShift })) {
                     when (tab) {
@@ -270,9 +275,8 @@ fun TitleScreen(
         val alertOnMessage = stringResource(R.string.title_alert_on)
         val alertOffMessage = stringResource(R.string.title_alert_off)
         val alertOffNote = stringResource(R.string.title_alert_off_note)
-        // What the bell is for depends on where the title is: each new episode or chapter, a new season or what comes after, the return
-        // after a pause, or the release. A title that was cancelled has nothing to follow. The notices are not there yet, so the island
-        // says what they will do
+
+        // What the bell does depends on where the title is: new episodes, a season, a return or the release, none when cancelled
         val manga = state.title?.manga == true
         val notifyText = when (state.title?.releaseState) {
             ReleaseState.Releasing -> if (manga) R.string.title_notify_releasing_manga else R.string.title_notify_releasing
@@ -310,8 +314,7 @@ fun TitleScreen(
     }
 }
 
-// Back on the left and share on the right over the art, and the name of the title between them once the bar is solid. The room of the
-// status bar stays even when it is hidden, so the bar keeps clear of the camera
+// Back on the left and share on the right over the art, with the name between them once the bar is solid, clearing the camera
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TitleTopBar(
@@ -350,6 +353,7 @@ private fun TitleTopBar(
                 .padding(horizontal = dimens.spaceSmall)
                 .alpha(progress)
         )
+
         // The bell rings when the alerts of the title are on
         if (onNotify != null) {
             HeaderAction(

@@ -14,17 +14,18 @@ import java.time.LocalDate
 import com.kaisou.app.core.net.Gates
 import com.kaisou.app.core.net.TooManyRequests
 
-// The score IMDb has for each episode of a series, from the same open door its own site uses to show them, the GraphQL one, which answers a plain
-// request and gives all the episodes of a series in a page or a few, each with its score, the day it aired and its season. It is not a door
-// IMDb documents, so it can change, and then the other sources are used
+// The score IMDb has for each episode of a series, from the open GraphQL door its own site uses, which can change
 object ImdbClient {
+    // Address of the API, the time to wait, the size of a page and how many pages are read
     private const val ApiUrl = "https://api.graphql.imdb.com/"
     private const val TimeoutMillis = 15_000
     private const val PageSize = 250
     private const val MaxPages = 8
-    // The fewest people that can have scored an episode for the score to be taken, since a score of one person is not what people think of it
+
+    // The fewest people that can have scored an episode for the score to be taken
     private const val MinVotes = 3
 
+    // The GraphQL query of the episodes of a series
     internal const val Query = """query(${'$'}id:ID!,${'$'}after:ID){title(id:${'$'}id){episodes{episodes(first:$PageSize,after:${'$'}after){pageInfo{hasNextPage endCursor} edges{node{releaseDate{year month day} ratingsSummary{aggregateRating voteCount} series{episodeNumber{episodeNumber seasonNumber}}}}}}}}"""
 
     // An episode of a season of IMDb: its number in the season, the day it aired as 2026-10-03 and its score from 0 to 10
@@ -33,8 +34,7 @@ object ImdbClient {
     // A page of the answer: the episodes that have a score, whether there is another page and where it begins
     class Page(val episodes: List<Episode>, val hasNext: Boolean, val cursor: String?)
 
-    // The episodes of all the seasons of a series that have a score, and whether all the pages came. Null when not even the first did. Throws when
-    // IMDb could not be reached
+    // The scored episodes of all the seasons and whether all the pages came, null when not even the first did, throws when unreachable
     suspend fun episodes(imdbId: String): Pair<List<Episode>, Boolean>? = withContext(Dispatchers.IO) {
         val found = ArrayList<Episode>()
         var cursor: String? = null
@@ -47,6 +47,7 @@ object ImdbClient {
         found to false
     }
 
+    // Asks IMDb for a page of the episodes
     private fun post(imdbId: String, after: String?): String? = Gates.Imdb.run {
         val connection = URL(ApiUrl).openConnection() as HttpURLConnection
         try {
@@ -84,6 +85,7 @@ object ImdbClient {
             )
         }.getOrNull()
 
+    // Reads an episode with its season, number, day and score
     private fun episode(node: JSONObject): Episode? {
         val numbers = node.optJSONObject("series")?.optJSONObject("episodeNumber") ?: return null
         val summary = node.optJSONObject("ratingsSummary") ?: return null

@@ -39,8 +39,7 @@ import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.settings.ui.SettingsDimens
 
-// One way to choose, the words, if it is the one in use, if it is the one the app starts with, the icon before its name when it has one and
-// what it does when it is chosen
+// One way to choose: the words, whether it is in use or the default, its icon and what it does when chosen
 class Choice(
     val title: String,
     val isSelected: Boolean,

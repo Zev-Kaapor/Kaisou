@@ -113,9 +113,7 @@ import com.kaisou.app.features.home.data.StoryItemUi
 import com.kaisou.app.features.home.data.StoryUi
 import com.kaisou.app.features.home.ui.HomeDimens
 
-// The stories of the people, full screen: one activity at a time over its picture, with a bar for each of them on top that fills as
-// time goes. A tap on the right goes forward and on the left goes back, in the middle it opens the title, holding stops the time. When the last one of a person ends
-// the next person starts, and after the last person it closes. Each activity shown is marked as seen
+// The stories full screen: one activity at a time with a bar for each, taps going forward and back, and a swipe between people
 @Composable
 fun StoryViewer(
     stories: List<StoryUi>,
@@ -167,6 +165,7 @@ fun StoryViewer(
     }
 }
 
+// Plays the stories of the people, starting from a person and an item
 @Composable
 private fun StoryPlayer(
     stories: List<StoryUi>,
@@ -191,15 +190,18 @@ private fun StoryPlayer(
 ) {
     val dimens = KaisouTheme.dimens
     val colors = KaisouTheme.colors
+
     // Lying down the window is wider than it is tall
     val landscape = LocalWindowInfo.current.containerSize.let { it.width > it.height }
 
-    // The person and the activity that are on are told to the screen as they change, which keeps them when the phone is turned, and the next
-    // time this is made it starts from them
+    // The person and the activity that are on are told to the screen, which keeps them when the phone is turned
     var userIndex by remember { mutableIntStateOf(startUser) }
     val user = stories[userIndex]
-    // A person starts at the first activity not seen yet, or at the first one if all were seen, or at the one the screen says when it is there
+
+    // A person starts at the first activity not seen, or the first one, or the one the screen says
     fun firstOf(person: StoryUi) = person.items.indexOfFirst { it.id !in seen }.coerceAtLeast(0)
+
+    // Gives the item a person starts at
     fun startOf(person: StoryUi) = person.items.indexOfFirst { it.id == startItem }.takeIf { it >= 0 } ?: firstOf(person)
     var itemIndex by remember(userIndex) { mutableIntStateOf(startOf(user)) }
     val item = user.items[itemIndex]
@@ -207,10 +209,12 @@ private fun StoryPlayer(
     var held by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     var confirmingDelete by remember { mutableStateOf(false) }
+
     // The comment whose menu is open, and the one the user is asked whether to delete
     var replyMenu by remember { mutableStateOf<ReplyUi?>(null) }
     var replyToDelete by remember { mutableStateOf<ReplyUi?>(null) }
     val context = LocalContext.current
+
     // The page of the person opens behind the stories, so they close first
     val openUser = LocalOpenUser.current
     val openProfile: (String) -> Unit = { name ->
@@ -218,11 +222,12 @@ private fun StoryPlayer(
         openUser(name)
     }
     val scope = rememberCoroutineScope()
-    // The cube that turns from a person to another: where it goes and which way, how far it has turned from nothing to all, and the movement
-    // that takes it to its end
+
+    // The cube that turns from a person to another: where it goes, how far it has turned, and the movement that ends it
     var turn by remember { mutableStateOf<StoryTurn?>(null) }
     var turned by remember { mutableFloatStateOf(0f) }
     var turning by remember { mutableStateOf<Job?>(null) }
+
     // The time also stops while the comments or the menu are open, while the user is asked whether to delete and while the cube turns
     val paused = held || replies != null || menuOpen || confirmingDelete || turn != null
     val isOwn = user.userId == ownUserId
@@ -230,8 +235,7 @@ private fun StoryPlayer(
     val progress = remember(userIndex, itemIndex, restarts) { Animatable(0f) }
     val duration = if (item.text != null) HomeDimens.StoryTextMillis else HomeDimens.StoryItemMillis
 
-    // The pictures of what comes next, the next activity of the person or the first of the next person, are asked for before they are needed, so
-    // the change finds them and shows them at once
+    // The pictures of what comes next are asked before they are needed, so the change finds them and shows them at once
     LaunchedEffect(userIndex, itemIndex) {
         val following = user.items.getOrNull(itemIndex + 1) ?: stories.getOrNull(userIndex + 1)?.let { it.items[firstOf(it)] }
         val loader = SingletonImageLoader.get(context)
@@ -250,6 +254,7 @@ private fun StoryPlayer(
         }
     }
 
+    // Starts the cube turning to another person, forward or back
     fun startTurn(to: Int, forward: Boolean) {
         if (turn != null) return
         turned = 0f
@@ -257,7 +262,7 @@ private fun StoryPlayer(
         settleTurn(commit = true)
     }
 
-    // A turn that is left with nothing taking it to its end, which a drag that was cut could do, is undone, so it never holds the touches
+    // Undoes a turn left with nothing taking it to its end, which a cut drag could cause, so it never holds the touches
     fun clearStaleTurn(): Boolean {
         if (turn == null) return false
         if (turning?.isActive == true) return true
@@ -266,6 +271,7 @@ private fun StoryPlayer(
         return false
     }
 
+    // Goes to the next activity or person, or closes after the last
     fun next() {
         if (clearStaleTurn()) return
         when {
@@ -299,13 +305,7 @@ private fun StoryPlayer(
             .fillMaxSize()
             .background(colors.veil)
             .pointerInput(userIndex) {
-                // One gesture for the whole screen, so a touch is only ever taken by it: the time stops while a finger is down. A short touch
-                // that stayed where it was goes back on the left third, forward on the right third and, in the middle, to the title of the
-                // activity when it has one, forward when it has none. A long one only held the time, so letting go goes on where it was and does
-                // not change the activity. Any drag to the side goes to another person, however short: going left to the next one, or closing
-                // when there is none, and going right to the one before, or starting again when there is none. The cube turns with the finger
-                // and then goes on by itself. It is made again for each person, since the activity of each one is a state of its own, and a
-                // gesture that was made for the one before it would change that one's
+                // One gesture for the screen: taps go back, forward or to the title, a hold stops the time, a drag changes person
                 awaitEachGesture {
                     val down = awaitFirstDown()
                     held = true
@@ -325,6 +325,7 @@ private fun StoryPlayer(
                             lifted = change
                             break
                         }
+
                         // Something else took the touch, as a button does
                         if (!dragging && change.isConsumed) {
                             cancelled = true
@@ -394,8 +395,7 @@ private fun StoryPlayer(
                 onOpenProfile = { openProfile(user.name) }
             )
         } else {
-            // While the cube turns the person that goes out and the one that comes in are both drawn, each on its side of the corner, and
-            // nothing on them answers to a touch
+            // While the cube turns both persons are drawn, each on its side of the corner, and nothing on them answers to a touch
             val coming = stories[moving.to]
             val comingIndex = firstOf(coming)
             StoryFace(
@@ -494,9 +494,7 @@ private fun StoryPlayer(
 // Where the cube goes: the person it turns to and whether it is forward, to the one after
 private class StoryTurn(val to: Int, val forward: Boolean)
 
-// What a person shows at a moment: the picture of the title blurred behind, the bars of their activities with the one that is on filling, who
-// they are with the time since they did it, and the activity. The picture and the name open the person. A new activity comes in with a fade
-// and a rise
+// What a person shows at a moment: the blurred picture, the bars with the one on filling, who they are, and the activity
 @Composable
 private fun StoryFace(
     user: StoryUi,
@@ -513,8 +511,8 @@ private fun StoryFace(
 ) {
     val dimens = KaisouTheme.dimens
     val colors = KaisouTheme.colors
-    // What the activity shows comes in with a short fade and a rise each time it changes, in one copy and not over the old one, so nothing
-    // blinks while a picture loads. The one the face starts with is already there
+
+    // What the activity shows fades in and rises each time it changes, in one copy, so nothing blinks while a picture loads
     val firstId = remember { item.id }
     val enter = remember(item.id) { Animatable(if (item.id == firstId) 1f else 0f) }
     LaunchedEffect(item.id) { if (enter.value < 1f) enter.animateTo(1f, tween(HomeDimens.StoryFadeMillis)) }
@@ -534,8 +532,7 @@ private fun StoryFace(
         Box(modifier = Modifier.fillMaxSize().background(colors.veil.copy(alpha = HomeDimens.StoryBackdropAlpha)))
 
         Column(
-            // The keyboard is left out of the room the story keeps clear, it is the sheet of the comments that makes way for it, so the cover
-            // does not shrink when the keyboard comes and grow when it goes
+            // The keyboard is left out of the room the story keeps clear, so the cover does not shrink when it comes
             modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.exclude(WindowInsets.ime)).padding(horizontal = dimens.screenPadding),
             verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
         ) {
@@ -595,6 +592,7 @@ private fun StoryFace(
                         )
                     }
                 }
+
                 // The three dots, with the options for the activity that is on, and the X, close to each other
                 Row(horizontalArrangement = Arrangement.spacedBy(HomeDimens.StoryHeaderActionsGap), verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -663,8 +661,7 @@ private fun StoryFace(
     }
 }
 
-// A face of the cube while it turns, from nothing to all: the one that goes out turns on its edge toward the side it leaves by, and the one that
-// comes in turns from the side it comes from, so both meet in a corner. The one that is turned away gets dark
+// A face of the cube while it turns: the one going out turns toward the side it leaves by, the one coming in from its side
 private fun Modifier.cube(outgoing: Boolean, forward: Boolean, turned: () -> Float): Modifier =
     graphicsLayer {
         val amount = turned()
@@ -738,8 +735,7 @@ private fun StoryActions(item: StoryItemUi, onOpenReplies: (Int) -> Unit, onLike
     }
 }
 
-// A button with its icon and, under it, how many there are, when there is any. The icons of two of them stay on the same line whether
-// they have a number or not
+// A button with its icon and, under it, how many there are, keeping the icons of two of them on the same line
 @Composable
 private fun StackedAction(count: Int, onClick: () -> Unit, icon: @Composable () -> Unit) {
     val dimens = KaisouTheme.dimens
@@ -834,8 +830,7 @@ private fun StoryMenu(user: StoryUi, item: StoryItemUi, isOwn: Boolean, onDelete
     }
 }
 
-// The comments of an activity in the sheet of the app: who wrote each one and when, and where the user writes theirs. The keyboard
-// lifts the sheet, and a comment that comes in slides into the list
+// The comments of an activity in the sheet: who wrote each and when, where the user writes theirs, and one coming in slides in
 @Composable
 internal fun RepliesSheet(
     replies: RepliesUi,
@@ -851,12 +846,14 @@ internal fun RepliesSheet(
     val colors = KaisouTheme.colors
     var text by remember(replies.activityId) { mutableStateOf("") }
     val canSend = text.isNotBlank() && !replies.sending
+
     // A comment that was taken leaves the field empty for the next one
     var known by remember(replies.activityId) { mutableIntStateOf(replies.items.size) }
     LaunchedEffect(replies.items.size) {
         if (replies.items.size > known) text = ""
         known = replies.items.size
     }
+
     // Changing a comment puts its text in the field, and leaving that empties the field again
     LaunchedEffect(replies.editingId) {
         text = replies.editingId?.let { id -> replies.items.firstOrNull { it.id == id }?.text }.orEmpty()
@@ -895,6 +892,7 @@ internal fun RepliesSheet(
                     )
                     else -> {
                         val listState = rememberLazyListState()
+
                         // The newest comment is at the end, and it is where the list stays when one is added
                         LaunchedEffect(replies.items.size) { listState.animateScrollToItem(replies.items.lastIndex) }
                         LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(dimens.spaceLarge)) {
@@ -983,8 +981,7 @@ internal fun RepliesSheet(
     }
 }
 
-// A comment: the picture and the name, which open the profile of who wrote it, the text, and under it the heart with how many liked it
-// and the three dots with the options
+// A comment: the picture and name that open the profile, the text, and under it the heart with its count and the options
 @Composable
 private fun ReplyRow(reply: ReplyUi, onLike: () -> Unit, onMenu: () -> Unit, onProfile: () -> Unit, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
@@ -1031,8 +1028,7 @@ private fun ReplyRow(reply: ReplyUi, onLike: () -> Unit, onMenu: () -> Unit, onP
     }
 }
 
-// The menu of a comment in the sheet of the app: changing it and deleting it, only for the ones of the user, and for all of them
-// copying the text, sharing the activity and opening it on AniList, which has no page of its own for a comment
+// The menu of a comment: change and delete for the user's, and for all copy, share and open it on AniList
 @Composable
 internal fun ReplyMenu(reply: ReplyUi, activityId: Int, isOwn: Boolean, onEdit: () -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit) {
     val dimens = KaisouTheme.dimens
@@ -1107,8 +1103,7 @@ internal fun ReplyMenu(reply: ReplyUi, activityId: Int, isOwn: Boolean, onEdit: 
     }
 }
 
-// How big a heart is, which pops when the like is given and rests at its size otherwise. Only a like given now pops, not one that was
-// already there when the activity or the comment came up
+// How big a heart is, which pops only when the like is given now and rests otherwise
 @Composable
 private fun rememberLikePop(liked: Boolean, key: Int): Animatable<Float, AnimationVector1D> {
     val scale = remember { Animatable(1f) }

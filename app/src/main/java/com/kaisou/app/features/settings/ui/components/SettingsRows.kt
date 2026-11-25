@@ -44,7 +44,7 @@ import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.settings.ui.SettingsDimens
 import com.kaisou.app.features.settings.ui.SettingsType
 
-// The screen of a section, the arrow and the name on top and the cards of its settings under them, the scroll can be shared so the screen moves it
+// The screen of a section: the arrow and name on top and the cards of its settings, the scroll shareable with the screen
 @Composable
 fun SettingsPage(
     title: String,

@@ -9,7 +9,9 @@ import org.junit.Assert.assertTrue
 import org.junit.After
 import org.junit.Test
 
+// Tests of the rating of a card
 class RatingRepositoryTest {
+    // Builds the query of a manga
     private fun manga(id: Int, adult: Boolean) = RatingQuery(id, malId = null, adult = adult, manga = true, art = ArtQuery(listOf("Title"), null, false))
 
     private val original = RatingRepository.mangaRating
@@ -20,6 +22,7 @@ class RatingRepositoryTest {
         RatingRepository.mangaRating = original
     }
 
+    // A manga with nothing to say it by is not rated
     @Test
     fun aMangaWithNothingToSayItByIsNotRated() {
         RatingRepository.mangaRating = { _, _ -> ContentRating.NotRated }
@@ -29,6 +32,7 @@ class RatingRepositoryTest {
         assertFalse(rating.symbol)
     }
 
+    // A manga takes the age worked out from its tags
     @Test
     fun aMangaTakesTheAgeWorkedOutFromItsTags() {
         RatingRepository.mangaRating = { _, region -> ContentRating(AgeGroup.Sixteen, official = false, symbol = region == "BR") }
@@ -39,6 +43,7 @@ class RatingRepositoryTest {
         assertTrue(rating.symbol)
     }
 
+    // An adult manga is for eighteen when its tags could not be asked
     @Test
     fun anAdultMangaIsForEighteenWhenItsTagsCouldNotBeAsked() {
         RatingRepository.mangaRating = { _, _ -> null }
@@ -47,6 +52,7 @@ class RatingRepositoryTest {
         assertEquals(AgeGroup.Eighteen, rating.group)
     }
 
+    // A manga whose tags could not be asked has nothing and is not kept
     @Test
     fun aMangaWhoseTagsCouldNotBeAskedHasNothingAndIsNotKept() {
         RatingRepository.mangaRating = { _, _ -> null }
@@ -55,6 +61,7 @@ class RatingRepositoryTest {
         assertFalse(RatingRepository.known("BR", query).first)
     }
 
+    // What was found is known afterwards
     @Test
     fun whatWasFoundIsKnownAfterwards() {
         RatingRepository.mangaRating = { _, _ -> ContentRating.NotRated }

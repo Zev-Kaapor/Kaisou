@@ -64,7 +64,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.kaisou.app.features.title.ui.components.CoversViewer
 
-// Gets the covers of the volumes of a manga that the page of the title kept a moment ago, so opening this page asks MangaDex for nothing
+// Gets the covers of a manga that the title page kept a moment ago, so opening this page asks MangaDex for nothing
 class TitleCoversViewModel(application: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
     private val id: Int = checkNotNull(savedStateHandle[TitleIdArg])
     private val mutableState = MutableStateFlow<Load<List<MangaCover>>>(Load.Loading)
@@ -77,6 +77,7 @@ class TitleCoversViewModel(application: Application, savedStateHandle: SavedStat
         load()
     }
 
+    // Asks for the covers
     fun load() {
         mutableState.value = Load.Loading
         viewModelScope.launch {
@@ -86,7 +87,7 @@ class TitleCoversViewModel(application: Application, savedStateHandle: SavedStat
     }
 }
 
-// All the covers of the volumes of a manga in a grid, each with its volume and its language under it, and a tap opens the picture over the whole screen
+// All the covers of the volumes of a manga in a grid, each with its volume and language, a tap opening the picture
 @Composable
 fun TitleCoversScreen(onBack: () -> Unit, modifier: Modifier = Modifier, viewModel: TitleCoversViewModel = viewModel()) {
     val dimens = KaisouTheme.dimens

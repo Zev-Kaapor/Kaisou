@@ -18,8 +18,7 @@ import com.kaisou.app.features.title.data.ReviewSummaries
 import com.kaisou.app.features.title.data.TitleRepository
 import com.kaisou.app.features.title.data.TitleReview
 
-// What the page of all the reviews of a title shows: the reviews that came, whether there are more to ask for, and whether a page is
-// being asked for
+// What the page of all the reviews shows: the reviews that came, whether there are more, and whether a page is coming
 data class ReviewsUi(val reviews: List<TitleReview> = emptyList(), val hasMore: Boolean = true, val loading: Boolean = false, val failed: Boolean = false)
 
 // Asks for the reviews of a title a page at a time, the most useful first as AniList does, the next page when the list gets to its end
@@ -37,6 +36,7 @@ class ReviewsViewModel(application: Application, savedStateHandle: SavedStateHan
         loadMore()
     }
 
+    // Asks for the next page when there is one and none is being asked
     fun loadMore() {
         val now = mutableState.value
         if (now.loading || !now.hasMore) return
@@ -50,6 +50,7 @@ class ReviewsViewModel(application: Application, savedStateHandle: SavedStateHan
                 page++
                 before.copy(reviews = (before.reviews + next.reviews).distinctBy { it.id }, hasMore = next.hasMore, loading = false)
             }
+
             // The summaries show as they were written and come in the language of the app a moment after
             if (next != null) {
                 val translated = ReviewSummaries.translated(next.reviews).associateBy { it.id }

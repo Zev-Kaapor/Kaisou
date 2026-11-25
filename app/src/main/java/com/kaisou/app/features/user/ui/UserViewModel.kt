@@ -33,13 +33,12 @@ class UserViewModel(application: Application, savedStateHandle: SavedStateHandle
     private val name: String = checkNotNull(savedStateHandle[UserNameArg])
     private val repository = UserRepository(application)
 
-    // Whether the page is the user's own, known by the name before the page comes, which is when the placeholder says if it has the button
+    // Whether the page is the user's own, known by the name before the page comes, so the placeholder knows about the button
     val isSelf: Boolean = name.equals(AniListSession.viewer?.name, ignoreCase = true)
     private val mutableState = MutableStateFlow<Load<UserUi>>(Load.Loading)
     val state: StateFlow<Load<UserUi>> = mutableState.asStateFlow()
 
-    // The last things the person did, asked once the page came, so the page does not wait for them
-    // Null while they are coming, which the page shows as placeholders
+    // The last things the person did, asked once the page came, null while they come, shown as placeholders
     private val mutableRecent = MutableStateFlow<List<UserActivity>?>(null)
     val recent: StateFlow<List<UserActivity>?> = mutableRecent.asStateFlow()
 
@@ -47,8 +46,7 @@ class UserViewModel(application: Application, savedStateHandle: SavedStateHandle
     private val mutableCounts = MutableStateFlow<Pair<Int, Int>?>(null)
     val counts: StateFlow<Pair<Int, Int>?> = mutableCounts.asStateFlow()
 
-    // Whether what they say of themselves is shown in the language of the app, which it is until the user turns it off, and that text when it is
-    // there. It shows as each group of it comes back
+    // Whether what they say of themselves is shown translated, until the user turns it off, and that text as each group comes back
     private val mutableTranslate = MutableStateFlow(true)
     val translate: StateFlow<Boolean> = mutableTranslate.asStateFlow()
     private val mutableAbout = MutableStateFlow<String?>(null)
@@ -65,14 +63,17 @@ class UserViewModel(application: Application, savedStateHandle: SavedStateHandle
         load()
     }
 
+    // Asks for the page of the person
     fun load() {
         mutableState.value = Load.Loading
         viewModelScope.launch {
             val user = repository.user(name)
             mutableState.value = if (user == null) Load.Failed else Load.Done(user)
             if (user == null) return@launch
+
             // The text is put in the language of the app apart, so the rest of the page does not wait for it
             launch { translateAbout(user.about) }
+
             // The manga of the favourites are said all at once, so their ages come in one question and the cards find them ready
             val manga = (user.favourites.anime + user.favourites.manga).filter { it.rating.manga }.map { it.rating.anilistId }
             if (manga.isNotEmpty()) MangaAgeRepository.prefetch(manga)
@@ -82,7 +83,7 @@ class UserViewModel(application: Application, savedStateHandle: SavedStateHandle
         }
     }
 
-    // Turns the translation of what they say of themselves on or off. The text comes back in the language it was written when it is off
+    // Turns the translation of what they say of themselves on or off
     fun toggleTranslate() {
         val on = !mutableTranslate.value
         mutableTranslate.value = on
@@ -90,6 +91,7 @@ class UserViewModel(application: Application, savedStateHandle: SavedStateHandle
         if (on && about != null && mutableAbout.value == null) viewModelScope.launch { translateAbout(about) }
     }
 
+    // Translates what they say of themselves, group by group
     private suspend fun translateAbout(text: String) {
         if (!mutableTranslate.value || mutableAbout.value != null || text.isBlank() || !AppLanguage.needsTranslation) return
         mutableAbout.value = MarkdownTranslator.translate(text, AppLanguage.translationCode) { partial -> mutableAbout.value = partial }
@@ -115,6 +117,7 @@ class UserViewModel(application: Application, savedStateHandle: SavedStateHandle
         }
     }
 
+    // Sets whether the user follows the person
     private fun setFollowing(value: Boolean) {
         mutableState.update { state -> if (state is Load.Done) Load.Done(state.value.copy(isFollowing = value)) else state }
     }

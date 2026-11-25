@@ -16,16 +16,15 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-// The rating of an anime on MyAnimeList, one small request by the id AniList gives. Mangas have none there. The Client ID comes
-// from local.properties
+// The rating of an anime on MyAnimeList by the id AniList gives, none for manga, with the Client ID from local.properties
 object MalClient {
+    // Address of the API, the time to wait, and how long and how many ratings are kept in memory
     private const val ApiUrl = "https://api.myanimelist.net/v2"
     private const val TimeoutMillis = 10_000
     private const val CacheMillis = 60L * 60L * 1000L
     private const val MaxEntries = 500
 
-    // What is kept on the disk and for how long: a week, the rating of a title almost never changes. A title with no rating is kept
-    // as the word none
+    // What is kept on the disk and for how long, a week, a title with no rating being kept as the word none
     private const val StoreSpace = "mal"
     private const val StoreMillis = 7L * 24L * 60L * 60L * 1000L
     private const val None = "none"
@@ -74,6 +73,7 @@ object MalClient {
         }
     }
 
+    // Keeps a rating in memory and on the disk
     private fun keep(malId: Int, rating: MalRating?) {
         cache.put(malId, rating)
         AppStore.put(StoreSpace, malId.toString(), rating?.code ?: None)

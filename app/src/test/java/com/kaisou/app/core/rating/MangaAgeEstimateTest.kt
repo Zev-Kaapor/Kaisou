@@ -4,11 +4,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+// Tests of the estimate of the age of a manga
 class MangaAgeEstimateTest {
-    // A series with the tags and genres AniList gave it, and the age the table gives it. Taken from the table that was calibrated, so the port of it
-    // to Kotlin has to give the same age to every one of them
+    // A series with the tags and genres of AniList and the age of the calibrated table, which the Kotlin estimate has to match
     private class Case(val name: String, val age: Int, val tags: List<AgeTag>, val genres: List<String>, val adult: Boolean)
 
+    // Builds a case of the table
     private fun case(name: String, age: Int, tags: List<AgeTag>, genres: List<String>, adult: Boolean) = Case(name, age, tags, genres, adult)
 
     private val cases = listOf(
@@ -77,27 +78,32 @@ class MangaAgeEstimateTest {
         case("Boku no Kokoro no Yabai Yatsu", 10, listOf(AgeTag("Heterosexual", 98, false, false), AgeTag("School", 92, false, false), AgeTag("Male Protagonist", 90, false, false), AgeTag("Coming of Age", 88, false, false), AgeTag("Female Protagonist", 76, false, false), AgeTag("Shounen", 70, false, false), AgeTag("Iyashikei", 56, false, false), AgeTag("Chuunibyou", 45, false, false), AgeTag("Meta", 40, false, false), AgeTag("Acting", 40, false, false), AgeTag("Modeling", 40, false, false)), listOf("Comedy", "Romance", "Slice of Life"), false)
     )
 
+    // Every series of the calibration gets the same age
     @Test
     fun everySeriesOfTheCalibrationGetsTheSameAge() {
         cases.forEach { assertEquals(it.name, it.age, MangaAgeEstimate.age(it.tags, it.genres, it.adult)) }
     }
 
+    // The adult mark of AniList is eighteen
     @Test
     fun theAdultMarkOfAniListIsEighteen() {
         assertEquals(AgeGroup.Eighteen, MangaAgeEstimate.of(listOf(AgeTag("Nudity", 20, false, false)), listOf("Comedy"), true))
     }
 
+    // A series with nothing known has no age
     @Test
     fun aSeriesWithNothingKnownHasNoAge() {
         assertNull(MangaAgeEstimate.of(emptyList(), emptyList(), false))
     }
 
+    // A few votes on a heavy tag do not count
     @Test
     fun aFewVotesOnAHeavyTagDoNotCount() {
         val few = listOf(AgeTag("Gore", 30, false, false), AgeTag("Shounen", 90, false, false))
         assertEquals(AgeGroup.Twelve, MangaAgeEstimate.of(few, listOf("Action"), false))
     }
 
+    // A tag that AniList flags as adult but is fan service is not eighteen
     @Test
     fun aTagThatAniListFlagsAsAdultButIsFanServiceIsNotEighteen() {
         val tags = listOf(AgeTag("Large Breasts", 80, false, true), AgeTag("Shounen", 90, false, false))

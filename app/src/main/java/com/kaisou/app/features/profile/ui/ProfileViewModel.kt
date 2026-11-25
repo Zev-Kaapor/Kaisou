@@ -43,6 +43,7 @@ class ProfileViewModel(application: Application, savedStateHandle: SavedStateHan
         load()
     }
 
+    // Asks for the page
     fun load() {
         mutableState.value = Load.Loading
         viewModelScope.launch {
@@ -76,6 +77,7 @@ class ProfileViewModel(application: Application, savedStateHandle: SavedStateHan
         }
     }
 
+    // Sets whether the page is a favourite
     private fun setFavourite(value: Boolean) {
         mutableState.update { state -> if (state is Load.Done) Load.Done(state.value.copy(isFavourite = value)) else state }
     }

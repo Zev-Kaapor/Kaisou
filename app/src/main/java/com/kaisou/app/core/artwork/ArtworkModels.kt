@@ -15,6 +15,7 @@ class Artwork(
 
 // What a site answered: its pictures of one kind, and whether the answer failed, a title the site does not know is not a failure
 class Artworks(val list: List<Artwork>, val failed: Boolean) {
+    // The empty list of pictures and the one that failed
     companion object {
         val None = Artworks(emptyList(), failed = false)
         val Failed = Artworks(emptyList(), failed = true)
@@ -25,6 +26,7 @@ class Artworks(val list: List<Artwork>, val failed: Boolean) {
 class SiteImages(val posters: Artworks, val logos: Artworks, val backdrops: Artworks) {
     val failed: Boolean get() = posters.failed || logos.failed || backdrops.failed
 
+    // The pictures of a site with nothing in them and the ones that failed
     companion object {
         val None = SiteImages(Artworks.None, Artworks.None, Artworks.None)
         val Failed = SiteImages(Artworks.Failed, Artworks.Failed, Artworks.Failed)
@@ -33,6 +35,7 @@ class SiteImages(val posters: Artworks, val logos: Artworks, val backdrops: Artw
 
 // The ratings the countries give a title, by country as in BR, each as the country writes it, and whether the answer failed
 class Certified(val byCountry: Map<String, String>, val failed: Boolean) {
+    // The ratings with nothing in them and the ones that failed
     companion object {
         val None = Certified(emptyMap(), failed = false)
         val Failed = Certified(emptyMap(), failed = true)
@@ -41,15 +44,16 @@ class Certified(val byCountry: Map<String, String>, val failed: Boolean) {
 
 // The day each season of a series first aired, by season number, and whether the answer failed
 class SeasonStarts(val byNumber: Map<Int, LocalDate>, val failed: Boolean) {
+    // The season starts with nothing in them and the ones that failed
     companion object {
         val None = SeasonStarts(emptyMap(), failed = false)
         val Failed = SeasonStarts(emptyMap(), failed = true)
     }
 }
 
-// What a site has of one season of a series: the day the season first aired when the site says it, its posters and its backdrops, and whether
-// the answer failed
+// What a site has of one season of a series: the day it first aired, its posters, its backdrops and whether it failed
 class SeasonArtwork(val airDate: LocalDate?, val posters: Artworks, val backdrops: Artworks, val failed: Boolean) {
+    // The season with nothing in it and the one that failed
     companion object {
         val None = SeasonArtwork(null, Artworks.None, Artworks.None, failed = false)
         val Failed = SeasonArtwork(null, Artworks.None, Artworks.None, failed = true)
@@ -58,13 +62,13 @@ class SeasonArtwork(val airDate: LocalDate?, val posters: Artworks, val backdrop
 
 // The picture of a season of a series that is its own, the poster and the backdrop, each null when there is none
 class SeasonPictures(val posterUrl: String?, val backdropUrl: String?) {
+    // The pictures of a season with nothing in them
     companion object {
         val None = SeasonPictures(null, null)
     }
 }
 
-// What is known of a title: the address of its best poster and of its best backdrop, the addresses of its logos in the order they
-// are worth trying, the ratings of the countries and where it is on TMDB, which is what its trailer is asked by
+// What is known of a title: its best poster and backdrop, its logos, the ratings of the countries and its place on TMDB
 class TitleArt(
     val posterUrl: String?,
     val backdropUrl: String?,
@@ -73,13 +77,13 @@ class TitleArt(
     val tmdbKind: String? = null,
     val tmdbId: Int? = null
 ) {
+    // The title with nothing known of it
     companion object {
         val None = TitleArt(null, null, emptyList(), emptyMap())
     }
 }
 
-// What is known of a title to look it up by name when the other sites do not have its id: the names it goes by, the year
-// it started and whether it is a movie
+// What is known of a title to look it up by name: the names it goes by, the year it started and whether it is a movie
 class ArtQuery(val names: List<String>, val year: Int?, val movie: Boolean)
 
 // The ids of a title on the other sites, the kind is what TMDB calls it, tv or movie

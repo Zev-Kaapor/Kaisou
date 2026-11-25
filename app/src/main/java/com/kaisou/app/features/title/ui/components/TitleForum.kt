@@ -39,8 +39,7 @@ import com.kaisou.app.features.title.data.LinkedTitle
 import com.kaisou.app.features.title.data.ThreadTag
 import com.kaisou.app.features.title.ui.TitleDimens
 
-// A text of the forum: the text as AniList writes it, and the links to a title that stand alone in a line as a card of the title, as the site shows
-// them. A link to a title that is not known stays as a link
+// A text of the forum as AniList writes it, with the links to a known title alone in a line shown as a card
 @Composable
 internal fun ForumText(text: String, cards: Map<Int, LinkedTitle>, onOpenTitle: (Int) -> Unit, style: TextStyle, color: Color, modifier: Modifier = Modifier) {
     val parts = remember(text, cards.keys) { ForumLinks.split(text, cards.keys) }
@@ -87,7 +86,7 @@ private fun LinkedTitleCard(title: LinkedTitle, onOpen: (Int) -> Unit) {
     }
 }
 
-// The tags of a thread in a row that breaks into lines: its categories and the titles it is about, which open the title when they are touched
+// The tags of a thread in a row that breaks into lines, the titles opening when touched
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ThreadTags(tags: List<ThreadTag>, onOpenTitle: (Int) -> Unit) {
