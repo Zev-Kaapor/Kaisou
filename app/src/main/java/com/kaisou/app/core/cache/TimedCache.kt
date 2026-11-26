@@ -32,6 +32,11 @@ class TimedCache<V>(private val lifeMillis: Long, private val maxEntries: Int) {
         synchronized(entries) { entries.remove(id) }
     }
 
+    // Forgets all that was kept
+    fun clear() {
+        synchronized(entries) { entries.clear() }
+    }
+
     // Constants of the cache
     private companion object {
         // How full the map may get before it grows

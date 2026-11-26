@@ -1,11 +1,9 @@
 package com.kaisou.app.core.rating
 
 // Coroutines
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 // JSON parsing
@@ -16,12 +14,13 @@ import com.kaisou.app.core.anilist.AniListClient
 import com.kaisou.app.core.auth.AniListSession
 import com.kaisou.app.core.cache.AppStore
 import com.kaisou.app.core.cache.TimedCache
+import com.kaisou.app.core.net.IdBatcher
 
 // The age of the manga on the cards, asked of AniList in batches of up to 50 and kept in memory and on the phone
 object MangaAgeRepository {
     // The region of Brazil, how long a batch waits and how big it is, the mark of no age, and where and how long ages are kept
     private const val BrazilRegion = "BR"
-    private const val BatchWaitMillis = 250L
+    private const val BatchWaitMillis = 1_500L
     private const val BatchSize = 50
     private const val NoAge = -1
     private const val StoreSpace = "manga-age1"
@@ -38,12 +37,8 @@ object MangaAgeRepository {
     // The age of a title found, as a number, or NoAge for one with nothing known to say it by
     private val memory = TimedCache<Int>(CacheMillis, MaxEntries)
 
-    // The titles that wait for the next question, with who waits for each. The question goes when the wait of a moment is over
-    private val waiting = LinkedHashMap<Int, CompletableDeferred<Int?>>()
-
-    // The titles of the question that went and has no answer yet, so whoever asks for one of them waits for that answer
-    private val asking = HashMap<Int, CompletableDeferred<Int?>>()
-    private var running = false
+    // The titles asked within a moment go in one question
+    private val batcher = IdBatcher(BatchSize, BatchWaitMillis, scope, ::ask)
 
     // The rating of a manga only when it is already in memory, with no wait, null when it is not. A card with it shows it at once
     fun known(id: Int, region: String): ContentRating? = memory.get(id)?.let { made(it.value, region) }
@@ -72,32 +67,8 @@ object MangaAgeRepository {
                 return age
             }
         }
-        val answer = synchronized(waiting) {
-            val one = asking[id] ?: waiting.getOrPut(id) { CompletableDeferred() }
-            if (!running) {
-                running = true
-                scope.launch { runBatches() }
-            }
-            one
-        }
-        return answer.await()
-    }
-
-    // Asks for the titles that wait, up to 50 at a time, until none is left
-    private suspend fun runBatches() {
-        delay(BatchWaitMillis)
-        while (true) {
-            val batch = synchronized(waiting) {
-                if (waiting.isEmpty()) {
-                    running = false
-                    return
-                }
-                waiting.keys.take(BatchSize).associateWith { waiting.remove(it)!! }.also { asking.putAll(it) }
-            }
-            val found = ask(batch.keys.toList())
-            synchronized(waiting) { asking.keys.removeAll(batch.keys) }
-            batch.forEach { (id, one) -> one.complete(found?.get(id) ?: if (found == null) null else NoAge) }
-        }
+        val found = batcher.get(id) ?: return null
+        return found[id] ?: NoAge
     }
 
     // The age of each title of the group, by its id. Null when AniList could not be reached

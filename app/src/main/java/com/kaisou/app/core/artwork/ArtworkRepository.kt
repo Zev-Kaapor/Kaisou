@@ -11,7 +11,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 // Project resources
-import com.kaisou.app.core.anilist.AniListClient
 import com.kaisou.app.core.cache.AppStore
 import com.kaisou.app.core.cache.TimedCache
 import kotlinx.coroutines.delay
@@ -21,7 +20,7 @@ class ArtworkRepository {
     // What was found of a title and whether the answer failed
     private class Found(val art: TitleArt, val failed: Boolean)
 
-    private val ids = IdResolver(AniListClient())
+    private val ids = IdResolver()
 
     // What was found per title, one with nothing means the title has none, so it is not asked again
     private val cache = TimedCache<TitleArt>(CacheMillis, MaxEntries)

@@ -270,7 +270,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         if (mutableState.value.status != TitleStatus.Content || turningFavourite || savingEntry) return
         if (System.currentTimeMillis() - askedAt < RefreshMinMillis) return
         viewModelScope.launch {
-            val fresh = repository.header(id) ?: return@launch
+            val fresh = repository.header(id, fresh = true) ?: return@launch
             askedAt = System.currentTimeMillis()
             if (!turningFavourite) mutableState.update { state -> if (state.status == TitleStatus.Content) state.copy(title = fresh) else state }
         }
@@ -579,7 +579,7 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
         const val ArtWaitMillis = 6_000L
 
         // The least time between two questions about the title that is on the page when the user comes back to the app
-        const val RefreshMinMillis = 20_000L
+        const val RefreshMinMillis = 2L * 60_000L
 
         // How much of the synopsis is translated
         const val TranslatedCharacters = 2_000

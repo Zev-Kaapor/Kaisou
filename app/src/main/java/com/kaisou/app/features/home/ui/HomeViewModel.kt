@@ -22,6 +22,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import com.kaisou.app.core.designsystem.components.ScrollPosition
 import kotlinx.coroutines.launch
@@ -135,6 +136,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     // The activities whose like is going to AniList
     private val liking = mutableSetOf<Int>()
     private var loadedAt = 0L
+
+    // When each part lower on the page was last asked for, so a quiet ask leaves out the ones that are still fresh
+    private var belowAt = 0L
+    private var recommendedAt = 0L
+    private var sequelsAt = 0L
+
+    // Whether the Home is the screen being used, so the lower parts are not asked while the user is somewhere else
+    private val shown = MutableStateFlow(true)
+
+    // Told by the screen when it comes to the front and when it leaves
+    fun setShown(value: Boolean) {
+        shown.value = value
+    }
 
     // The last change of the list that the shelves were asked again for
     private var seenListVersion = ListChanges.version.value
@@ -299,11 +313,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val listChanged = ListChanges.version.value != seenListVersion
         if (!listChanged && SystemClock.elapsedRealtime() - loadedAt < minAgeMillis) return
         seenListVersion = ListChanges.version.value
-        refreshUnder()
+        refreshUnder(force = listChanged)
     }
 
-    // Asks for what is under the hero again, quietly, and swaps each part in when it comes
-    private fun refreshUnder() {
+    // Asks quietly for what is under the hero, the lower parts only when older than their time or forced, as after a list change
+    private fun refreshUnder(force: Boolean = false) {
         val userId = AniListSession.viewer?.id ?: return
         quietJob?.cancel()
         quietJob = viewModelScope.launch {
@@ -312,15 +326,34 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 loadedAt = SystemClock.elapsedRealtime()
                 rebuild(userId)
             }
-            askLower(userId)
+            askLower(userId, force)
         }
     }
 
-    // The three lower parts under the hero are asked at once, each going into the page as it comes, none holding it
-    private fun CoroutineScope.askLower(userId: Int) {
-        launch { repository.below(userId)?.let { parts = parts.copy(below = it); rebuild(userId) } }
-        launch { repository.recommended(userId)?.let { parts = parts.copy(recommended = it); rebuild(userId) } }
-        launch { repository.sequels(userId)?.let { parts = parts.copy(sequels = it); rebuild(userId) } }
+    // Asks the three lower parts at once, each going into the page as it comes, one asked or kept within its time left alone
+    private fun CoroutineScope.askLower(userId: Int, force: Boolean) {
+        val now = SystemClock.elapsedRealtime()
+        if (force || now - belowAt >= HomeDimens.BelowRefreshMillis) launch {
+            repository.below(userId, if (force) 0L else HomeDimens.BelowRefreshMillis)?.let {
+                belowAt = SystemClock.elapsedRealtime()
+                parts = parts.copy(below = it)
+                rebuild(userId)
+            }
+        }
+        if (force || now - recommendedAt >= HomeDimens.RecommendedRefreshMillis) launch {
+            repository.recommended(userId, if (force) 0L else HomeDimens.RecommendedRefreshMillis)?.let {
+                recommendedAt = SystemClock.elapsedRealtime()
+                parts = parts.copy(recommended = it)
+                rebuild(userId)
+            }
+        }
+        if (force || now - sequelsAt >= HomeDimens.SequelsRefreshMillis) launch {
+            repository.sequels(userId, if (force) 0L else HomeDimens.SequelsRefreshMillis)?.let {
+                sequelsAt = SystemClock.elapsedRealtime()
+                parts = parts.copy(sequels = it)
+                rebuild(userId)
+            }
+        }
     }
 
     // Puts what is known into the page, if the page is already on the screen. If it is not, it is put in when it shows
@@ -396,11 +429,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             // What was kept of what is lower on the page is shown at once, and the new answers take its place as they come
             if (userId != null && !refreshing) parts = repository.kept(userId)
 
-            // The top goes alone first, what the page waits for, and the lower parts are asked after it and do not hold the page
+            // The top goes alone first, what the page waits for, and the lower parts after it, the fresh ones kept being left alone
             val top = async { userId?.let { repository.top(it) } }
             if (userId != null) launch {
                 top.await()
-                askLower(userId)
+
+                // With the kept parts on the screen the lower ones wait a moment, and are left for later if the user leaves meanwhile
+                if (!refreshing && parts.below != null) {
+                    val stayed = withTimeoutOrNull(HomeDimens.LowerDelayMillis) { shown.first { !it } } == null
+                    if (!stayed) return@launch
+                }
+                askLower(userId, force = refreshing)
             }
             val heroes = repository.heroes(fresh = refreshing)
             if (heroes == null) {

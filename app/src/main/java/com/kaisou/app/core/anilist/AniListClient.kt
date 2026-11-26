@@ -8,6 +8,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 // Java networking and time
 import com.kaisou.app.core.cache.AppStore
+import com.kaisou.app.core.cache.TimedCache
 import com.kaisou.app.core.net.Gates
 import com.kaisou.app.core.net.TooManyRequests
 import java.net.HttpURLConnection
@@ -142,19 +143,20 @@ class AniListClient {
         fetchShelves(TopSpace, userId.toString(), TopQuery, JSONObject().put("userId", userId), token)
 
     // The part under the top of the Home, shown from what was kept while the new one comes
-    suspend fun belowShelves(userId: Int, token: String?): AniShelves? {
+    suspend fun belowShelves(userId: Int, token: String?, maxAgeMillis: Long = 0L): AniShelves? {
         val now = System.currentTimeMillis() / MillisPerSecond
         val season = AniSeason.of(LocalDate.now())
         val next = season.next()
         val variables = JSONObject()
             .put("userId", userId).put("from", now - NewEpisodesSeconds).put("to", now)
             .put("season", season.name).put("year", season.year).put("nextSeason", next.name).put("nextYear", next.year)
-        return fetchShelves(BelowSpace, userId.toString(), BelowQuery, variables, token)
+        return fetchShelves(BelowSpace, userId.toString(), BelowQuery, variables, token, maxAgeMillis)
     }
 
-    // Asks for shelves, keeps the answer and falls back to the one kept when AniList does not answer
-    private suspend fun fetchShelves(space: String, key: String, query: String, variables: JSONObject, token: String?): AniShelves? =
+    // Asks for shelves and keeps the answer, using one kept within the age given, or when AniList does not answer
+    private suspend fun fetchShelves(space: String, key: String, query: String, variables: JSONObject, token: String?, maxAgeMillis: Long = 0L): AniShelves? =
         withContext(Dispatchers.IO) {
+            if (maxAgeMillis > 0) AppStore.get(space, key, maxAgeMillis)?.let(::parseShelves)?.let { return@withContext it }
             val fresh = try {
                 post(query, variables, token)?.toString()
             } catch (_: Exception) {
@@ -178,9 +180,10 @@ class AniListClient {
     suspend fun keptSequels(userId: Int): List<AniCard>? =
         withContext(Dispatchers.IO) { AppStore.getAny(SequelsSpace, userId.toString())?.let(::parseSequels) }
 
-    // What is recommended after the list of the user, asked apart because it is heavy
-    suspend fun recommended(userId: Int, token: String?): AniRecommended? = withContext(Dispatchers.IO) {
+    // What is recommended after the list of the user, asked apart because it is heavy, one kept within the age given used as it is
+    suspend fun recommended(userId: Int, token: String?, maxAgeMillis: Long = 0L): AniRecommended? = withContext(Dispatchers.IO) {
         val key = userId.toString()
+        if (maxAgeMillis > 0) AppStore.get(RecommendedSpace, key, maxAgeMillis)?.let(::parseRecommended)?.let { return@withContext it }
         val fresh = try {
             post(RecommendedQuery, JSONObject().put("userId", userId), token)?.toString()
         } catch (_: Exception) {
@@ -194,8 +197,9 @@ class AniListClient {
     }
 
     // The sequels of what the user finished and does not have, asked in batches and kept like the shelves
-    suspend fun missingSequels(userId: Int, token: String?): List<AniCard>? = withContext(Dispatchers.IO) {
+    suspend fun missingSequels(userId: Int, token: String?, maxAgeMillis: Long = 0L): List<AniCard>? = withContext(Dispatchers.IO) {
         val key = userId.toString()
+        if (maxAgeMillis > 0) AppStore.get(SequelsSpace, key, maxAgeMillis)?.let(::parseSequels)?.let { return@withContext it }
         val fresh = try {
             val ids = sequelIds(key, userId, token)
             if (ids == null) {
@@ -344,32 +348,38 @@ class AniListClient {
             null
         }
 
-    // The season before a title, null when it has none or AniList fails, blocks so call it off the main thread
-    fun prequelOf(id: Int): Int? =
-        try {
-            val data = post(PrequelQuery, JSONObject().put("id", id), token = null)
-            val edges = data?.getJSONObject("Media")?.getJSONObject("relations")?.getJSONArray("edges")
-            edges?.let { list ->
-                (0 until list.length()).map { list.getJSONObject(it) }
-                    .firstOrNull { it.getString("relationType") == "PREQUEL" && it.getJSONObject("node").getString("type") == "ANIME" }
-                    ?.getJSONObject("node")
-                    ?.getInt("id")
-            }
-        } catch (_: Exception) {
-            null
-        }
+    // The season before each of the titles in one question, a title with none left out, null when AniList fails
+    suspend fun prequels(ids: List<Int>): Map<Int, Int>? {
+        val media = query(PrequelQuery, JSONObject().put("ids", JSONArray(ids)), token = null)?.optJSONObject("Page")?.optJSONArray("media") ?: return null
+        return (0 until media.length()).map { media.getJSONObject(it) }.mapNotNull { item ->
+            val edges = item.optJSONObject("relations")?.optJSONArray("edges") ?: return@mapNotNull null
+            (0 until edges.length()).map { edges.getJSONObject(it) }
+                .firstOrNull { it.optString("relationType") == "PREQUEL" && it.optJSONObject("node")?.optString("type") == "ANIME" }
+                ?.optJSONObject("node")
+                ?.optInt("id")
+                ?.let { item.getInt("id") to it }
+        }.toMap()
+    }
 
-    // Any question to AniList, for the screens that own their query: the data of the answer, null when there was none or it failed
-    suspend fun query(query: String, variables: JSONObject, token: String?): JSONObject? = withContext(Dispatchers.IO) {
+    // Any question to AniList, answered again from memory for a moment unless the screen says not to keep it
+    suspend fun query(query: String, variables: JSONObject, token: String?, keep: Boolean = true): JSONObject? = withContext(Dispatchers.IO) {
+        val key = if (keep && !isChange(query)) "${token.hashCode()}\n$query\n$variables" else null
+        key?.let { asked -> answers.get(asked.hashCode())?.value?.takeIf { it.first == asked }?.let { return@withContext it.second } }
         try {
-            post(query, variables, token)
+            post(query, variables, token)?.also { data -> key?.let { answers.put(it.hashCode(), it to data) } }
         } catch (_: Exception) {
             null
         }
     }
 
-    // Asks AniList and gives the data of the answer, null when there was none. When AniList asks for rest the request waits for it
-    private fun post(query: String, variables: JSONObject, token: String?): JSONObject? = Gates.AniList.run { postOnce(query, variables, token) }
+    // Asks AniList and gives its data, waiting when it asks for rest, and a change forgets the answers kept
+    private fun post(query: String, variables: JSONObject, token: String?): JSONObject? {
+        if (isChange(query)) answers.clear()
+        return Gates.AniList.run { postOnce(query, variables, token) }
+    }
+
+    // Tells whether a question changes the account
+    private fun isChange(query: String): Boolean = query.trimStart().startsWith("mutation")
 
     // Sends a question to AniList once and reads the answer
     private fun postOnce(query: String, variables: JSONObject, token: String?): JSONObject? {
@@ -460,6 +470,11 @@ class AniListClient {
 
     // Constants of the client
     private companion object {
+        // The answers kept in memory for a moment, by the question, and how many of them
+        const val AnswerMillis = 90_000L
+        const val MaxAnswers = 40
+        val answers = TimedCache<Pair<String, JSONObject>>(AnswerMillis, MaxAnswers)
+
         // Address of the API and the time to wait for it
         const val ApiUrl = "https://graphql.anilist.co"
         const val TimeoutMillis = 15_000
@@ -543,7 +558,7 @@ class AniListClient {
         const val SequelIdsSpace = "sequelids2"
         const val SequelIdsMillis = 6L * 60L * 60L * 1000L
         const val SequelBatch = 50
-        const val MaxSequelBatches = 4
+        const val MaxSequelBatches = 1
 
         // The new titles only count when some people already have them, otherwise the ones just made up fill the shelf
         const val NewMinPopularity = 100
@@ -622,11 +637,11 @@ class AniListClient {
                     "onList: false, isAdult: false) { $ShelfCard } }"
             }.joinToString(" ") + " }"
 
-        // The title that comes before another one, to find the series of a season that the other sites do not know yet
+        // The titles that come before others, to find the series of a season that the other sites do not know yet
         const val PrequelQuery = """
-            query (${'$'}id: Int) {
-              Media(id: ${'$'}id, type: ANIME) {
-                relations { edges { relationType node { id type } } }
+            query (${'$'}ids: [Int]) {
+              Page(perPage: 50) {
+                media(id_in: ${'$'}ids, type: ANIME) { id relations { edges { relationType node { id type } } } }
               }
             }
         """

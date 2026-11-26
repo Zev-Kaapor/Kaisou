@@ -94,8 +94,16 @@ object HomeDimens {
     val SkeletonMetaWidth = 170.dp
 
     // What is under the hero is asked again by itself when the user comes back after a while, and every few minutes
-    const val ResumeRefreshMinMillis = 60_000L
+    const val ResumeRefreshMinMillis = 3L * 60_000L
     const val AutoRefreshMillis = 5L * 60_000L
+
+    // Only the top is asked each time, the lower parts only when older than their own time
+    const val BelowRefreshMillis = 15L * 60_000L
+    const val RecommendedRefreshMillis = 3L * 60L * 60_000L
+    const val SequelsRefreshMillis = 3L * 60L * 60_000L
+
+    // How long the lower parts wait on a Home that already shows what was kept, dropped if the user leaves, to spare the limit
+    const val LowerDelayMillis = 6_000L
 
     // Placeholder of what is under the hero: how many friends and cards, and how much width the bars take
     const val SkeletonFriends = 5

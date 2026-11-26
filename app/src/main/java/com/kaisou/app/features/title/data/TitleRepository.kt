@@ -36,6 +36,7 @@ import com.kaisou.app.core.anilist.StaffRoles
 import com.kaisou.app.core.artwork.ArtQuery
 import com.kaisou.app.core.auth.AniListSession
 import com.kaisou.app.core.cache.AppStore
+import com.kaisou.app.core.cache.TimedCache
 import com.kaisou.app.core.designsystem.theme.Background
 import com.kaisou.app.core.designsystem.theme.ContainerHigh
 import com.kaisou.app.core.language.AppLanguage
@@ -64,11 +65,12 @@ class TitleRepository(context: Context) {
     private val relationNames by lazy { names(R.array.title_relation_keys, R.array.title_relation_names) }
     private val mapper = HomeMapper(resources)
 
-    // The title of the page, null when AniList could not be reached or does not know it
-    suspend fun header(id: Int): TitleUi? {
+    // The title of the page, the one seen a moment ago unless a new one is asked for, null when AniList fails or does not know it
+    suspend fun header(id: Int, fresh: Boolean = false): TitleUi? {
+        if (!fresh) headers.get(id)?.let { return it.value }
         val data = askAll(HeaderQuery, id) ?: return null
         val title = data.optJSONObject("Media")?.let(::parse) ?: return null
-        return title.copy(friends = friends(data.optJSONObject("friends")?.optJSONArray("mediaList"), title.manga))
+        return title.copy(friends = friends(data.optJSONObject("friends")?.optJSONArray("mediaList"), title.manga)).also { headers.put(id, it) }
     }
 
     // Everything after the top in one question: the details, recommendations, characters and staff, kept on the phone for a while
@@ -78,13 +80,13 @@ class TitleRepository(context: Context) {
         val data = JSONObject(raw)
         val details = data.optJSONObject("details") ?: return null
         val parsed = parseDetails(details)
-        val people = cast(data.optJSONObject("cast"))
+        val people = cast(data.optJSONObject("cast") ?: details)
 
         // The ones that made the title are in the data too, by what they did, each one a link
         val makers = people.creators.groupBy { it.role }.map { (role, list) -> TitleDatum(role.orEmpty(), list.map { it.name }, list.map { it.ref }) }
         return TitleExtras(
             details = parsed.copy(tags = inTheLanguage(parsed.tags), data = afterStudios(parsed.data, makers)),
-            recommendations = recommendations(data.optJSONObject("recommended")),
+            recommendations = recommendations(data.optJSONObject("recommended") ?: details),
             people = people
         )
     }
@@ -211,6 +213,7 @@ class TitleRepository(context: Context) {
 
     // The reviews, how the scores and lists are spread and the forum threads, null when AniList could not be reached
     suspend fun community(id: Int, manga: Boolean): TitleCommunity? {
+        communities.get(id)?.let { return it.value }
         val variables = JSONObject().put("id", id).put("fresh", -Random.nextInt(1, Int.MAX_VALUE))
         val data = client.query(CommunityQuery, variables, AniListSession.token) ?: return null
         val media = data.optJSONObject("Media")
@@ -228,7 +231,7 @@ class TitleRepository(context: Context) {
             favourites = media?.optInt("favourites") ?: 0,
             trends = objects(media?.optJSONObject("trends")?.optJSONArray("nodes")).map { TitleTrend(it.optLong("date"), it.optInt("trending")) }.sortedBy { it.day },
             threads = objects(threads).mapNotNull(::threadOf)
-        )
+        ).also { communities.put(id, it) }
     }
 
     // What a person did to the title as AniList gives it, said in the language of the app, null when it has no author
@@ -279,9 +282,8 @@ class TitleRepository(context: Context) {
         return ThreadsPage(objects(block.optJSONArray("threads")).mapNotNull(::threadOf), block.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true)
     }
 
-    // A thread with its whole text. Null when AniList could not be reached or does not have it
-    suspend fun thread(id: Int): ThreadBody? {
-        val found = client.query(ThreadQuery, JSONObject().put("id", id), AniListSession.token)?.optJSONObject("Thread") ?: return null
+    // A thread with its whole text, null when it has not what a thread needs
+    private fun threadBody(found: JSONObject): ThreadBody? {
         val thread = threadOf(found) ?: return null
         val tags = objects(found.optJSONArray("categories")).mapNotNull { category -> text(category, "name")?.let { ThreadTag(it) } } +
             objects(found.optJSONArray("mediaCategories")).mapNotNull { media ->
@@ -316,11 +318,21 @@ class TitleRepository(context: Context) {
         }.toMap()
     }
 
+    // A thread with its whole text and the first page of its comments in one question, each null when unreachable or missing
+    suspend fun threadWithComments(id: Int): Pair<ThreadBody?, CommentsPage?> {
+        val root = client.query(ThreadWithCommentsQuery, JSONObject().put("id", id), AniListSession.token) ?: return null to null
+        return root.optJSONObject("Thread")?.let(::threadBody) to root.optJSONObject("comments")?.let(::commentsPage)
+    }
+
     // A page of the comments of a thread, each with the answers to it that AniList gives. Null when AniList could not be reached
     suspend fun threadComments(id: Int, page: Int): CommentsPage? {
         val block = client.query(ThreadCommentsQuery, JSONObject().put("id", id).put("page", page), AniListSession.token)?.optJSONObject("Page") ?: return null
-        return CommentsPage(objects(block.optJSONArray("threadComments")).mapNotNull(::commentOf), block.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true)
+        return commentsPage(block)
     }
+
+    // Reads a page of the comments of a thread
+    private fun commentsPage(block: JSONObject): CommentsPage =
+        CommentsPage(objects(block.optJSONArray("threadComments")).mapNotNull(::commentOf), block.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true)
 
     // Reads one comment, null when it has no author
     private fun commentOf(comment: JSONObject): ThreadComment? {
@@ -873,8 +885,10 @@ class TitleRepository(context: Context) {
         client.query(RemoveEntryQuery, JSONObject().put("id", entryId), AniListSession.token)?.optJSONObject("DeleteMediaListEntry")?.optBoolean("deleted") == true
 
     // Turns the title among the favourites of the user, true when AniList did it
-    suspend fun toggleFavourite(id: Int, manga: Boolean): Boolean =
-        client.query(ToggleFavouriteQuery, JSONObject().put(if (manga) "mangaId" else "animeId", id), AniListSession.token) != null
+    suspend fun toggleFavourite(id: Int, manga: Boolean): Boolean {
+        headers.remove(id)
+        return client.query(ToggleFavouriteQuery, JSONObject().put(if (manga) "mangaId" else "animeId", id), AniListSession.token) != null
+    }
 
     // Reads a date, null when a part is missing
     private fun localDate(json: JSONObject): LocalDate? {
@@ -911,6 +925,12 @@ class TitleRepository(context: Context) {
 
     // Constants of the repository
     internal companion object {
+        // The pages seen a moment ago, kept so a title that is opened again soon does not ask AniList again, and for how long
+        const val ReopenMillis = 3L * 60_000L
+        const val ReopenMaxEntries = 30
+        val headers = TimedCache<TitleUi>(ReopenMillis, ReopenMaxEntries)
+        val communities = TimedCache<TitleCommunity>(ReopenMillis, ReopenMaxEntries)
+
         // The types, formats, ties and rankings the repository tells apart
         const val MangaType = "MANGA"
         const val MovieFormat = "MOVIE"
@@ -993,16 +1013,15 @@ class TitleRepository(context: Context) {
             "friends: Page(perPage: 15) { mediaList(mediaId: \$id, isFollowing: true, sort: UPDATED_TIME_DESC) { " +
             "status progress score(format: POINT_10_DECIMAL) user { name avatar { large } } } } }"
 
-        // Everything after the top in one question as three names: details, the agreed recommendations, and characters and staff
+        // Everything after the top in one question and one name, as AniList charges the limit by name: details, recommendations, cast
         const val ExtrasQuery = "query (\$id: Int) { " +
             "details: Media(id: \$id) { idMal isAdult type format status title { romaji english native } synonyms episodes chapters volumes duration " +
             "season seasonYear startDate { year month day } endDate { year month day } source countryOfOrigin " +
             "studios { edges { isMain node { id name isAnimationStudio } } } popularity favourites " +
             "averageScore meanScore hashtag genres airingSchedule(notYetAired: true, perPage: 12) { nodes { episode airingAt } } rankings { rank type allTime year season } tags { name description rank isMediaSpoiler isGeneralSpoiler isAdult } " +
             "trailer { id site thumbnail } externalLinks { site url type language isDisabled } " +
-            "relations { edges { relationType(version: 2) node { ${AniShelvesParser.CardFields} } } } } " +
-            "recommended: Media(id: \$id) { recommendations(sort: RATING_DESC, perPage: 20) { nodes { rating mediaRecommendation { ${AniShelvesParser.CardFields} } } } } " +
-            "cast: Media(id: \$id) { countryOfOrigin " +
+            "relations { edges { relationType(version: 2) node { ${AniShelvesParser.CardFields} } } } " +
+            "recommendations(sort: RATING_DESC, perPage: 20) { nodes { rating mediaRecommendation { ${AniShelvesParser.CardFields} } } } " +
             "characters(sort: [ROLE, RELEVANCE, FAVOURITES_DESC], perPage: 20) { pageInfo { hasNextPage } edges { role node { id name { userPreferred } image { large } } " +
             "voiceActors(sort: [RELEVANCE, ID]) { name { userPreferred } languageV2 } } } " +
             "staff(sort: RELEVANCE, perPage: 20) { pageInfo { hasNextPage } edges { role node { id name { userPreferred } image { large } } } } } }"
@@ -1030,11 +1049,8 @@ class TitleRepository(context: Context) {
         const val ThreadsQuery = "query (\$id: Int, \$page: Int) { Page(page: \$page, perPage: 20) { pageInfo { hasNextPage } " +
             "threads(mediaCategoryId: \$id, sort: REPLIED_AT_DESC) { $ThreadFields } } }"
 
-        // The query of a thread with its text
-        const val ThreadQuery = "query (\$id: Int) { Thread(id: \$id) { $ThreadFields body(asHtml: false) isSubscribed isLocked categories { name } " +
-            "mediaCategories { id title { userPreferred } } } }"
-
-        // The mutations that follow a thread and save a comment, and the fields of a comment
+        // The fields of a thread and the queries that follow it and save a comment
+        const val ThreadBodyFields = "$ThreadFields body(asHtml: false) isSubscribed isLocked categories { name } mediaCategories { id title { userPreferred } }"
         const val SubscribeThreadQuery = "mutation (\$id: Int, \$subscribe: Boolean) { ToggleThreadSubscription(threadId: \$id, subscribe: \$subscribe) { id isSubscribed } }"
         const val SaveThreadCommentQuery = "mutation (\$id: Int, \$parent: Int, \$text: String) { SaveThreadComment(threadId: \$id, parentCommentId: \$parent, comment: \$text) { " +
             "id comment(asHtml: false) likeCount isLiked createdAt user { name avatar { large } } childComments } }"
@@ -1042,8 +1058,13 @@ class TitleRepository(context: Context) {
         // The most titles linked in one question, the query of them, and the fields and query of the comments of a thread
         const val LinkedMax = 50
         const val LinkedTitlesQuery = "query (\$ids: [Int]) { Page(perPage: $LinkedMax) { media(id_in: \$ids) { id format startDate { year } title { userPreferred } coverImage { large } } } }"
+        const val CommentFields = "id comment(asHtml: false) likeCount isLiked createdAt user { name avatar { large } } childComments"
         const val ThreadCommentsQuery = "query (\$id: Int, \$page: Int) { Page(page: \$page, perPage: 25) { pageInfo { hasNextPage } " +
-            "threadComments(threadId: \$id) { id comment(asHtml: false) likeCount isLiked createdAt user { name avatar { large } } childComments } } }"
+            "threadComments(threadId: \$id) { $CommentFields } } }"
+
+        // The query of a thread with its first comments
+        const val ThreadWithCommentsQuery = "query (\$id: Int) { Thread(id: \$id) { $ThreadBodyFields } " +
+            "comments: Page(page: 1, perPage: 25) { pageInfo { hasNextPage } threadComments(threadId: \$id) { $CommentFields } } }"
 
         // A page of the reviews of a title, the most useful first, and one review with its text
         const val ReviewsQuery = "query (\$id: Int, \$page: Int) { Page(page: \$page, perPage: 20) { pageInfo { hasNextPage } " +

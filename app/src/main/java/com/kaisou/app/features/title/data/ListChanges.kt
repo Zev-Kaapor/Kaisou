@@ -21,6 +21,7 @@ object ListChanges {
             AppStore.clear(TitleRepository.ExtrasSpace)
             AppStore.clear(TitleRepository.SeriesSpace)
         }
+        TitleRepository.headers.clear()
         mutableVersion.update { it + 1 }
     }
 }

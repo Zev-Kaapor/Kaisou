@@ -71,18 +71,25 @@ class ThreadViewModel(application: Application, savedStateHandle: SavedStateHand
         load()
     }
 
-    // Asks for the thread and its comments
+    // The thread and the first page of its comments come in one question, and the cards of the titles that both link to in one more
     fun load() {
-        mutableState.update { it.copy(thread = Load.Loading) }
+        page = 0
+        mutableState.update { it.copy(thread = Load.Loading, comments = emptyList(), hasMore = true, loadingComments = true, commentsFailed = false) }
         viewModelScope.launch {
-            val found = repository.thread(id)
-            mutableState.update { it.copy(thread = if (found == null) Load.Failed else Load.Done(found)) }
-            if (found != null) {
-                launch { loadCards(found.text) }
-                translateNow(found)
+            val (found, first) = repository.threadWithComments(id)
+            mutableState.update { state ->
+                val withThread = state.copy(thread = if (found == null) Load.Failed else Load.Done(found))
+                if (first == null) {
+                    withThread.copy(loadingComments = false, commentsFailed = true)
+                } else {
+                    page = 1
+                    withThread.copy(comments = first.comments, hasMore = first.hasMore, loadingComments = false)
+                }
             }
+            launch { loadCards((listOfNotNull(found?.text) + first?.comments.orEmpty().flatMap(::allTexts)).joinToString("\n")) }
+            if (found != null) launch { translateNow(found) }
+            if (first != null) translateComments(first.comments)
         }
-        loadMoreComments()
     }
 
     // The next page of the comments

@@ -4,7 +4,6 @@ package com.kaisou.app.core.artwork
 import android.util.JsonReader
 import android.util.JsonToken
 // Project resources
-import com.kaisou.app.core.anilist.AniListClient
 import com.kaisou.app.core.net.Gates
 import com.kaisou.app.core.net.TooManyRequests
 // Java networking and utilities
@@ -14,10 +13,10 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 // Finds the ids of a title on TMDB and TheTVDB from AniList, then by name on TMDB, then through the season before
-class IdResolver(private val anilist: AniListClient) {
+class IdResolver {
 
     // Null when nothing is known, throws when ani.zip cannot be reached, and adds the TheTVDB id that TMDB knows
-    fun resolve(anilistId: Int, query: ArtQuery): TitleIds? = resolveIds(anilistId, query)?.let(::withTvdbId)
+    suspend fun resolve(anilistId: Int, query: ArtQuery): TitleIds? = resolveIds(anilistId, query)?.let(::withTvdbId)
 
     // Adds the TheTVDB id that TMDB knows when the mappings have none
     private fun withTvdbId(ids: TitleIds): TitleIds {
@@ -27,7 +26,7 @@ class IdResolver(private val anilist: AniListClient) {
     }
 
     // Finds the ids of a title from the mappings, then by name, then through the season before it
-    private fun resolveIds(anilistId: Int, query: ArtQuery): TitleIds? {
+    private suspend fun resolveIds(anilistId: Int, query: ArtQuery): TitleIds? {
         val direct = mappingsOf(anilistId)
         if (direct?.tmdbId != null) return direct
 
@@ -35,7 +34,7 @@ class IdResolver(private val anilist: AniListClient) {
 
         var current = anilistId
         repeat(MaxPrequelHops) {
-            val prequel = anilist.prequelOf(current) ?: return direct
+            val prequel = PrequelRepository.of(current) ?: return direct
             val ids = runCatching { mappingsOf(prequel) }.getOrNull()
             if (ids?.tmdbId != null) return merge(direct, ids)
             current = prequel

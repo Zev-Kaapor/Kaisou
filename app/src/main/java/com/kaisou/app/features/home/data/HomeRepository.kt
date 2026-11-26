@@ -26,14 +26,14 @@ class HomeRepository(context: Context) {
     // The four parts under the hero: the top is what the page waits for, and the lower ones can be asked from what was kept
     suspend fun top(userId: Int): AniShelves? = client.topShelves(userId, AniListSession.token)
 
-    // Asks for the lower part of the Home
-    suspend fun below(userId: Int): AniShelves? = client.belowShelves(userId, AniListSession.token)
+    // Asks for the lower part of the Home, a copy kept within the age given being used as it is
+    suspend fun below(userId: Int, maxAgeMillis: Long = 0L): AniShelves? = client.belowShelves(userId, AniListSession.token, maxAgeMillis)
 
-    // Asks for what is recommended
-    suspend fun recommended(userId: Int): AniRecommended? = client.recommended(userId, AniListSession.token)
+    // Asks for what is recommended, a copy kept within the age given being used as it is
+    suspend fun recommended(userId: Int, maxAgeMillis: Long = 0L): AniRecommended? = client.recommended(userId, AniListSession.token, maxAgeMillis)
 
-    // Asks for the missing sequels
-    suspend fun sequels(userId: Int): List<AniCard>? = client.missingSequels(userId, AniListSession.token)
+    // Asks for the missing sequels, a copy kept within the age given being used as it is
+    suspend fun sequels(userId: Int, maxAgeMillis: Long = 0L): List<AniCard>? = client.missingSequels(userId, AniListSession.token, maxAgeMillis)
 
     // Gives what was kept of the lower parts
     suspend fun kept(userId: Int): HomeParts =

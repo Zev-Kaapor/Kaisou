@@ -19,6 +19,7 @@ import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.home.data.HomeMapper
 import com.kaisou.app.features.profile.data.ProfileKind
 import com.kaisou.app.features.profile.data.ProfileRef
+import com.kaisou.app.features.title.data.ListChanges
 import com.kaisou.app.features.title.data.TitlePerson
 
 // Asks AniList for the page of a person and turns the answer into what the screen shows
@@ -29,7 +30,7 @@ class UserRepository(context: Context) {
 
     // The page of the person by their name, null when AniList could not be reached or does not know them
     suspend fun user(name: String): UserUi? {
-        pages.get(name.lowercase().hashCode())?.let { return it.value }
+        pages.get(pageKey(name))?.let { return it.value }
         val root = client.query(UserQuery, JSONObject().put("name", name), AniListSession.token) ?: return null
         val json = root.optJSONObject("User") ?: return null
         val id = json.optInt("id").takeIf { it > 0 } ?: return null
@@ -62,15 +63,21 @@ class UserRepository(context: Context) {
                 more = FavouriteKind.entries.filter { favourites?.optJSONObject(it.path)?.optJSONObject("pageInfo")?.optBoolean("hasNextPage") == true }.toSet()
             )
         )
-        pages.put(name.lowercase().hashCode(), built)
+        pages.put(pageKey(name), built)
         return built
     }
 
-    // The last things the person did, newest first, titles moved on their list and texts cut to their start, empty on failure
+    // The key of a page or of its tail, which changes with the list of the user, as the totals on their own page do
+    private fun pageKey(text: String): Int = "${text.lowercase()} ${ListChanges.version.value}".hashCode()
+
+    // The last things the person did, newest first, titles moved and texts cut to their beginning, kept as long as the page
     suspend fun tail(id: Int): UserTail {
+        tails.get(pageKey("tail $id"))?.let { return it.value }
         val root = client.query(TailQuery, JSONObject().put("id", id).put("size", RecentShown), AniListSession.token)
         val items = root?.optJSONObject("activity")?.let { activities(it) }.orEmpty()
-        return UserTail(items, total(root?.optJSONObject("followers")), total(root?.optJSONObject("following")))
+        val found = UserTail(items, total(root?.optJSONObject("followers")), total(root?.optJSONObject("following")))
+        if (root != null) tails.put(pageKey("tail $id"), found)
+        return found
     }
 
     // Reads the total of a block from its page info
@@ -126,8 +133,9 @@ class UserRepository(context: Context) {
     suspend fun toggleFollow(name: String, id: Int): Boolean? {
         val root = client.query(FollowQuery, JSONObject().put("id", id), AniListSession.token) ?: return null
 
-        // What was kept of the page no longer says whether the user follows them
-        pages.remove(name.lowercase().hashCode())
+        // What was kept of the page no longer says whether the user follows them, nor how many follow them
+        pages.remove(pageKey(name))
+        tails.remove(pageKey("tail $id"))
         return root.optJSONObject("ToggleFollow")?.optBoolean("isFollowing")
     }
 
@@ -178,10 +186,11 @@ class UserRepository(context: Context) {
         // The minutes of a day, which is what the days watched are counted from
         const val MinutesPerDay = 1_440.0
 
-        // The pages that were opened, kept for two minutes, so going to a title or to a person and back does not ask again
-        private const val PagesMillis = 2L * 60L * 1000L
-        private const val MaxPages = 10
+        // The pages that were opened, kept for five minutes, so going to a title or to a person and back does not ask again
+        private const val PagesMillis = 5L * 60L * 1000L
+        private const val MaxPages = 20
         private val pages = TimedCache<UserUi>(PagesMillis, MaxPages)
+        private val tails = TimedCache<UserTail>(PagesMillis, MaxPages)
 
         // How many of each kind of favourite come with the page, the rest is in the page of its kind, and how many genres
         const val FavouritesShown = 10

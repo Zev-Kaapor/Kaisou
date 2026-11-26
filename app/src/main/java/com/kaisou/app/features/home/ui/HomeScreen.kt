@@ -70,12 +70,17 @@ fun HomeScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner, viewModel) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            viewModel.refreshIfStale(HomeDimens.ResumeRefreshMinMillis)
-            while (true) {
-                delay(HomeDimens.AutoRefreshMillis)
+            viewModel.setShown(true)
+            try {
+                viewModel.refreshIfStale(HomeDimens.ResumeRefreshMinMillis)
+                while (true) {
+                    delay(HomeDimens.AutoRefreshMillis)
 
-                // A little less than the time between, since the Home was asked for a moment after the last time it was due
-                viewModel.refreshIfStale(HomeDimens.AutoRefreshMillis / 2)
+                    // A little less than the time between, since the Home was asked for a moment after the last time it was due
+                    viewModel.refreshIfStale(HomeDimens.AutoRefreshMillis / 2)
+                }
+            } finally {
+                viewModel.setShown(false)
             }
         }
     }
