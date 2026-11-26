@@ -3,6 +3,7 @@ package com.kaisou.app.core.language
 // Android framework
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 // Reactive flows
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +39,6 @@ object TagOrderPreference {
     // Changes the order and keeps it on the phone
     fun set(order: TagOrder) {
         mutableOrder.value = order
-        preferences.edit().putString(OrderKey, order.name).apply()
+        preferences.edit { putString(OrderKey, order.name) }
     }
 }

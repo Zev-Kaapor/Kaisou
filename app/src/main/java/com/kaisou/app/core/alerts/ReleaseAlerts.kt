@@ -3,6 +3,7 @@ package com.kaisou.app.core.alerts
 // Android framework
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 // Reactive flows
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +30,7 @@ object ReleaseAlerts {
         val on = id !in mutableTitles.value
         val next = if (on) mutableTitles.value + id else mutableTitles.value - id
         mutableTitles.value = next
-        preferences.edit().putStringSet(TitlesKey, next.map { it.toString() }.toSet()).apply()
+        preferences.edit { putStringSet(TitlesKey, next.map { it.toString() }.toSet()) }
         return on
     }
 }

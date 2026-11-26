@@ -53,7 +53,7 @@ private const val UserBadgePath =
 
 // The bell that rings: a filled body with its clapper, and two waves of line on each side
 private const val BellRingingBodyPath =
-    "M12,4.4 C10.9,4.4 10,5.2 9.9,6.2 C7.6,7 6.1,9.2 6.1,12 V15.5 L4.7,18.4 C4.5,18.8 4.8,19.2 5.2,19.2 H18.8 C19.2,19.2 19.5,18.8 19.3,18.4 L17.9,15.5 V12 C17.9,9.2 16.4,7 14.1,6.2 C14,5.2 13.1,4.4 12,4.4 Z" +
+    "M12,4.4 C10.9,4.4 10,5.2 9.9,6.2 C7.6,7 6.1,9.2 6.1,12 V15.5 L4.7,18.4 C4.5,18.8 4.8,19.2 5.2,19.2 H18.8 C19.2,19.2 19.5,18.8 19.3,18.4 L17.9,15.5 V12 C17.9,9.2 16.4,7 14.1,6.2 C14,5.2 13.1,4.4 12,4.4 Z " +
         "M9,20.6 H15 C14.5,21.7 13.4,22.3 12,22.3 C10.6,22.3 9.5,21.7 9,20.6 Z"
 
 // The waves of the ringing bell

@@ -402,7 +402,7 @@ fun CoversBlock(covers: List<MangaCover>, onSeeAll: (() -> Unit)? = null) {
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
             modifier = Modifier.padding(top = dimens.spaceSmall)
         ) {
-            itemsIndexed(shown, key = { _, cover -> cover.original }) { index, cover -> CoverTile(cover, onClick = { viewing = index }) }
+            itemsIndexed(shown, key = { _, cover -> cover.original }) { index, cover -> CoverTile(cover, onClick = { viewing = index }, modifier = Modifier.width(TitleDimens.CoverWidth)) }
             if (onSeeAll != null) {
                 item(key = "see-all") {
                     Column(
@@ -426,7 +426,7 @@ fun CoversBlock(covers: List<MangaCover>, onSeeAll: (() -> Unit)? = null) {
 
 // A cover of a volume: its picture and under it its volume and language, a touch being left to the page
 @Composable
-fun CoverTile(cover: MangaCover, onClick: () -> Unit, modifier: Modifier = Modifier.width(TitleDimens.CoverWidth)) {
+fun CoverTile(cover: MangaCover, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
     val separator = stringResource(R.string.home_card_separator)
 
