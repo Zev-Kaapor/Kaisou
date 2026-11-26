@@ -95,6 +95,13 @@ const val CoversRoute = "title/{$TitleIdArg}/covers"
 // Builds the route of all the covers of the volumes of a manga
 fun coversRoute(id: Int): String = "title/$id/covers"
 
+// The posters, backdrops and logos of an anime, with the kind that opens first
+const val GalleryKindArg = "gallery"
+const val GalleryRoute = "title/{$TitleIdArg}/gallery/{$GalleryKindArg}"
+
+// Builds the route of the gallery of an anime, the kind being posters, backdrops or logos
+fun galleryRoute(id: Int, kind: String): String = "title/$id/gallery/$kind"
+
 // All the titles tied to a title, or its whole series in order, and whether it is a manga, which names the order
 const val CardsKindArg = "kind"
 const val CardsRelated = "related"

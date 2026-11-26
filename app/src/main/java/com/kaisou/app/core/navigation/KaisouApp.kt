@@ -90,6 +90,7 @@ import com.kaisou.app.features.updates.data.Updates
 import com.kaisou.app.features.title.ui.TitleCardsScreen
 import com.kaisou.app.features.profile.ui.ProfileVoicesScreen
 import com.kaisou.app.features.title.ui.TitleCoversScreen
+import com.kaisou.app.features.title.ui.TitleGalleryScreen
 import com.kaisou.app.features.user.ui.UserActivityScreen
 import com.kaisou.app.features.user.ui.UserFavouritesScreen
 import com.kaisou.app.features.user.ui.UserScreen
@@ -141,7 +142,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
 
     // Pages that open over the tabs use the whole screen, but the page of a title keeps the bar with its own sections
     val route = backStackEntry?.destination?.route
-    val fullScreen = route.let { it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute || it == ReviewsRoute || it == ReviewRoute || it == ThreadsRoute || it == ThreadRoute || it == UserActivityRoute || it == UserFavouritesRoute }
+    val fullScreen = route.let { it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute || it == GalleryRoute || it == ReviewsRoute || it == ReviewRoute || it == ThreadsRoute || it == ThreadRoute || it == UserActivityRoute || it == UserFavouritesRoute }
     val titleSections by NavSectionsHost.sections.collectAsState()
     val sections = if (route == TitleRoute || route == UserRoute) titleSections else null
 
@@ -305,6 +306,7 @@ private fun MainNavHost(
                 onOpenCast = { id, staff -> navController.navigate(castRoute(id, staff)) },
                 onOpenCards = { id, order, manga -> navController.navigate(cardsRoute(id, order, manga)) },
                 onOpenCovers = { navController.navigate(coversRoute(it)) },
+                onOpenGallery = { id, kind -> navController.navigate(galleryRoute(id, kind.path)) },
                 onOpenReviews = { navController.navigate(reviewsRoute(it)) },
                 onOpenThreads = { navController.navigate(threadsRoute(it)) },
                 onOpenThread = { navController.navigate(threadRoute(it)) },
@@ -439,6 +441,14 @@ private fun MainNavHost(
         // All the covers of the volumes of a manga, open over it with no bar
         composable(route = CoversRoute, arguments = listOf(navArgument(TitleIdArg) { type = NavType.IntType })) {
             TitleCoversScreen(onBack = { navController.popBackStack() }, modifier = Modifier.fillMaxSize())
+        }
+
+        // The posters, backdrops and logos of an anime, open over it with no bar
+        composable(
+            route = GalleryRoute,
+            arguments = listOf(navArgument(TitleIdArg) { type = NavType.IntType }, navArgument(GalleryKindArg) { type = NavType.StringType })
+        ) {
+            TitleGalleryScreen(onBack = { navController.popBackStack() }, modifier = Modifier.fillMaxSize())
         }
 
         // All the titles tied to a title, or its whole series in order, open over it with no bar

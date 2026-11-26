@@ -28,6 +28,9 @@ object TitleDimens {
     val SeriesLandscapeMax = 520.dp
     val TrailerLandscapeMax = 400.dp
     val CoverWidth = 112.dp
+    val GalleryWideWidth = 200.dp
+    val GalleryPosterColumn = 110.dp
+    val GalleryWideColumn = 180.dp
     val StepButton = 36.dp
     val ListCover = 56.dp
     val ListLine = 1.5.dp
@@ -64,6 +67,7 @@ object TitleDimens {
 
     // The shape of a cover and how many lines a news item has
     const val CoverRatio = 2f / 3f
+    const val GalleryWideRatio = 16f / 9f
     const val NewsLines = 3
 
     // The gap above each block under the synopsis, and the room inside a chip of the strip, of the tags and of the links

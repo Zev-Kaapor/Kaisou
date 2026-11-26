@@ -65,6 +65,7 @@ import com.kaisou.app.features.home.ui.HomeDimens
 import com.kaisou.app.features.home.ui.components.HeaderAction
 import com.kaisou.app.features.home.ui.components.HomeHeroSkeleton
 import com.kaisou.app.features.profile.data.ProfileRef
+import com.kaisou.app.features.title.data.GalleryKind
 import com.kaisou.app.features.title.data.ReleaseState
 import com.kaisou.app.features.title.data.TitleStatus
 import com.kaisou.app.features.title.ui.components.ListEditorSheet
@@ -96,6 +97,7 @@ fun TitleScreen(
     onOpenCast: (id: Int, staff: Boolean) -> Unit,
     onOpenCards: (id: Int, order: Boolean, manga: Boolean) -> Unit,
     onOpenCovers: (id: Int) -> Unit,
+    onOpenGallery: (id: Int, kind: GalleryKind) -> Unit,
     onOpenReviews: (id: Int) -> Unit,
     onOpenReview: (id: Int) -> Unit,
     onOpenThreads: (id: Int) -> Unit,
@@ -233,6 +235,8 @@ fun TitleScreen(
                             news = state.news,
                             covers = state.covers,
                             onOpenCovers = { onOpenCovers(title.anilistId) },
+                            gallery = state.gallery,
+                            onOpenGallery = { kind -> onOpenGallery(title.anilistId, kind) },
                             onOpenTitle = onOpenTitle,
                             onRetryExtras = viewModel::loadExtras,
                             onRetryNews = viewModel::retryNews,

@@ -97,7 +97,8 @@ object TvdbClient {
                             width = json.optInt("width"),
                             height = json.optInt("height"),
                             language = if (json.isNull("language")) null else json.getString("language").let { code -> twoLetters[code] ?: code },
-                            score = json.optDouble("score", 0.0)
+                            score = json.optDouble("score", 0.0),
+                            thumbnail = if (json.isNull("thumbnail")) null else json.getString("thumbnail").takeIf { it.isNotBlank() }
                         )
                     }
                 },

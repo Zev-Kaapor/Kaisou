@@ -10,8 +10,35 @@ class Artwork(
     val height: Int,
     val language: String?,
     // How the people of the site rated it, only used to settle a tie in size
-    val score: Double
+    val score: Double,
+    // The small version of the picture when the site gives one, null when only the whole one is known
+    val thumbnail: String? = null
 )
+
+// A picture of the gallery of a title: the whole one, the small one for a grid, its size and its language, null when it has none
+class GalleryImage(val url: String, val thumbnail: String, val width: Int, val height: Int, val language: String?)
+
+// The posters, backdrops and logos of a title from both sites, to look at and not only the one picked for the page
+class TitleGallery(val posters: List<GalleryImage>, val backdrops: List<GalleryImage>, val logos: List<GalleryImage>) {
+    val isEmpty: Boolean get() = posters.isEmpty() && backdrops.isEmpty() && logos.isEmpty()
+
+    // The same pictures with the language of the user first, then the ones with no text, then English, keeping the order
+    fun inLanguage(language: String): TitleGallery {
+        // The place of a picture in the order, by its language
+        fun rank(image: GalleryImage) = when (image.language) {
+            language -> 0
+            null -> 1
+            "en" -> 2
+            else -> 3
+        }
+        return TitleGallery(posters.sortedBy(::rank), backdrops.sortedBy(::rank), logos.sortedBy(::rank))
+    }
+
+    // The gallery with nothing in it
+    companion object {
+        val None = TitleGallery(emptyList(), emptyList(), emptyList())
+    }
+}
 
 // What a site answered: its pictures of one kind, and whether the answer failed, a title the site does not know is not a failure
 class Artworks(val list: List<Artwork>, val failed: Boolean) {

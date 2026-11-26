@@ -88,6 +88,8 @@ import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.home.ui.HomeDimens
 import com.kaisou.app.features.home.ui.components.CornerTab
 import com.kaisou.app.features.title.data.Load
+import com.kaisou.app.core.artwork.TitleGallery
+import com.kaisou.app.features.title.data.GalleryKind
 import com.kaisou.app.features.title.data.MangaCover
 import com.kaisou.app.features.title.data.NextAiring
 import com.kaisou.app.core.language.TagOrder
@@ -268,6 +270,8 @@ fun LazyListScope.titleDetailsItems(
     news: Load<List<TitleNews>>,
     covers: List<MangaCover>,
     onOpenCovers: () -> Unit,
+    gallery: TitleGallery,
+    onOpenGallery: (GalleryKind) -> Unit,
     onOpenTitle: (Int) -> Unit,
     onRetryExtras: () -> Unit,
     onRetryNews: () -> Unit,
@@ -302,6 +306,12 @@ fun LazyListScope.titleDetailsItems(
                 news is Load.Failed -> item(key = "details-news-error") { DetailsError(onRetry = onRetryNews) }
             }
             if (covers.isNotEmpty()) item(key = "details-covers") { CoversBlock(covers, onSeeAll = onOpenCovers.takeIf { covers.size > TitleDimens.CardsShown }) }
+
+            // An anime has its posters, backdrops and logos where a manga has its covers, each kind apart and only when it has some
+            GalleryKind.entries.forEach { kind ->
+                val images = kind.of(gallery)
+                if (images.isNotEmpty()) item(key = "details-gallery-${kind.path}") { GalleryBlock(kind, images, onSeeAll = { onOpenGallery(kind) }) }
+            }
             if (value.relations.isNotEmpty()) {
                 item(key = "details-relations") { CardsBlock(
                         R.string.title_section_relations,

@@ -433,6 +433,12 @@
     <string name="title_news_all">See all the news</string>
     <string name="title_news_empty">No news yet</string>
     <string name="title_section_covers">Covers</string>
+    <string name="title_section_gallery">Pictures</string>
+    <string name="title_section_posters">Posters</string>
+    <string name="title_section_backdrops">Backdrops</string>
+    <string name="title_section_logos">Logos</string>
+    <string name="title_gallery_credit">Pictures from TMDB and TheTVDB</string>
+    <string name="title_gallery_size">%1$d × %2$d</string>
     <string name="title_cover_download_started">Downloading the cover. It will be in the Kaisou folder of your pictures</string>
     <string name="title_cover_download_failed">Could not download the cover</string>
     <string name="title_cover_volume">Vol. %1$s</string>

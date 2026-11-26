@@ -295,8 +295,19 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
             mutableState.update { it.copy(status = TitleStatus.Content, title = title, art = art) }
             loadExtras()
             loadListOptions(title.manga)
-            if (!title.manga) loadThemes(title)
+            if (!title.manga) {
+                loadThemes(title)
+                loadGallery(title)
+            }
             loadNews(title)
+        }
+    }
+
+    // The posters, backdrops and logos of an anime, which most of the time the pictures of the page already left on the phone
+    private fun loadGallery(title: TitleUi) {
+        viewModelScope.launch {
+            val gallery = runCatching { ArtworkRepository.Shared.gallery(title.anilistId, title.query, AppLanguage.code) }.getOrNull() ?: return@launch
+            mutableState.update { it.copy(gallery = gallery) }
         }
     }
 

@@ -180,6 +180,32 @@ class ArtworkRepository {
         return certified.byCountry
     }
 
+    // The posters, backdrops and logos of both sites to look at, the ones in the language first, from the phone or asked once and kept
+    suspend fun gallery(anilistId: Int, query: ArtQuery, language: String): TitleGallery {
+        keptGallery(anilistId, language)?.let { return it }
+        val resolved = idsOf(anilistId, query)?.takeIf { it.tmdbId != null || it.tvdbId != null || it.imdbId != null } ?: return TitleGallery.None
+        val (tmdb, tvdb) = coroutineScope {
+            val first = async(Dispatchers.IO) { resolved.tmdbId?.let { TmdbClient.images(resolved.kind, it) } ?: SiteImages.None }
+            val second = async(Dispatchers.IO) {
+                SiteImages(
+                    TvdbClient.posters(resolved.tvdbId, resolved.imdbId),
+                    TvdbClient.logos(resolved.tvdbId, resolved.imdbId),
+                    TvdbClient.backdrops(resolved.tvdbId, resolved.imdbId)
+                )
+            }
+            first.await() to second.await()
+        }
+        val found = GalleryBuilder.of(tmdb.posters.list + tvdb.posters.list, tmdb.backdrops.list + tvdb.backdrops.list, tmdb.logos.list + tvdb.logos.list)
+
+        // A gallery that a site failed to give is shown but not kept, so it is asked again next time
+        if (!tmdb.failed && !tvdb.failed) withContext(Dispatchers.IO) { AppStore.put(GallerySpace, anilistId.toString(), GalleryBuilder.write(found)) }
+        return found.inLanguage(language)
+    }
+
+    // The gallery kept on the phone for a title, null when none is kept, so an empty one is not taken for one that was not asked
+    suspend fun keptGallery(anilistId: Int, language: String): TitleGallery? =
+        withContext(Dispatchers.IO) { AppStore.get(GallerySpace, anilistId.toString(), StoreMillis) }?.let(GalleryBuilder::read)?.inLanguage(language)
+
     // Asks both sites for what a title has and picks the best of each
     private suspend fun fetch(anilistId: Int, query: ArtQuery, language: String): Found = coroutineScope {
         val resolved = try {
@@ -217,6 +243,11 @@ class ArtworkRepository {
         val logos = first.logos.list + second?.logos?.list.orEmpty()
         val backdrops = first.backdrops.list + second?.backdrops?.list.orEmpty()
 
+        // Both sites answered, so what they have is kept for the gallery too, which then asks for nothing
+        if (second != null && !first.failed && !second.failed) {
+            withContext(Dispatchers.IO) { AppStore.put(GallerySpace, anilistId.toString(), GalleryBuilder.write(GalleryBuilder.of(posters, backdrops, logos))) }
+        }
+
         // The ratings and the seasons were asked from the start, so they are almost always there by now
         val ratings = withTimeoutOrNull(OtherSiteWaitMillis) { certified.await() }
         if (ratings == null) certified.cancel()
@@ -245,6 +276,9 @@ class ArtworkRepository {
 
         // What is kept on the disk and for how long: a day, since a title does not change its pictures or its ratings that fast
         private const val StoreSpace = "art5"
+
+        // Where the galleries are kept, the same day as the pictures of the page
+        private const val GallerySpace = "gallery2"
 
         // Where the ids of the titles are kept, and for how long: a month
         private const val IdsSpace = "ids1"

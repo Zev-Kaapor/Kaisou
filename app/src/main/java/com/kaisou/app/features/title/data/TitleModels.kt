@@ -12,6 +12,7 @@ import java.time.LocalDate
 // Project resources
 import com.kaisou.app.R
 import com.kaisou.app.core.artwork.ArtQuery
+import com.kaisou.app.core.artwork.TitleGallery
 import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.home.data.HeroArt
@@ -253,6 +254,26 @@ data class TitlePeople(
     val moreStaff: Boolean = false
 )
 
+// The kinds of picture in the gallery of an anime, each with the word in its address and the name it has on the screen
+enum class GalleryKind(val path: String, @StringRes val label: Int) {
+    Posters("posters", R.string.title_section_posters),
+    Backdrops("backdrops", R.string.title_section_backdrops),
+    Logos("logos", R.string.title_section_logos);
+
+    // The pictures of this kind in a gallery
+    fun of(gallery: TitleGallery) = when (this) {
+        Posters -> gallery.posters
+        Backdrops -> gallery.backdrops
+        Logos -> gallery.logos
+    }
+
+    // Finds a kind by the word in the address, the posters when it is not one
+    companion object {
+        // The kind of a word in the address
+        fun byPath(path: String?): GalleryKind = entries.firstOrNull { it.path == path } ?: Posters
+    }
+}
+
 // An episode of an anime: number, name, picture, length, day, text, score, season, and whether its texts are in the user's language
 data class TitleEpisode(
     val number: Int,
@@ -453,6 +474,9 @@ data class TitleUiState(
     val listOptions: ListOptions? = null,
     // The covers of the volumes of a manga, empty for an anime or when none was found
     val covers: List<MangaCover> = emptyList(),
+
+    // The posters, backdrops and logos of an anime from TMDB and TheTVDB, empty for a manga or until they come
+    val gallery: TitleGallery = TitleGallery.None,
     val news: Load<List<TitleNews>> = Load.Idle,
     // Sizes the poster, the backdrop and the logo are downloaded at, the page asks for the same ones so it finds them in memory
     val posterSize: Size = Size.ORIGINAL,
