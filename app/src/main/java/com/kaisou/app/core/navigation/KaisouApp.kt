@@ -92,6 +92,7 @@ import com.kaisou.app.features.profile.ui.ProfileVoicesScreen
 import com.kaisou.app.features.title.ui.TitleCoversScreen
 import com.kaisou.app.features.title.ui.TitleGalleryScreen
 import com.kaisou.app.features.user.ui.UserActivityScreen
+import com.kaisou.app.features.user.ui.UserListScreen
 import com.kaisou.app.features.user.ui.UserFavouritesScreen
 import com.kaisou.app.features.user.ui.UserScreen
 
@@ -482,7 +483,14 @@ private fun MainNavHost(
         // The other tabs have no screen yet
         composable(MainTab.Explore.route) { Box(modifier = Modifier.fillMaxSize()) }
         composable(MainTab.Calendar.route) { Box(modifier = Modifier.fillMaxSize()) }
-        composable(MainTab.Library.route) { Box(modifier = Modifier.fillMaxSize()) }
+
+        // The Library is the whole list of the user, in the tab itself, with no screen to open from it
+        composable(MainTab.Library.route) {
+            UserListScreen(
+                onOpenTitle = { navController.navigate(titleRoute(it)) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         composable(SettingsRoute) {
             SettingsScreen(

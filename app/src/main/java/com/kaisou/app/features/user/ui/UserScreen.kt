@@ -86,6 +86,8 @@ import com.kaisou.app.features.title.ui.components.Chip
 import com.kaisou.app.features.title.ui.components.TagTip
 import com.kaisou.app.features.title.ui.components.DetailsError
 import com.kaisou.app.features.user.ui.components.UserSkeleton
+import com.kaisou.app.features.user.ui.components.userListsItems
+import androidx.compose.runtime.LaunchedEffect
 import com.kaisou.app.features.user.data.FavouriteKind
 import com.kaisou.app.features.user.data.UserUi
 import com.kaisou.app.features.user.ui.components.userOverviewItems
@@ -108,6 +110,8 @@ fun UserScreen(
     val counts by viewModel.counts.collectAsState()
     val translate by viewModel.translate.collectAsState()
     val translatedAbout by viewModel.about.collectAsState()
+    val lists: UserListsViewModel = viewModel()
+    val listsState by lists.state.collectAsState()
     val listState = rememberKeptListState(viewModel.scroll)
     val context = LocalContext.current
     val user = (state as? Load.Done)?.value
@@ -149,6 +153,9 @@ fun UserScreen(
             }
         }
 
+        // The lists are asked for the first time their section is open
+        LaunchedEffect(tab) { if (tab == UserTab.Lists) lists.ensureLoaded() }
+
         // The section that is open is read here, in the composition, so the bar follows it when it changes
         val openIndex = tab.ordinal
         if (user != null) SideEffect { NavSectionsHost.show(barOwner, NavSections(tabLabels, UserTab.entries.map { it.icon }, openIndex), openTab) }
@@ -168,6 +175,11 @@ fun UserScreen(
                                 onOpenProfile,
                                 onOpenActivity = { onOpenActivity(user.name, user.id) },
                                 onOpenFavourites = { onOpenFavourites(user.name, it) }
+                            )
+                            UserTab.Lists -> userListsItems(
+                                state = listsState,
+                                onOpenTitle = onOpenTitle,
+                                onRetry = lists::ensureLoaded
                             )
                             else -> item(key = "soon-${tab.name}") { SoonBlock() }
                         }

@@ -305,6 +305,17 @@ object KaisouIcons {
         "M8 8v12",
         "M4 4v16"
     )
+    val Shuffle = strokeIcon(
+        "Shuffle",
+        "m18 14 4 4-4 4",
+        "m18 2 4 4-4 4",
+        "M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22",
+        "M2 6h1.9c1.5 0 2.9.9 3.6 2.2",
+        "M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"
+    )
+    val LayoutGrid = strokeIcon("LayoutGrid", "M3 3h7v7H3z", "M14 3h7v7h-7z", "M14 14h7v7h-7z", "M3 14h7v7H3z")
+    val ListRows = strokeIcon("ListRows", "M3 5h18", "M3 12h18", "M3 19h18")
+    val Filter = strokeIcon("Filter", "M22 3H2l8 9.46V19l4 2v-8.54L22 3z")
     val BarChart = strokeIcon(
         "BarChart",
         "M3 3v16a2 2 0 0 0 2 2h16",

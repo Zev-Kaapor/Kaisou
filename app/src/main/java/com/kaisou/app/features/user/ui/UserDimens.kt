@@ -41,6 +41,15 @@ object UserDimens {
     const val GenreBarPieces = 6
     val GenreBarHeight = 8.dp
 
+    // The lists: how many titles each row of cards has, the state dot, the switch padding and the placeholders
+    const val ListWatching = 10
+    const val ListFinished = 12
+    val ListDot = 8.dp
+    val SwitchPadding = 4.dp
+
+    // How many placeholder rows the list has
+    const val ListSkeletonRows = 8
+
     // The cover at the start of a thing the person did to a title
     val RecentCover = 60.dp
 

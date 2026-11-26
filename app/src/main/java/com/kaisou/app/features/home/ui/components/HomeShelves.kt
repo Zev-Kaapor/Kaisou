@@ -303,7 +303,7 @@ fun CornerTab(shape: Shape, modifier: Modifier = Modifier, content: @Composable 
 
 // The tab of a card: the new episode, a line, and the score with its star, like E7 | 6,2, with dashes when there is no score
 @Composable
-private fun CardTab(episode: Int?, score: Float?, userScore: Float?, modifier: Modifier = Modifier) {
+internal fun CardTab(episode: Int?, score: Float?, userScore: Float?, modifier: Modifier = Modifier) {
     val colors = KaisouTheme.colors
     val format = rememberScoreFormat()
 
