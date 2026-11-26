@@ -80,6 +80,7 @@ import java.util.Locale
 import com.kaisou.app.R
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.ui.HomeDimens
+import com.kaisou.app.features.home.ui.components.rememberScoreFormat
 import com.kaisou.app.features.home.ui.components.MarkdownContent
 import com.kaisou.app.features.home.ui.components.SpoilerText
 import com.kaisou.app.features.profile.data.ProfileRef
@@ -550,7 +551,7 @@ internal fun UserActivityCard(item: UserActivity, onOpenTitle: (Int) -> Unit, mo
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)) {
                 if (card != null) {
-                    Text(text = item.text, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium), color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    ActivityLine(text = item.text, title = card.title)
                 } else {
                     SpoilerText(
                         text = item.text,
@@ -561,22 +562,81 @@ internal fun UserActivityCard(item: UserActivity, onOpenTitle: (Int) -> Unit, mo
                         maxLines = TextLines
                     )
                 }
-                Text(text = time, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                // The scores of the title and the time share a line under the name
+                ActivityMeta(userScore = card?.userScore, score = card?.score, time = time)
+
+                // With a cover the buttons stay beside it, under the line, so no space is left between the two
+                if (actions != null && card != null) ActivityButtons(item, actions)
             }
         }
-        if (actions != null) {
-            Row(modifier = Modifier.fillMaxWidth().padding(top = dimens.spaceExtraSmall), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                ActionButton(
-                    icon = if (item.isSubscribed) KaisouIcons.BellRinging else KaisouIcons.Bell,
-                    description = stringResource(if (item.isSubscribed) R.string.cd_activity_unfollow else R.string.cd_activity_follow),
-                    onClick = { actions.onFollow(item.id) },
-                    active = item.isSubscribed
-                )
-                ActivityMenu(item.id, actions)
-                CommentButton(count = item.replyCount, onClick = { actions.onOpenReplies(item.id) })
-                LikeButton(liked = item.isLiked, count = item.likeCount, onClick = { actions.onLike(item.id) })
+
+        // A text with no cover has nothing beside it, so its buttons go under it
+        if (actions != null && card == null) ActivityButtons(item, actions)
+    }
+}
+
+// The buttons of an activity at its end: follow, the menu, the comments and the like
+@Composable
+private fun ActivityButtons(item: UserActivity, actions: ActivityActions) {
+    Row(modifier = Modifier.fillMaxWidth().padding(top = KaisouTheme.dimens.spaceExtraSmall), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+        ActionButton(
+            icon = if (item.isSubscribed) KaisouIcons.BellRinging else KaisouIcons.Bell,
+            description = stringResource(if (item.isSubscribed) R.string.cd_activity_unfollow else R.string.cd_activity_follow),
+            onClick = { actions.onFollow(item.id) },
+            active = item.isSubscribed
+        )
+        ActivityMenu(item.id, actions)
+        CommentButton(count = item.replyCount, onClick = { actions.onOpenReplies(item.id) })
+        LikeButton(liked = item.isLiked, count = item.likeCount, onClick = { actions.onLike(item.id) })
+    }
+}
+
+// What the person did in two tones, both semi-bold: the words around the title in the accent and the title itself in white
+@Composable
+private fun ActivityLine(text: String, title: String) {
+    val at = if (title.isEmpty()) -1 else text.indexOf(title)
+    val accent = MaterialTheme.colorScheme.primary
+
+    Text(
+        text = buildAnnotatedString {
+            if (at < 0) {
+                append(text)
+            } else {
+                withStyle(SpanStyle(color = accent)) { append(text.substring(0, at)) }
+                append(title)
+                withStyle(SpanStyle(color = accent)) { append(text.substring(at + title.length)) }
             }
+        },
+        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+// The line under the name: the scores like 2,0 person | 8,0 star, the user's and everyone's, then the time, all in a quiet style
+@Composable
+private fun ActivityMeta(userScore: Float?, score: Float?, time: String) {
+    val format = rememberScoreFormat()
+    val gray = MaterialTheme.colorScheme.onSurfaceVariant
+    val style = MaterialTheme.typography.bodySmall
+    val hasScores = userScore != null || score != null
+
+    Row(horizontalArrangement = Arrangement.spacedBy(KaisouTheme.dimens.spaceExtraSmall), verticalAlignment = Alignment.CenterVertically) {
+        if (userScore != null) {
+            Text(text = format.format(userScore), style = style, color = MaterialTheme.colorScheme.onSurface)
+            Icon(imageVector = KaisouIcons.PersonFilled, contentDescription = stringResource(R.string.cd_your_score), tint = gray, modifier = Modifier.size(HomeDimens.TabStar))
         }
+        if (userScore != null && score != null) {
+            Box(modifier = Modifier.size(KaisouTheme.dimens.hairline, HomeDimens.TabStar).background(gray.copy(alpha = HomeDimens.MetaDividerAlpha)))
+        }
+        if (score != null) {
+            Text(text = format.format(score), style = style, color = MaterialTheme.colorScheme.onSurface)
+            Icon(imageVector = KaisouIcons.Star, contentDescription = null, tint = gray, modifier = Modifier.size(HomeDimens.TabStar))
+        }
+        if (hasScores) Text(text = stringResource(R.string.home_card_separator).trim(), style = style, color = gray)
+        Text(text = time, style = style, color = gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

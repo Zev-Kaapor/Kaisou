@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -80,6 +79,7 @@ import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.ui.HomeDimens
 import com.kaisou.app.features.home.ui.components.HeaderAction
+import com.kaisou.app.features.home.ui.components.HeaderPill
 import com.kaisou.app.features.profile.data.ProfileRef
 import com.kaisou.app.features.title.data.Load
 import com.kaisou.app.features.title.ui.components.Chip
@@ -199,7 +199,7 @@ fun UserScreen(
                 .padding(horizontal = dimens.spaceSmall, vertical = dimens.spaceExtraSmall),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            HeaderAction(icon = KaisouIcons.Back, contentDescription = stringResource(R.string.cd_back), onClick = onBack)
+            HeaderAction(icon = KaisouIcons.Back, contentDescription = stringResource(R.string.cd_back), onClick = onBack, backdrop = true)
             Text(
                 text = user?.name.orEmpty(),
                 style = MaterialTheme.typography.titleMedium,
@@ -213,24 +213,33 @@ fun UserScreen(
             )
 
             // The button that puts what they say of themselves in the app language, on until turned off, at the start of the share
-            if (user != null && user.about.isNotBlank() && AppLanguage.needsTranslation) {
-                HeaderAction(
-                    icon = KaisouIcons.Translate,
-                    contentDescription = stringResource(R.string.title_translate),
-                    onClick = viewModel::toggleTranslate,
-                    active = translate
-                )
+            val canTranslate = user != null && user.about.isNotBlank() && AppLanguage.needsTranslation
+            val url = user?.siteUrl
+            val buttons: @Composable (Boolean) -> Unit = { backdrop ->
+                if (canTranslate) {
+                    HeaderAction(
+                        icon = KaisouIcons.Translate,
+                        contentDescription = stringResource(R.string.title_translate),
+                        onClick = viewModel::toggleTranslate,
+                        active = translate,
+                        backdrop = backdrop
+                    )
+                }
+                if (url != null) {
+                    HeaderAction(
+                        icon = KaisouIcons.Share,
+                        contentDescription = stringResource(R.string.cd_share),
+                        backdrop = backdrop,
+                        onClick = {
+                            val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, url)
+                            context.startActivity(Intent.createChooser(send, null))
+                        }
+                    )
+                }
             }
-            user?.siteUrl?.let { url ->
-                HeaderAction(
-                    icon = KaisouIcons.Share,
-                    contentDescription = stringResource(R.string.cd_share),
-                    onClick = {
-                        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, url)
-                        context.startActivity(Intent.createChooser(send, null))
-                    }
-                )
-            }
+
+            // The two buttons share one pill, and a button alone keeps its own round backdrop
+            if (canTranslate && url != null) HeaderPill { buttons(false) } else buttons(true)
         }
     }
 }
@@ -280,9 +289,8 @@ private fun UserHeader(user: UserUi, counts: Pair<Int, Int>?, bannerTop: Dp, onF
                                     text = user.name,
                                     style = MaterialTheme.typography.titleLarge,
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Clip,
-                                    modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                             if (user.previousNames.isEmpty()) {

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,6 +34,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.graphics.Brush
@@ -180,7 +185,8 @@ fun HeaderAction(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     counter: Int = 0,
-    active: Boolean = false
+    active: Boolean = false,
+    backdrop: Boolean = false
 ) {
     Box(
         modifier = modifier
@@ -189,6 +195,11 @@ fun HeaderAction(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
+        // The round backdrop is smaller than the touch area, so the button is as easy to touch as the others
+        if (backdrop) {
+            Box(modifier = Modifier.size(HomeDimens.HeaderBackdrop).background(KaisouTheme.colors.veil.copy(alpha = HomeDimens.HeaderBackdropAlpha), CircleShape))
+        }
+
         // The shadow of the icon is the icon again, dark and blurred, a little lower, doing nothing before Android 12
         val dimens = KaisouTheme.dimens
         Icon(
@@ -208,6 +219,27 @@ fun HeaderAction(
         )
         if (counter > 0) Counter(count = counter, modifier = Modifier.align(Alignment.TopEnd))
     }
+}
+
+// Round buttons side by side over a picture on one backdrop in the shape of a pill, as tall as the backdrop of a single button
+@Composable
+fun HeaderPill(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+    val color = KaisouTheme.colors.veil.copy(alpha = HomeDimens.HeaderBackdropAlpha)
+
+    Row(
+        modifier = modifier.drawBehind {
+            val height = HomeDimens.HeaderBackdrop.toPx()
+            val inset = (HomeDimens.HeaderAction.toPx() - height) / 2
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(inset, (size.height - height) / 2),
+                size = Size(size.width - inset * 2, height),
+                cornerRadius = CornerRadius(height / 2)
+            )
+        },
+        verticalAlignment = Alignment.CenterVertically,
+        content = content
+    )
 }
 
 // Small round number on the corner of a button, a bigger number than the most it shows reads as that and a plus

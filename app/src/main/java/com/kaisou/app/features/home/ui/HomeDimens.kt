@@ -6,10 +6,12 @@ import androidx.compose.ui.unit.sp
 
 // Sizes that only the Home uses
 object HomeDimens {
-    // Header: the logo, the round buttons on the right and the picture of the account inside its button
+    // Header: the logo, the round buttons, the backdrop of one over a picture and the picture of the account inside its button
     val Logo = 32.dp
     val HeaderAction = 48.dp
     val HeaderIcon = 24.dp
+    val HeaderBackdrop = 38.dp
+    val HeaderBackdropAlpha = 0.65f
     val Avatar = 44.dp
     val AvatarIcon = 20.dp
 
