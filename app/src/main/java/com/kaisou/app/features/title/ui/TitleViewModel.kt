@@ -410,7 +410,10 @@ class TitleViewModel(application: Application, savedStateHandle: SavedStateHandl
     private fun loadEpisodes(title: TitleUi) {
         mutableState.update { it.copy(episodes = Load.Loading) }
         viewModelScope.launch {
-            val found = repository.episodes(title)
+            // The season and the backdrop of the title help the episodes that the sites lack, which show that backdrop
+            val season = SeasonNumber.of(title.startDate, ArtworkRepository.Shared.seasonStarts(title.anilistId, title.query), title.seasonMarker, title.hasPrequel, title.isContinuation)
+            val picture = mutableState.value.art?.backdropUrl ?: title.bannerUrl ?: title.coverUrl
+            val found = repository.episodes(title, season, picture)
             mutableState.update { it.copy(episodes = if (found == null) Load.Failed else Load.Done(found.episodes)) }
 
             // The list shows at once as ani.zip has it and then comes again with the names and texts in the language of the app

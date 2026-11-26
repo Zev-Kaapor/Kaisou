@@ -17,7 +17,7 @@ import com.kaisou.app.core.translation.GoogleTranslator
 // Puts the name and text of each episode in the language of the app from TMDB, matched by the day it aired, unmatched ones kept
 object EpisodeTranslator {
     // Where the texts are kept, how long, how many seasons are read, and the first season
-    private const val StoreSpace = "episode-texts2"
+    private const val StoreSpace = "episode-texts3"
     private const val StoreMillis = 7L * 24L * 60L * 60L * 1000L
     private const val MaxSeasons = 30
     private const val FirstSeason = 1
@@ -97,7 +97,7 @@ object EpisodeTranslator {
     }
 
     // One season, kept on the phone for a week, and kept as empty when TMDB does not have it
-    private suspend fun season(tmdbId: Int, season: Int, tag: String): List<TmdbEpisode> = withContext(Dispatchers.IO) {
+    internal suspend fun season(tmdbId: Int, season: Int, tag: String): List<TmdbEpisode> = withContext(Dispatchers.IO) {
         val key = "$tmdbId $season $tag"
         AppStore.get(StoreSpace, key, StoreMillis)?.let { kept -> read(kept)?.let { return@withContext it } }
         val found = TmdbClient.season(tmdbId, season, tag) ?: return@withContext emptyList()
@@ -107,7 +107,9 @@ object EpisodeTranslator {
 
     // Writes the TMDB episodes as text to keep them
     private fun write(list: List<TmdbEpisode>): String = JSONArray().apply {
-        list.forEach { put(JSONArray().put(it.number).put(it.airDate ?: "").put(it.name).put(it.overview).put(it.vote.toDouble()).put(it.votes)) }
+        list.forEach {
+            put(JSONArray().put(it.number).put(it.airDate ?: "").put(it.name).put(it.overview).put(it.vote.toDouble()).put(it.votes).put(it.still ?: "").put(it.minutes ?: 0))
+        }
     }.toString()
 
     // Reads the TMDB episodes that were kept
@@ -116,7 +118,10 @@ object EpisodeTranslator {
             val list = JSONArray(text)
             (0 until list.length()).map { index ->
                 val item = list.getJSONArray(index)
-                TmdbEpisode(item.getInt(0), item.getString(1).takeIf { it.isNotEmpty() }, item.getString(2), item.getString(3), item.getDouble(4).toFloat(), item.getInt(5))
+                TmdbEpisode(
+                    item.getInt(0), item.getString(1).takeIf { it.isNotEmpty() }, item.getString(2), item.getString(3), item.getDouble(4).toFloat(), item.getInt(5),
+                    item.getString(6).takeIf { it.isNotEmpty() }, item.getInt(7).takeIf { it > 0 }
+                )
             }
         } catch (_: Exception) {
             null

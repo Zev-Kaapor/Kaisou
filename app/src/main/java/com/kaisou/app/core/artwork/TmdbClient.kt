@@ -18,13 +18,23 @@ import java.time.LocalDate
 class TmdbHit(val id: Int, val names: List<String>, val year: Int?, val votes: Int)
 
 // An episode of a season on TMDB: its number, day, name, what it tells and how it was scored by how many people
-class TmdbEpisode(val number: Int, val airDate: String?, val name: String, val overview: String, val vote: Float, val votes: Int)
+class TmdbEpisode(
+    val number: Int,
+    val airDate: String?,
+    val name: String,
+    val overview: String,
+    val vote: Float,
+    val votes: Int,
+    val still: String? = null,
+    val minutes: Int? = null
+)
 
 // First source of posters and logos, the images and the search of TMDB. The token comes from local.properties
 object TmdbClient {
     // Addresses of the API and of its images, the time to wait and the length of a year in a date
     private const val ApiUrl = "https://api.themoviedb.org/3"
     private const val ImageUrl = "https://image.tmdb.org/t/p/original"
+    private const val StillUrl = "https://image.tmdb.org/t/p/w500"
     private const val TimeoutMillis = 8_000
     private const val YearLength = 4
 
@@ -85,7 +95,9 @@ object TmdbClient {
                     name = episode.optString("name"),
                     overview = episode.optString("overview"),
                     vote = episode.optDouble("vote_average", 0.0).toFloat(),
-                    votes = episode.optInt("vote_count")
+                    votes = episode.optInt("vote_count"),
+                    still = if (episode.isNull("still_path")) null else episode.optString("still_path").takeIf { it.isNotBlank() }?.let { StillUrl + it },
+                    minutes = episode.optInt("runtime").takeIf { it > 0 }
                 )
             }
         } catch (_: Exception) {
@@ -98,6 +110,16 @@ object TmdbClient {
         if (!isSet) return null
         return try {
             get("/tv/$tmdbId/external_ids")?.optInt("tvdb_id")?.takeIf { it > 0 }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    // The id of a series on IMDb, null when TMDB does not have it or the answer failed. Blocks on the network
+    fun imdbIdOf(tmdbId: Int): String? {
+        if (!isSet) return null
+        return try {
+            get("/tv/$tmdbId/external_ids")?.let { if (it.isNull("imdb_id")) null else it.optString("imdb_id") }?.takeIf { it.isNotBlank() }
         } catch (_: Exception) {
             null
         }

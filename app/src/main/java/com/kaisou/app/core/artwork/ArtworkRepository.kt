@@ -43,6 +43,14 @@ class ArtworkRepository {
         return found
     }
 
+    // The ids of a title on the other sites for the screens that need them, null when none are known or they could not be asked
+    suspend fun titleIds(anilistId: Int, query: ArtQuery): TitleIds? =
+        try {
+            idsOf(anilistId, query)
+        } catch (_: Exception) {
+            null
+        }
+
     // Reads kept ids, null when the text is broken
     private fun readIds(text: String): TitleIds? {
         val parts = text.split(IdsSeparator)

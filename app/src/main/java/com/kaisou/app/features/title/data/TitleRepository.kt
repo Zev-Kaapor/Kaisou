@@ -542,13 +542,25 @@ class TitleRepository(context: Context) {
         return JSONArray(found.values.toList())
     }
 
-    // The episodes of an anime, those ani.zip lacks as numbers only up to the last aired, null when ani.zip could not be reached
-    suspend fun episodes(title: TitleUi): EpisodeSet? {
-        val found = EpisodeClient.episodes(title.anilistId, AppLanguage.code, AppLanguage.region) ?: return null
-        val aired = title.episodes ?: title.nextAiring?.let { it.episode - 1 } ?: found.episodes.maxOfOrNull { it.number } ?: 0
+    // The episodes of an anime that already aired, those ani.zip lacks as numbers only, null when ani.zip could not be reached
+    suspend fun episodes(title: TitleUi, season: Int? = null, fallbackImage: String? = null): EpisodeSet? {
+        val asked = EpisodeClient.episodes(title.anilistId, AppLanguage.code, AppLanguage.region) ?: return null
+
+        // A title ani.zip has no episodes for gets them from IMDb and TMDB, and what none of them has shows the picture of the title
+        val found = if (asked.episodes.isEmpty()) EpisodeFallback.build(title, season) ?: asked else asked
         val known = found.episodes.associateBy { it.number }
+        val today = LocalDate.now().toString()
+        val aired = when {
+            title.nextAiring != null -> title.nextAiring.episode - 1
+            title.releaseState == ReleaseState.Finished -> title.episodes ?: found.episodes.maxOfOrNull { it.number } ?: 0
+
+            // A title still on the way counts only the episodes ani.zip has with a day that came, not the ones with only a number
+            else -> found.episodes.filter { it.aired == null || it.aired.take(IsoDateLength) <= today }.maxOfOrNull { it.number } ?: 0
+        }
         return EpisodeSet(
-            episodes = (1..aired.coerceAtMost(MaxEpisodes)).map { known[it] ?: TitleEpisode(it, null, null, null, null) },
+            episodes = (1..aired.coerceAtMost(MaxEpisodes)).map { number ->
+                (known[number] ?: TitleEpisode(number, null, null, null, null)).let { episode -> if (episode.image == null) episode.copy(image = fallbackImage) else episode }
+            },
             tmdbId = found.tmdbId,
             imdbId = found.imdbId,
             malId = found.malId,
@@ -990,6 +1002,9 @@ class TitleRepository(context: Context) {
         const val CharacterPage = "character"
         const val StaffPage = "staff"
         const val MaxEpisodes = 2000
+
+        // The length of a day written as year, month and day, which sorts as the days do
+        const val IsoDateLength = 10
 
         // How many reviews the community shows
         const val MaxReviews = 5
