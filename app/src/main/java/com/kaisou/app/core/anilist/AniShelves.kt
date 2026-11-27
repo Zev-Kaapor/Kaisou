@@ -29,6 +29,9 @@ data class AniCard(
     val userScore: Int? = null
 )
 
+// One list of the user to ask for as a shelf of the Home: the name of its part of the answer, its kind and its state
+class AniListAsk(val alias: String, val type: String, val status: String)
+
 // A title on the list of the user and how far the user is in it
 data class AniEntry(val card: AniCard, val progress: Int)
 
@@ -239,7 +242,7 @@ object AniShelvesParser {
     }
 
     // The entries of a list of the user, in the order AniList sent them
-    private fun entries(collection: JSONObject?): List<AniEntry> {
+    fun entries(collection: JSONObject?): List<AniEntry> {
         val lists = collection?.optJSONArray("lists") ?: return emptyList()
         return (0 until lists.length()).flatMap { index ->
             val entries = lists.getJSONObject(index).optJSONArray("entries") ?: JSONArray()

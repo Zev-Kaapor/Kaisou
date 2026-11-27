@@ -4,18 +4,23 @@ package com.kaisou.app.features.home.data
 import android.content.Context
 // Project resources
 import com.kaisou.app.core.anilist.AniCard
+import com.kaisou.app.core.anilist.AniEntry
+import com.kaisou.app.core.anilist.AniListAsk
 import com.kaisou.app.core.anilist.AniLike
 import com.kaisou.app.core.anilist.AniListClient
 import com.kaisou.app.core.anilist.AniRecommended
 import com.kaisou.app.core.anilist.AniShelves
 import com.kaisou.app.core.auth.AniListSession
+import com.kaisou.app.features.settings.data.AdultContent
+import com.kaisou.app.features.settings.data.AdultMode
 
-// What is known of what goes under the hero, in the four parts it comes in, each one null while it is not known
+// What is known of what goes under the hero, in the five parts it comes in, each one null while it is not known
 data class HomeParts(
     val top: AniShelves? = null,
     val below: AniShelves? = null,
     val recommended: AniRecommended? = null,
-    val sequels: List<AniCard>? = null
+    val sequels: List<AniCard>? = null,
+    val lists: Map<String, List<AniEntry>>? = null
 )
 
 // Asks AniList for the Home and turns the answer into what the screens show
@@ -35,6 +40,10 @@ class HomeRepository(context: Context) {
     // Asks for the missing sequels, a copy kept within the age given being used as it is
     suspend fun sequels(userId: Int, maxAgeMillis: Long = 0L): List<AniCard>? = client.missingSequels(userId, AniListSession.token, maxAgeMillis)
 
+    // Asks for the lists of the user that were turned on, the same kind and state asked once for the shelves that share it
+    suspend fun lists(userId: Int, wanted: Collection<ShelfId>): Map<String, List<AniEntry>>? =
+        client.listShelves(userId, AniListSession.token, wanted.mapNotNull { ListAsks[it] }.distinctBy { it.alias })
+
     // Gives what was kept of the lower parts
     suspend fun kept(userId: Int): HomeParts =
         HomeParts(below = client.keptBelow(userId), recommended = client.keptRecommended(userId), sequels = client.keptSequels(userId))
@@ -42,7 +51,7 @@ class HomeRepository(context: Context) {
     // The stories and the shelves from the parts that are known, null while the top is not
     fun build(userId: Int, parts: HomeParts): HomeShelvesUi? {
         val top = parts.top ?: return null
-        return mapper.shelves(top.merge(parts.below ?: AniShelves.Empty), userId, parts.recommended, parts.sequels)
+        return mapper.shelves(top.merge(parts.below ?: AniShelves.Empty), userId, parts.recommended, parts.sequels, parts.lists, AdultContent::allows)
     }
 
     // The like of an activity, given or taken back, and how it stands now, null when it did not go
@@ -78,7 +87,22 @@ class HomeRepository(context: Context) {
     suspend fun heroes(fresh: Boolean = false): List<HeroUi>? =
         client.heroPool(AniListSession.token, fresh)
             ?.takeIf { it.isNotEmpty() }
+            ?.map(mapper::hero)
+            ?.filter { AdultContent.mode.value != AdultMode.Hide || !it.adult }
+            ?.takeIf { it.isNotEmpty() }
             ?.shuffled()
             ?.take(HeroCount)
-            ?.map(mapper::hero)
+
+    // The shelves that are a state of the list and what asks for each, the movies and the series sharing the list of the anime
+    companion object {
+        val ListAsks: Map<ShelfId, AniListAsk> = mapOf(
+            ShelfId.CompletedTv to AniListAsk("completedAnime", "ANIME", "COMPLETED"),
+            ShelfId.CompletedMovie to AniListAsk("completedAnime", "ANIME", "COMPLETED"),
+            ShelfId.CompletedManga to AniListAsk("completedManga", "MANGA", "COMPLETED"),
+            ShelfId.PausedAnime to AniListAsk("pausedAnime", "ANIME", "PAUSED"),
+            ShelfId.PausedManga to AniListAsk("pausedManga", "MANGA", "PAUSED"),
+            ShelfId.DroppedAnime to AniListAsk("droppedAnime", "ANIME", "DROPPED"),
+            ShelfId.DroppedManga to AniListAsk("droppedManga", "MANGA", "DROPPED")
+        )
+    }
 }

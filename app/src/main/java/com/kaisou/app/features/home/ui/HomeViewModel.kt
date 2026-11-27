@@ -22,6 +22,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import com.kaisou.app.core.designsystem.components.ScrollPosition
@@ -43,8 +44,10 @@ import com.kaisou.app.core.rating.RatingRepository
 import com.kaisou.app.core.translation.GoogleTranslator
 import com.kaisou.app.features.home.data.HeroArt
 import com.kaisou.app.features.home.data.HeroUi
+import com.kaisou.app.features.home.data.HomeLayout
 import com.kaisou.app.features.home.data.HomeParts
 import com.kaisou.app.features.home.data.HomeRepository
+import com.kaisou.app.features.settings.data.AdultContent
 import com.kaisou.app.features.home.data.ComposerUi
 import com.kaisou.app.features.home.data.HomeStatus
 import com.kaisou.app.features.home.data.HomeUiState
@@ -141,6 +144,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private var belowAt = 0L
     private var recommendedAt = 0L
     private var sequelsAt = 0L
+    private var listsAt = 0L
 
     // Whether the Home is the screen being used, so the lower parts are not asked while the user is somewhere else
     private val shown = MutableStateFlow(true)
@@ -156,6 +160,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     init {
         // TheTVDB is logged in to while the titles come, so the first title does not wait for it
         viewModelScope.launch { artwork.prewarm() }
+
+        // The choice about adult content changes the hero, the stories and the shelves, so the Home is asked for again
+        viewModelScope.launch { AdultContent.mode.drop(1).collect { load() } }
+
+        // A list of states turned on in the settings is asked for at once, with no waiting for the Home to be asked again
+        viewModelScope.launch {
+            HomeLayout.state.drop(1).collect {
+                val userId = AniListSession.viewer?.id ?: return@collect
+                askLists(userId, force = true)
+            }
+        }
         load()
     }
 
@@ -330,7 +345,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Asks the three lower parts at once, each going into the page as it comes, one asked or kept within its time left alone
+    // Asks the lists of the user that were turned on, each one going into the page as it comes, the ones asked lately left alone
+    private fun CoroutineScope.askLists(userId: Int, force: Boolean) {
+        val wanted = HomeRepository.ListAsks.keys.filter { HomeLayout.state.value.shown(it.name) }
+        if (wanted.isEmpty() || (!force && SystemClock.elapsedRealtime() - listsAt < HomeDimens.BelowRefreshMillis)) return
+        launch {
+            repository.lists(userId, wanted)?.let {
+                listsAt = SystemClock.elapsedRealtime()
+                parts = parts.copy(lists = it)
+                rebuild(userId)
+            }
+        }
+    }
+
+    // Asks the lower parts at once, each going into the page as it comes, one asked or kept within its time left alone
     private fun CoroutineScope.askLower(userId: Int, force: Boolean) {
         val now = SystemClock.elapsedRealtime()
         if (force || now - belowAt >= HomeDimens.BelowRefreshMillis) launch {
@@ -347,6 +375,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 rebuild(userId)
             }
         }
+        askLists(userId, force)
         if (force || now - sequelsAt >= HomeDimens.SequelsRefreshMillis) launch {
             repository.sequels(userId, if (force) 0L else HomeDimens.SequelsRefreshMillis)?.let {
                 sequelsAt = SystemClock.elapsedRealtime()

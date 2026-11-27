@@ -20,6 +20,8 @@ import com.kaisou.app.core.artwork.ArtQuery
 import com.kaisou.app.core.auth.AniListSession
 import com.kaisou.app.core.cache.TimedCache
 import com.kaisou.app.core.rating.RatingQuery
+import com.kaisou.app.features.settings.data.AdultContent
+import com.kaisou.app.features.settings.data.AdultMode
 import com.kaisou.app.features.title.data.ListChanges
 
 // A title on the list of a person: picture, names, kind, progress, scores, state, times, year, genres, facts and what rates it
@@ -88,7 +90,14 @@ object UserListStore {
     private var seenVersion = ListChanges.version.value
 
     // The lists of the person, from what is kept when it is there. Null when AniList could not be reached or the lists are private
-    suspend fun lists(context: Context, name: String, manga: Boolean): List<UserListSection>? {
+    suspend fun lists(context: Context, name: String, manga: Boolean): List<UserListSection>? = cached(context, name, manga)?.let(::visible)
+
+    // Leaves out of the lists the titles the user chose not to see, or all but them
+    private fun visible(sections: List<UserListSection>): List<UserListSection> =
+        if (AdultContent.mode.value == AdultMode.Show) sections else sections.map { UserListSection(it.key, it.custom, it.entries.filter { entry -> AdultContent.allows(entry.adult) }) }
+
+    // The lists as they were asked for, with every title
+    private suspend fun cached(context: Context, name: String, manga: Boolean): List<UserListSection>? {
         val person = name.lowercase()
         val (mine, wait) = lock.withLock {
             // A change of the list of the user makes what was kept old

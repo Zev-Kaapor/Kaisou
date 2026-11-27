@@ -10,6 +10,7 @@ import com.kaisou.app.core.designsystem.icons.KaisouIcons
 // The names of the screens that open from the sections in the route of the settings
 const val ThanksSection = "Thanks"
 const val UpdatesSection = "Updates"
+const val HomePartsSection = "HomeParts"
 
 // A part of the settings, with the words that name it, the line that says what is in it and its icon
 enum class SettingsSection(
@@ -17,10 +18,13 @@ enum class SettingsSection(
     @StringRes val subtitleRes: Int,
     val icon: ImageVector
 ) {
+    Home(R.string.settings_home, R.string.settings_home_subtitle, KaisouIcons.Home),
+    Content(R.string.settings_content, R.string.settings_content_subtitle, KaisouIcons.Shield),
     About(R.string.settings_about, R.string.settings_about_subtitle, KaisouIcons.Info)
 }
 
 // The sections that sit together in a card under a name
 enum class SettingsGroup(@StringRes val titleRes: Int, val sections: List<SettingsSection>) {
+    Preferences(R.string.settings_group_preferences, listOf(SettingsSection.Home, SettingsSection.Content)),
     More(R.string.settings_group_more, listOf(SettingsSection.About))
 }

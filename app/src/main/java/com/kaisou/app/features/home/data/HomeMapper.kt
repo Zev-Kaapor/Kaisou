@@ -15,6 +15,7 @@ import java.time.ZoneId
 import com.kaisou.app.R
 import com.kaisou.app.core.anilist.AniActivity
 import com.kaisou.app.core.anilist.AniCard
+import com.kaisou.app.core.anilist.AniEntry
 import com.kaisou.app.core.anilist.AniMedia
 import com.kaisou.app.core.anilist.AniReply
 import com.kaisou.app.core.anilist.AniRecommended
@@ -59,13 +60,13 @@ class HomeMapper(private val resources: Resources) {
     }
 
     // Everything under the hero in order: the user apart from the friends, new episodes first, empty shelves left out
-    fun shelves(source: AniShelves, userId: Int, recommended: AniRecommended?, sequels: List<AniCard>?, hideAdult: Boolean = false): HomeShelvesUi {
+    fun shelves(source: AniShelves, userId: Int, recommended: AniRecommended?, sequels: List<AniCard>?, lists: Map<String, List<AniEntry>>?, allows: (Boolean) -> Boolean = { true }): HomeShelvesUi {
         val mine = (source.watching + source.plannedAnime).map { it.card.id }.toSet()
         val airing = source.airing.sortedByDescending { it.card.id in mine }
         val now = System.currentTimeMillis()
         return HomeShelvesUi(
-            ownStory = stories(source.mine, now, hideAdult).firstOrNull()?.items.orEmpty(),
-            friends = stories(source.following.filterNot { it.userId == userId }, now, hideAdult),
+            ownStory = stories(source.mine, now, allows).firstOrNull()?.items.orEmpty(),
+            friends = stories(source.following.filterNot { it.userId == userId }, now, allows),
             shelves = listOfNotNull(
                 shelf(ShelfId.Watching, CardShape.Poster, source.watching.map { card(it.card, done = it.progress, total = it.card.episodes) }),
                 shelf(ShelfId.Reading, CardShape.Poster, source.reading.map { card(it.card, done = it.progress, total = it.card.chapters) }),
@@ -79,6 +80,13 @@ class HomeMapper(private val resources: Resources) {
                 ),
                 shelf(ShelfId.PlannedAnime, CardShape.Poster, source.plannedAnime.map { card(it.card, details = size(it.card)) }),
                 shelf(ShelfId.PlannedManga, CardShape.Poster, source.plannedManga.map { card(it.card, details = size(it.card)) }),
+                listShelf(ShelfId.CompletedTv, lists?.get("completedAnime")) { it.format != MovieFormat },
+                listShelf(ShelfId.CompletedMovie, lists?.get("completedAnime")) { it.format == MovieFormat },
+                listShelf(ShelfId.CompletedManga, lists?.get("completedManga")),
+                listShelf(ShelfId.PausedAnime, lists?.get("pausedAnime")),
+                listShelf(ShelfId.PausedManga, lists?.get("pausedManga")),
+                listShelf(ShelfId.DroppedAnime, lists?.get("droppedAnime")),
+                listShelf(ShelfId.DroppedManga, lists?.get("droppedManga")),
                 shelf(ShelfId.MissingSequels, CardShape.Poster, sequels.orEmpty().map { card(it, details = size(it)) }),
                 shelf(ShelfId.RecommendedAnime, CardShape.Poster, recommended?.anime.orEmpty().map { card(it, details = size(it)) }),
                 shelf(ShelfId.RecommendedManga, CardShape.Poster, recommended?.manga.orEmpty().map { card(it, details = size(it)) }),
@@ -92,11 +100,11 @@ class HomeMapper(private val resources: Resources) {
         )
     }
 
-    // The activities of the last days grouped by person, the latest first, each played oldest to newest, adult ones hidden when asked
-    private fun stories(activities: List<AniActivity>, now: Long, hideAdult: Boolean): List<StoryUi> {
+    // The activities of the last days by person, the latest first, each played oldest to newest, the adult ones as the user chose
+    private fun stories(activities: List<AniActivity>, now: Long, allows: (Boolean) -> Boolean): List<StoryUi> {
         val oldest = now / MillisPerSecond - StoryDays * SecondsPerDay
         return activities
-            .filter { it.createdAt > oldest && !(hideAdult && it.adult) }
+            .filter { it.createdAt > oldest && allows(it.adult) }
             .distinctBy { it.id }
             .groupBy { it.userId }
             .map { (userId, items) ->
@@ -162,6 +170,10 @@ class HomeMapper(private val resources: Resources) {
             else -> resources.getString(R.string.story_other, status, card.title)
         }
     }
+
+    // Builds a shelf from a state of the list of the user, the titles that pass what tells the kind, none when it has no cards
+    private fun listShelf(id: ShelfId, entries: List<AniEntry>?, kind: (AniCard) -> Boolean = { true }): ShelfUi? =
+        shelf(id, CardShape.Poster, entries.orEmpty().map { it.card }.filter(kind).take(ListShelfCards).map { card(it, details = size(it)) })
 
     // Builds a shelf, none when it has no cards
     private fun shelf(id: ShelfId, shape: CardShape, cards: List<CardUi>): ShelfUi? =
@@ -237,6 +249,7 @@ class HomeMapper(private val resources: Resources) {
         const val FirstEpisode = 1
         const val WatchingStatus = "CURRENT"
         const val NotYetReleased = "NOT_YET_RELEASED"
+        const val ListShelfCards = 20
         const val Releasing = "RELEASING"
         const val Hiatus = "HIATUS"
         const val Cancelled = "CANCELLED"

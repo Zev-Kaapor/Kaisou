@@ -86,9 +86,11 @@ import com.kaisou.app.core.rating.RatingRepository
 import com.kaisou.app.features.home.data.CardShape
 import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.home.data.StoryUi
+import com.kaisou.app.features.home.data.ShelfId
 import com.kaisou.app.features.home.data.ShelfUi
 import com.kaisou.app.features.home.ui.HomeDimens
 import com.kaisou.app.features.title.ui.components.ListEditing
+import com.kaisou.app.features.title.ui.components.SeeAllArrow
 
 // The user and the people they follow, as on Dantotsu: a picture in a ring with a piece for each activity, gray when seen
 @Composable
@@ -176,9 +178,24 @@ private fun StoryRing(seen: List<Boolean>, unseenColor: Color, seenColor: Color)
     }
 }
 
+// The shelves that show a state of the list of the user: whether it is manga and the key of the state its arrow opens
+private val ShelfLists = mapOf(
+    ShelfId.Watching to (false to "CURRENT"),
+    ShelfId.Reading to (true to "CURRENT"),
+    ShelfId.PlannedAnime to (false to "PLANNING"),
+    ShelfId.PlannedManga to (true to "PLANNING"),
+    ShelfId.CompletedTv to (false to "COMPLETED"),
+    ShelfId.CompletedMovie to (false to "COMPLETED"),
+    ShelfId.CompletedManga to (true to "COMPLETED"),
+    ShelfId.PausedAnime to (false to "PAUSED"),
+    ShelfId.PausedManga to (true to "PAUSED"),
+    ShelfId.DroppedAnime to (false to "DROPPED"),
+    ShelfId.DroppedManga to (true to "DROPPED")
+)
+
 // A shelf of the Home: its name and a row of cards that slides sideways, the last one cut by the edge to show there is more
 @Composable
-fun HomeShelf(shelf: ShelfUi, onOpenTitle: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun HomeShelf(shelf: ShelfUi, onOpenTitle: (Int) -> Unit, onOpenList: (manga: Boolean, tab: String) -> Unit, modifier: Modifier = Modifier) {
     val dimens = KaisouTheme.dimens
 
     // The wide cards change their picture together, on the clock of the shelf
@@ -192,15 +209,21 @@ fun HomeShelf(shelf: ShelfUi, onOpenTitle: (Int) -> Unit, modifier: Modifier = M
         }
     }
 
+    // The shelves that come from the list of the user have an arrow that opens that list on the tab of the state
+    val list = ShelfLists[shelf.id]
+
     Column(modifier = modifier) {
-        Text(
-            text = stringResource(shelf.id.titleRes),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = dimens.screenPadding)
-        )
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(shelf.id.titleRes),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            if (list != null) SeeAllArrow(onClick = { onOpenList(list.first, list.second) })
+        }
         LazyRow(
             contentPadding = PaddingValues(horizontal = dimens.screenPadding),
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),

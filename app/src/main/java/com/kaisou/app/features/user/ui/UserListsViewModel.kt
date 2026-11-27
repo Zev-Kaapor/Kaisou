@@ -9,10 +9,12 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 // Project resources
 import com.kaisou.app.core.navigation.UserNameArg
+import com.kaisou.app.features.settings.data.AdultContent
 import com.kaisou.app.features.title.data.Load
 import com.kaisou.app.features.user.data.UserListSection
 import com.kaisou.app.features.user.data.UserListStore
@@ -25,6 +27,17 @@ class UserListsViewModel(application: Application, savedStateHandle: SavedStateH
     val name: String = checkNotNull(savedStateHandle[UserNameArg])
     private val mutableState = MutableStateFlow(UserListsUi())
     val state: StateFlow<UserListsUi> = mutableState.asStateFlow()
+
+    init {
+        // The choice about adult content changes which titles are on the lists, so the ones that were asked for are asked again
+        viewModelScope.launch {
+            AdultContent.mode.drop(1).collect {
+                val now = mutableState.value
+                if (now.anime is Load.Done) load(manga = false)
+                if (now.manga is Load.Done) load(manga = true)
+            }
+        }
+    }
 
     // Asks for the lists that were not asked yet, or that failed the last time
     fun ensureLoaded() {

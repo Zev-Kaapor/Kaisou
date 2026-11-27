@@ -39,9 +39,11 @@ import com.kaisou.app.R
 import com.kaisou.app.core.anilist.AniViewer
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.data.HiddenOnHome
+import com.kaisou.app.features.home.data.HomeLayout
 import com.kaisou.app.features.home.data.HomeStatus
 import com.kaisou.app.features.home.data.StoryUi
 import com.kaisou.app.features.home.ui.components.HomeHeader
+import com.kaisou.app.features.settings.data.AdultContent
 import com.kaisou.app.features.home.ui.components.HomeHeroCarousel
 import com.kaisou.app.features.home.ui.components.HomeFriends
 import com.kaisou.app.features.home.ui.components.HomeHeroSkeleton
@@ -60,6 +62,7 @@ fun HomeScreen(
     viewer: AniViewer,
     onProfile: () -> Unit,
     onOpenTitle: (Int) -> Unit,
+    onOpenList: (manga: Boolean, tab: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -108,10 +111,12 @@ fun HomeScreen(
         var openStory by viewModel::openStory
 
 
-        // The shelves without the titles the user hid, and without the shelves left with none
+        // The shelves without what the user hid or turned off or the adult choice leaves out, and without the ones left with none
         val hiddenOnHome by HiddenOnHome.ids.collectAsState()
-        val shelves = remember(state.shelves, hiddenOnHome) {
-            state.shelves.map { shelf -> shelf.copy(cards = shelf.cards.filterNot { it.anilistId in hiddenOnHome }) }.filter { it.cards.isNotEmpty() }
+        val adultMode by AdultContent.mode.collectAsState()
+        val layout by HomeLayout.state.collectAsState()
+        val shelves = remember(state.shelves, hiddenOnHome, adultMode, layout) {
+            state.shelves.filter { layout.shown(it.id.name) }.map { shelf -> shelf.copy(cards = shelf.cards.filter { it.anilistId !in hiddenOnHome && AdultContent.allows(it.rating.adult) }) }.filter { it.cards.isNotEmpty() }
         }
 
         when (state.status) {
@@ -165,8 +170,8 @@ fun HomeScreen(
                 }
 
                 // What is under the hero: the user and the friends, then the shelves that have something on them
-                item(key = "friends") { HomeFriends(own = own, friends = state.friends, seen = state.seen, onOpen = { openStory = it.userId }, onAdd = viewModel::openComposer) }
-                items(shelves, key = { it.id.name }) { shelf -> HomeShelf(shelf = shelf, onOpenTitle = onOpenTitle) }
+                if (layout.shown(HomeLayout.Stories)) item(key = "friends") { HomeFriends(own = own, friends = state.friends, seen = state.seen, onOpen = { openStory = it.userId }, onAdd = viewModel::openComposer) }
+                items(shelves, key = { it.id.name }) { shelf -> HomeShelf(shelf = shelf, onOpenTitle = onOpenTitle, onOpenList = onOpenList) }
               }
             }
         }

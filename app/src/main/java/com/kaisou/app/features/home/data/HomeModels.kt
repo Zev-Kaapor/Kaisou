@@ -67,21 +67,28 @@ class HeroArt(
 }
 
 // The shelves of posters and wide cards under the hero, in the order they show, and the words that name each one
-enum class ShelfId(@StringRes val titleRes: Int) {
-    Watching(R.string.home_shelf_watching),
-    Reading(R.string.home_shelf_reading),
-    NewEpisodes(R.string.home_shelf_new_episodes),
-    PlannedAnime(R.string.home_shelf_planned_anime),
-    PlannedManga(R.string.home_shelf_planned_manga),
-    MissingSequels(R.string.home_shelf_missing_sequels),
-    RecommendedAnime(R.string.home_shelf_recommended_anime),
-    RecommendedManga(R.string.home_shelf_recommended_manga),
-    Trending(R.string.home_shelf_trending),
-    TrendingManga(R.string.home_shelf_trending_manga),
-    Popular(R.string.home_shelf_popular),
-    Upcoming(R.string.home_shelf_upcoming),
-    NewAnime(R.string.home_shelf_new_anime),
-    NewManga(R.string.home_shelf_new_manga)
+enum class ShelfId(@StringRes val titleRes: Int, @StringRes val descRes: Int) {
+    Watching(R.string.home_shelf_watching, R.string.home_shelf_watching_desc),
+    Reading(R.string.home_shelf_reading, R.string.home_shelf_reading_desc),
+    NewEpisodes(R.string.home_shelf_new_episodes, R.string.home_shelf_new_episodes_desc),
+    PlannedAnime(R.string.home_shelf_planned_anime, R.string.home_shelf_planned_anime_desc),
+    PlannedManga(R.string.home_shelf_planned_manga, R.string.home_shelf_planned_manga_desc),
+    CompletedTv(R.string.home_shelf_completed_tv, R.string.home_shelf_completed_tv_desc),
+    CompletedMovie(R.string.home_shelf_completed_movie, R.string.home_shelf_completed_movie_desc),
+    CompletedManga(R.string.home_shelf_completed_manga, R.string.home_shelf_completed_manga_desc),
+    PausedAnime(R.string.home_shelf_paused_anime, R.string.home_shelf_paused_anime_desc),
+    PausedManga(R.string.home_shelf_paused_manga, R.string.home_shelf_paused_manga_desc),
+    DroppedAnime(R.string.home_shelf_dropped_anime, R.string.home_shelf_dropped_anime_desc),
+    DroppedManga(R.string.home_shelf_dropped_manga, R.string.home_shelf_dropped_manga_desc),
+    MissingSequels(R.string.home_shelf_missing_sequels, R.string.home_shelf_missing_sequels_desc),
+    RecommendedAnime(R.string.home_shelf_recommended_anime, R.string.home_shelf_recommended_anime_desc),
+    RecommendedManga(R.string.home_shelf_recommended_manga, R.string.home_shelf_recommended_manga_desc),
+    Trending(R.string.home_shelf_trending, R.string.home_shelf_trending_desc),
+    TrendingManga(R.string.home_shelf_trending_manga, R.string.home_shelf_trending_manga_desc),
+    Popular(R.string.home_shelf_popular, R.string.home_shelf_popular_desc),
+    Upcoming(R.string.home_shelf_upcoming, R.string.home_shelf_upcoming_desc),
+    NewAnime(R.string.home_shelf_new_anime, R.string.home_shelf_new_anime_desc),
+    NewManga(R.string.home_shelf_new_manga, R.string.home_shelf_new_manga_desc)
 }
 
 // The shape of the cards of a shelf: a poster standing up, or a wide picture

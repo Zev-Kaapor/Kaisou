@@ -153,6 +153,17 @@ class AniListClient {
         return fetchShelves(BelowSpace, userId.toString(), BelowQuery, variables, token, maxAgeMillis)
     }
 
+    // The lists of the user that were turned on, each with its titles by the name of its part, null when AniList does not answer
+    suspend fun listShelves(userId: Int, token: String?, asks: List<AniListAsk>): Map<String, List<AniEntry>>? = withContext(Dispatchers.IO) {
+        if (asks.isEmpty()) return@withContext emptyMap()
+        val data = try {
+            post(listsQuery(asks), JSONObject().put("userId", userId), token)
+        } catch (_: Exception) {
+            null
+        } ?: return@withContext null
+        asks.associate { ask -> ask.alias to AniShelvesParser.entries(data.optJSONObject(ask.alias)) }
+    }
+
     // Asks for shelves and keeps the answer, using one kept within the age given, or when AniList does not answer
     private suspend fun fetchShelves(space: String, key: String, query: String, variables: JSONObject, token: String?, maxAgeMillis: Long = 0L): AniShelves? =
         withContext(Dispatchers.IO) {
@@ -568,9 +579,16 @@ class AniListClient {
             "$alias: Page(perPage: $ShelfSize) { media($arguments, isAdult: false) { $ShelfCard } }"
 
         // One list of the user, the ones touched last first
-        private fun shelfList(alias: String, type: String, statuses: String): String =
+        private fun shelfList(alias: String, type: String, statuses: String, size: Int = ShelfSize): String =
             "$alias: MediaListCollection(userId: ${'$'}userId, type: $type, status_in: [$statuses], sort: UPDATED_TIME_DESC, " +
-                "chunk: 1, perChunk: $ShelfSize) { lists { entries { progress media { $ShelfCard } } } }"
+                "chunk: 1, perChunk: $size) { lists { entries { progress media { $ShelfCard } } } }"
+
+        // How many titles of a list are asked for, more than a shelf shows since a kind is split from another
+        const val ListShelfSize = 60
+
+        // The lists of the user that are turned on, a part of one question for each
+        fun listsQuery(asks: List<AniListAsk>): String =
+            "query (${'$'}userId: Int) { " + asks.joinToString(" ") { shelfList(it.alias, it.type, it.status, ListShelfSize) } + " }"
 
         // The top of the shelves: what the friends did and the lists of what the user is in the middle of
         val TopQuery = """

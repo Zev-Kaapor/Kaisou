@@ -17,6 +17,7 @@ import com.kaisou.app.core.auth.AniListSession
 import com.kaisou.app.core.navigation.UserListKindArg
 import com.kaisou.app.core.navigation.UserListTabArg
 import com.kaisou.app.core.navigation.UserNameArg
+import com.kaisou.app.features.settings.data.AdultContent
 import com.kaisou.app.features.title.data.ListChanges
 import com.kaisou.app.features.title.data.Load
 import com.kaisou.app.features.user.data.ListFilter
@@ -64,6 +65,9 @@ class UserListViewModel(application: Application, savedStateHandle: SavedStateHa
 
         // A change of the list made anywhere in the app asks for it again with no placeholders, so the page keeps what it shows
         viewModelScope.launch { ListChanges.version.drop(1).collect { fetch(loading = false) } }
+
+        // The choice about adult content changes which titles are on the lists, so they are asked for again
+        viewModelScope.launch { AdultContent.mode.drop(1).collect { load() } }
     }
 
     // Asks for the list of the kind that is open, showing the placeholders while it comes

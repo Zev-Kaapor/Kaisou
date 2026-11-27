@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -129,9 +129,9 @@ private fun SectionRow(section: SettingsSection, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .height(SettingsDimens.RowHeight)
+            .heightIn(min = SettingsDimens.RowHeight)
             .clickable(onClick = onClick)
-            .padding(horizontal = SettingsDimens.RowPadding)
+            .padding(horizontal = SettingsDimens.RowPadding, vertical = SettingsDimens.RowVertical)
     ) {
         Icon(
             imageVector = section.icon,
@@ -152,7 +152,7 @@ private fun SectionRow(section: SettingsSection, onClick: () -> Unit) {
                 text = stringResource(section.subtitleRes),
                 style = MaterialTheme.typography.bodyMedium.merge(SettingsType.RowSubtitle),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
         }

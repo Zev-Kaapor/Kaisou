@@ -67,6 +67,10 @@ import com.kaisou.app.features.home.ui.HomeScreen
 import com.kaisou.app.features.profile.ui.ProfileSheet
 import com.kaisou.app.features.settings.data.UpdateStore
 import com.kaisou.app.features.settings.ui.AboutSettingsScreen
+import com.kaisou.app.features.settings.ui.ContentSettingsScreen
+import com.kaisou.app.features.settings.ui.HomePartsScreen
+import com.kaisou.app.features.settings.ui.HomePartsSection
+import com.kaisou.app.features.settings.ui.HomeSettingsScreen
 import com.kaisou.app.features.settings.ui.SettingsScreen
 import com.kaisou.app.features.settings.ui.SettingsSection
 import com.kaisou.app.features.settings.ui.ThanksScreen
@@ -291,6 +295,7 @@ private fun MainNavHost(
                 viewer = viewer,
                 onProfile = onProfile,
                 onOpenTitle = { navController.navigate(titleRoute(it)) },
+                onOpenList = { manga, tab -> navController.navigate(userListRoute(viewer.name, manga, tab)) },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -522,6 +527,12 @@ private fun MainNavHost(
                     onUpdates = { navController.navigate(settingsSectionRoute(UpdatesSection)) },
                     onThanks = { navController.navigate(settingsSectionRoute(ThanksSection)) }
                 )
+                SettingsSection.Home.name -> HomeSettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onParts = { navController.navigate(settingsSectionRoute(HomePartsSection)) }
+                )
+                HomePartsSection -> HomePartsScreen(onBack = { navController.popBackStack() })
+                SettingsSection.Content.name -> ContentSettingsScreen(onBack = { navController.popBackStack() })
                 ThanksSection -> ThanksScreen(onBack = { navController.popBackStack() })
                 UpdatesSection -> UpdatesSettingsScreen(onBack = { navController.popBackStack() })
             }
