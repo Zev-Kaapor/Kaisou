@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -123,6 +124,7 @@ fun SheetCloseButton(modifier: Modifier = Modifier) {
 fun KaisouSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -229,7 +231,7 @@ fun KaisouSheet(
 
         Surface(
             shape = RoundedCornerShape(topStart = SheetCorner, topEnd = SheetCorner),
-            color = MaterialTheme.colorScheme.surfaceContainer,
+            color = containerColor,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()

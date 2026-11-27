@@ -38,6 +38,15 @@ const val UserFavouritesRoute = "user/{$UserNameArg}/favourites/{$UserFavourites
 // Builds the route of the favourites of one kind of a person
 fun userFavouritesRoute(name: String, kind: String): String = "${userRoute(name)}/favourites/$kind"
 
+// The list of anime or of manga of a person, by their name, the kind of list and the tab of the state that opens first
+const val UserListKindArg = "listKind"
+const val UserListTabArg = "listTab"
+const val UserListRoute = "user/{$UserNameArg}/lists/{$UserListKindArg}/{$UserListTabArg}"
+
+// Builds the route of the list of a person, open on a tab of the anime or of the manga
+fun userListRoute(name: String, manga: Boolean, tab: String): String =
+    "${userRoute(name)}/lists/${if (manga) "manga" else "anime"}/${URLEncoder.encode(tab, Charsets.UTF_8.name()).replace("+", "%20")}"
+
 // Everything a person did lately, by their name and their id on AniList
 const val UserIdArg = "userId"
 const val UserActivityRoute = "user/{$UserNameArg}/activity/{$UserIdArg}"

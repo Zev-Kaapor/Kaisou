@@ -92,6 +92,7 @@ import com.kaisou.app.features.profile.ui.ProfileVoicesScreen
 import com.kaisou.app.features.title.ui.TitleCoversScreen
 import com.kaisou.app.features.title.ui.TitleGalleryScreen
 import com.kaisou.app.features.user.ui.UserActivityScreen
+import com.kaisou.app.features.user.ui.PersonListScreen
 import com.kaisou.app.features.user.ui.UserListScreen
 import com.kaisou.app.features.user.ui.UserFavouritesScreen
 import com.kaisou.app.features.user.ui.UserScreen
@@ -143,7 +144,7 @@ private fun KaisouShell(viewer: AniViewer, onSignOut: () -> Unit, startTab: Main
 
     // Pages that open over the tabs use the whole screen, but the page of a title keeps the bar with its own sections
     val route = backStackEntry?.destination?.route
-    val fullScreen = route.let { it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute || it == GalleryRoute || it == ReviewsRoute || it == ReviewRoute || it == ThreadsRoute || it == ThreadRoute || it == UserActivityRoute || it == UserFavouritesRoute }
+    val fullScreen = route.let { it == NewsRoute || it == ProfileRoute || it == ProfileMediaRoute || it == ProfileVoicesRoute || it == CastRoute || it == CardsRoute || it == CoversRoute || it == GalleryRoute || it == ReviewsRoute || it == ReviewRoute || it == ThreadsRoute || it == ThreadRoute || it == UserActivityRoute || it == UserFavouritesRoute || it == UserListRoute }
     val titleSections by NavSectionsHost.sections.collectAsState()
     val sections = if (route == TitleRoute || route == UserRoute) titleSections else null
 
@@ -349,8 +350,21 @@ private fun MainNavHost(
                 onOpenProfile = { navController.navigate(profileRoute(it.kind.path, it.id)) },
                 onOpenActivity = { name, id -> navController.navigate(userActivityRoute(name, id)) },
                 onOpenFavourites = { name, kind -> navController.navigate(userFavouritesRoute(name, kind.path)) },
+                onOpenList = { name, manga, tab -> navController.navigate(userListRoute(name, manga, tab)) },
                 modifier = Modifier.fillMaxSize()
             )
+        }
+
+        // The list of anime or of manga of a person opens over their page with no bar, on the tab of the state that was touched
+        composable(
+            route = UserListRoute,
+            arguments = listOf(
+                navArgument(UserNameArg) { type = NavType.StringType },
+                navArgument(UserListKindArg) { type = NavType.StringType },
+                navArgument(UserListTabArg) { type = NavType.StringType }
+            )
+        ) {
+            PersonListScreen(onBack = { navController.popBackStack() }, onOpenTitle = { navController.navigate(titleRoute(it)) }, modifier = Modifier.fillMaxSize())
         }
 
         // The whole list of one kind of favourites of a person opens over their page, with no bar

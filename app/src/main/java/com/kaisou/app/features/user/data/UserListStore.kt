@@ -22,19 +22,29 @@ import com.kaisou.app.core.cache.TimedCache
 import com.kaisou.app.core.rating.RatingQuery
 import com.kaisou.app.features.title.data.ListChanges
 
-// A title on the list of a person: picture, names, kind, progress, scores, state, times, year, genres and what rates it
+// A title on the list of a person: picture, names, kind, progress, scores, state, times, year, genres, facts and what rates it
 data class UserListEntry(
     val mediaId: Int,
     val title: String,
     val romaji: String,
     val cover: String?,
     val format: String?,
+    val formatKey: String?,
+    val source: String?,
+    val airing: String?,
+    val season: String?,
+    val country: String?,
+    val tags: List<String>,
     val total: Int?,
     val progress: Int,
     val score: Int,
     val status: String,
     val updatedAt: Long,
+    val addedAt: Long,
+    val startedOn: Int,
     val completedOn: Int,
+    val releaseOn: Int,
+    val popularity: Int,
     val year: Int?,
     val genres: List<String>,
     // The score of everyone from 0 to 100, and what the age rating needs: the MyAnimeList id, the adult mark and the kind
@@ -58,14 +68,14 @@ data class UserListEntry(
 // One list of a person: a state of AniList, by its key, or a list the person made, by its name, with its titles
 class UserListSection(val key: String, val custom: Boolean, val entries: List<UserListEntry>)
 
-// The lists of anime and manga of a person in one question without tags, kept ten minutes and shared by the profile and the Library
+// The lists of anime and manga of a person in one question, kept ten minutes and shared by the profile and the Library
 object UserListStore {
     // How long and how many lists are kept, the format of a movie, and the fields asked for each list
     private const val MovieFormat = "MOVIE"
     private const val LifeMillis = 10L * 60L * 1000L
     private const val MaxLists = 8
-    private const val Lists = "lists { name isCustomList status entries { status progress score(format: POINT_100) updatedAt completedAt { year month day } media { id title { english romaji } " +
-        "coverImage { large } format episodes chapters genres startDate { year } averageScore idMal isAdult } } }"
+    private const val Lists = "lists { name isCustomList status entries { status progress score(format: POINT_100) createdAt updatedAt startedAt { year month day } completedAt { year month day } media { id title { english romaji } " +
+        "coverImage { large } format status source season countryOfOrigin tags { name } episodes chapters genres startDate { year month day } popularity averageScore idMal isAdult } } }"
 
     // The query of the anime and the manga lists
     private const val Query = "query (\$name: String) { anime: MediaListCollection(userName: \$name, type: ANIME, forceSingleCompletedList: true) { $Lists } " +
@@ -137,14 +147,22 @@ object UserListStore {
             romaji = romaji,
             cover = media.optJSONObject("coverImage")?.let { text(it, "large") },
             format = text(media, "format")?.let { formats[it] ?: it },
+            formatKey = text(media, "format"),
+            source = text(media, "source"),
+            airing = text(media, "status"),
+            season = text(media, "season"),
+            country = text(media, "countryOfOrigin"),
+            tags = objects(media.optJSONArray("tags")).mapNotNull { text(it, "name") },
             total = (if (manga) media.optInt("chapters") else media.optInt("episodes")).takeIf { it > 0 },
             progress = entry.optInt("progress"),
             score = entry.optInt("score"),
             status = text(entry, "status").orEmpty(),
             updatedAt = entry.optLong("updatedAt"),
-            completedOn = entry.optJSONObject("completedAt")?.let { day ->
-                day.optInt("year").takeIf { it > 0 }?.let { year -> year * 10000 + day.optInt("month").coerceAtLeast(1) * 100 + day.optInt("day").coerceAtLeast(1) }
-            } ?: 0,
+            addedAt = entry.optLong("createdAt"),
+            startedOn = day(entry.optJSONObject("startedAt")),
+            completedOn = day(entry.optJSONObject("completedAt")),
+            releaseOn = day(media.optJSONObject("startDate")),
+            popularity = media.optInt("popularity"),
             year = media.optJSONObject("startDate")?.optInt("year")?.takeIf { it > 0 },
             genres = strings(media.optJSONArray("genres")),
             average = media.optInt("averageScore"),
@@ -154,6 +172,10 @@ object UserListStore {
             isMovie = text(media, "format") == MovieFormat
         )
     }
+
+    // Reads a day as a number of the year, the month and the day, 0 when there is no year
+    private fun day(json: JSONObject?): Int =
+        json?.let { it.optInt("year").takeIf { year -> year > 0 }?.let { year -> year * 10000 + it.optInt("month").coerceAtLeast(1) * 100 + it.optInt("day").coerceAtLeast(1) } } ?: 0
 
     // Reads a JSON array as objects
     private fun objects(list: JSONArray?): List<JSONObject> = if (list == null) emptyList() else (0 until list.length()).mapNotNull { list.optJSONObject(it) }

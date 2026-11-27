@@ -1,6 +1,7 @@
 package com.kaisou.app.features.user.ui
 
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 // Sizes of the page of a person
 object UserDimens {
@@ -52,6 +53,24 @@ object UserDimens {
 
     // The cover at the start of a thing the person did to a title
     val RecentCover = 60.dp
+
+    // The bar and tabs of the page of a list, as small as AnymeX has them: the touch and the drawing of an icon, the texts
+    val BarTouch = 44.dp
+    val BarGlyph = 20.dp
+    val BarTitleSize = 13.sp
+    val TabTextSize = 12.sp
+    val TabLine = 3.dp
+
+    // How long the bar of the page of a list takes to change to the search
+    val SearchMillis = 300
+
+    // The sheets of the filter and of the order: the header, the buttons, the pills and tiles, and their marks
+    val FilterChip = 36.dp
+    val FilterArrow = 18.dp
+    val FilterButton = 52.dp
+    val FilterHeader = 48.dp
+    val SortTile = 56.dp
+    val SortGlyph = 22.dp
 
     // The placeholders: the shares of the width of the bars, how many lines and cards, and the height of the card of genres
     const val SkeletonName = 0.5f

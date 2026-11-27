@@ -77,7 +77,8 @@ import com.kaisou.app.features.user.ui.UserListsUi
 fun LazyListScope.userListsItems(
     state: UserListsUi,
     onOpenTitle: (Int) -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onOpenList: (manga: Boolean, tab: String) -> Unit
 ) {
     if (state.anime is Load.Failed && state.manga is Load.Failed) {
         item(key = "lists-error") { DetailsError(onRetry = onRetry) }
@@ -89,20 +90,21 @@ fun LazyListScope.userListsItems(
             modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding).padding(top = TitleDimens.BlockTop),
             verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
         ) {
-            KindCard(manga = false, load = state.anime)
-            KindCard(manga = true, load = state.manga)
+            KindCard(manga = false, load = state.anime, onClick = { onOpenList(false, ListTabs.PageOrder.first()) })
+            KindCard(manga = true, load = state.manga, onClick = { onOpenList(true, ListTabs.PageOrder.first()) })
         }
     }
 
     // The kinds that came, the anime first
     val kinds = listOf(false to (state.anime as? Load.Done)?.value, true to (state.manga as? Load.Done)?.value).mapNotNull { (manga, sections) -> sections?.let { manga to it } }
     kinds.forEach { (manga, sections) ->
-        val current = ListTabs.entries(sections, "CURRENT").sortedWith(ListSort.Updated.comparator)
+        val current = ListTabs.entries(sections, "CURRENT").sortedWith(ListSort.Updated.comparator())
         if (current.isNotEmpty()) item(key = "lists-current-$manga") {
             CardsRowBlock(
                 title = stringResource(if (manga) R.string.user_row_reading else R.string.user_row_watching),
                 entries = current.take(UserDimens.ListWatching),
                 line = EntryLine.Progress,
+                onOpen = { onOpenList(manga, "CURRENT") },
                 onOpenTitle = onOpenTitle
             )
         }
@@ -116,12 +118,13 @@ fun LazyListScope.userListsItems(
     )
     others.forEach { (status, line, titles) ->
         kinds.forEach { (manga, sections) ->
-            val entries = ListTabs.entries(sections, status).sortedWith(ListSort.Updated.comparator)
+            val entries = ListTabs.entries(sections, status).sortedWith(ListSort.Updated.comparator())
             if (entries.isNotEmpty()) item(key = "lists-${status.lowercase()}-$manga") {
                 CardsRowBlock(
                     title = stringResource(if (manga) titles.second else titles.first),
                     entries = entries.take(UserDimens.ListWatching),
                     line = line,
+                    onOpen = { onOpenList(manga, status) },
                     onOpenTitle = onOpenTitle
                 )
             }
@@ -136,6 +139,7 @@ fun LazyListScope.userListsItems(
                 title = stringResource(if (manga) R.string.user_block_finished_manga else R.string.user_block_finished_anime),
                 entries = finished.take(UserDimens.ListFinished),
                 line = EntryLine.Day,
+                onOpen = { onOpenList(manga, "COMPLETED") },
                 onOpenTitle = onOpenTitle
             )
         }
@@ -170,7 +174,7 @@ internal fun KindSwitch(manga: Boolean, onPick: (Boolean) -> Unit, modifier: Mod
 // The card of a kind: its name and count, a bar split in the states and each state with its color and count
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun KindCard(manga: Boolean, load: Load<List<UserListSection>>) {
+private fun KindCard(manga: Boolean, load: Load<List<UserListSection>>, onClick: () -> Unit) {
     val dimens = KaisouTheme.dimens
     val palette = KaisouTheme.colors.chart
     val keys = stringArrayResource(R.array.title_list_keys)
@@ -184,6 +188,7 @@ private fun KindCard(manga: Boolean, load: Load<List<UserListSection>>) {
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
             .background(KaisouTheme.colors.elevated)
+            .clickable(enabled = sections != null, role = Role.Button, onClick = onClick)
             .padding(dimens.spaceMedium),
         verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
     ) {
@@ -196,16 +201,25 @@ private fun KindCard(manga: Boolean, load: Load<List<UserListSection>>) {
                 )
                 if (sections != null) {
                     Text(text = pluralStringResource(R.plurals.profile_titles_count, total, total), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else if (load !is Load.Failed) {
+                    SkeletonHost(modifier = Modifier.fillMaxWidth().padding(top = dimens.spaceExtraSmall)) {
+                        Box(modifier = Modifier.fillMaxWidth(UserDimens.SkeletonSince).height(ComponentDimens.SkeletonLineHeight).skeleton())
+                    }
                 }
             }
 
-            // The arrow only holds the place of the page of this list, which is not made yet
+            // The arrow says that the card opens the page of this list
             Icon(imageVector = KaisouIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         when {
             sections == null && load is Load.Failed -> Text(text = stringResource(R.string.user_list_empty), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             sections == null -> SkeletonHost(modifier = Modifier.fillMaxWidth()) {
-                Box(modifier = Modifier.fillMaxWidth().height(UserDimens.GenreBarHeight).skeleton(MaterialTheme.shapes.small))
+                // The bar and two lines of states, as tall as the card is once the list comes
+                Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
+                    Box(modifier = Modifier.fillMaxWidth().height(UserDimens.GenreBarHeight).skeleton(MaterialTheme.shapes.small))
+                    Box(modifier = Modifier.fillMaxWidth(UserDimens.SkeletonCounts).height(ComponentDimens.SkeletonLineHeight).skeleton())
+                    Box(modifier = Modifier.fillMaxWidth(UserDimens.SkeletonSince).height(ComponentDimens.SkeletonLineHeight).skeleton())
+                }
             }
             total == 0 -> Text(text = stringResource(R.string.user_list_empty), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             else -> {
@@ -231,12 +245,12 @@ private fun KindCard(manga: Boolean, load: Load<List<UserListSection>>) {
     }
 }
 
-// The name of a block with the arrow at its end, which for now only holds the place of the page with all of it
+// The name of a block with the arrow at its end, which opens the list of that state
 @Composable
-private fun BlockHeader(title: String) {
+private fun BlockHeader(title: String, onOpen: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = KaisouTheme.dimens.screenPadding), verticalAlignment = Alignment.CenterVertically) {
         BlockTitle(text = title, modifier = Modifier.weight(1f))
-        SeeAllArrow(onClick = {})
+        SeeAllArrow(onClick = onOpen)
     }
 }
 
@@ -245,7 +259,7 @@ private enum class EntryLine { Day, Progress, Facts }
 
 // The titles of a state as a row of the cards of the Home that slides sideways: scores in the tab, the rating and how far they went
 @Composable
-private fun CardsRowBlock(title: String, entries: List<UserListEntry>, line: EntryLine, onOpenTitle: (Int) -> Unit) {
+private fun CardsRowBlock(title: String, entries: List<UserListEntry>, line: EntryLine, onOpen: () -> Unit, onOpenTitle: (Int) -> Unit) {
     val dimens = KaisouTheme.dimens
     val locale = LocalConfiguration.current.locales[0]
     val dayFormat = remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
@@ -263,7 +277,7 @@ private fun CardsRowBlock(title: String, entries: List<UserListEntry>, line: Ent
     }
 
     Column(modifier = Modifier.fillMaxWidth().padding(top = TitleDimens.BlockTop)) {
-        BlockHeader(title)
+        BlockHeader(title, onOpen)
         LazyRow(
             contentPadding = PaddingValues(horizontal = dimens.screenPadding),
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),

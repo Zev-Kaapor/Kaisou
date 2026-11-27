@@ -63,6 +63,7 @@ import com.kaisou.app.core.navigation.NavSections
 import com.kaisou.app.core.navigation.NavSectionsHost
 import com.kaisou.app.features.title.ui.TitleDimens
 import com.kaisou.app.features.title.ui.components.EnterScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -72,6 +73,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
+import com.kaisou.app.core.browser.InAppBrowser
 import com.kaisou.app.core.language.AppLanguage
 import com.kaisou.app.core.designsystem.components.rememberKeptListState
 import com.kaisou.app.core.designsystem.components.scrollIndicator
@@ -101,6 +103,7 @@ fun UserScreen(
     onOpenProfile: (ProfileRef) -> Unit,
     onOpenActivity: (name: String, id: Int) -> Unit,
     onOpenFavourites: (name: String, kind: FavouriteKind) -> Unit,
+    onOpenList: (name: String, manga: Boolean, tab: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: UserViewModel = viewModel()
 ) {
@@ -179,7 +182,8 @@ fun UserScreen(
                             UserTab.Lists -> userListsItems(
                                 state = listsState,
                                 onOpenTitle = onOpenTitle,
-                                onRetry = lists::ensureLoaded
+                                onRetry = lists::ensureLoaded,
+                                onOpenList = { manga, tab -> onOpenList(user.name, manga, tab) }
                             )
                             else -> item(key = "soon-${tab.name}") { SoonBlock() }
                         }
@@ -212,34 +216,46 @@ fun UserScreen(
                     .alpha(barProgress)
             )
 
-            // The button that puts what they say of themselves in the app language, on until turned off, at the start of the share
-            val canTranslate = user != null && user.about.isNotBlank() && AppLanguage.needsTranslation
+            // The translation of what they say of themselves, on until turned off, and the pencil are only in the overview
+            val onOverview = tab == UserTab.Overview
+            val canTranslate = onOverview && user != null && user.about.isNotBlank() && AppLanguage.needsTranslation
             val url = user?.siteUrl
-            val buttons: @Composable (Boolean) -> Unit = { backdrop ->
-                if (canTranslate) {
-                    HeaderAction(
-                        icon = KaisouIcons.Translate,
-                        contentDescription = stringResource(R.string.title_translate),
-                        onClick = viewModel::toggleTranslate,
-                        active = translate,
-                        backdrop = backdrop
-                    )
-                }
-                if (url != null) {
+
+            // The pencil is only on the page of the user, on its own backdrop, and opens the profile settings in the app browser
+            AnimatedVisibility(visible = onOverview && user?.isSelf == true) {
+                HeaderAction(
+                    icon = KaisouIcons.Edit,
+                    contentDescription = stringResource(R.string.cd_edit_profile),
+                    onClick = { InAppBrowser.open(context, EditProfileUrl) },
+                    backdrop = true
+                )
+            }
+            val translateButton: @Composable (Boolean) -> Unit = { backdrop ->
+                HeaderAction(
+                    icon = KaisouIcons.Translate,
+                    contentDescription = stringResource(R.string.title_translate),
+                    onClick = viewModel::toggleTranslate,
+                    active = translate,
+                    backdrop = backdrop
+                )
+            }
+
+            // The share and the translation share one pill that grows and shrinks as the translation comes and goes
+            if (url != null) {
+                HeaderPill {
+                    AnimatedVisibility(visible = canTranslate) { translateButton(false) }
                     HeaderAction(
                         icon = KaisouIcons.Share,
                         contentDescription = stringResource(R.string.cd_share),
-                        backdrop = backdrop,
                         onClick = {
                             val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, url)
                             context.startActivity(Intent.createChooser(send, null))
                         }
                     )
                 }
+            } else {
+                AnimatedVisibility(visible = canTranslate) { translateButton(true) }
             }
-
-            // The two buttons share one pill, and a button alone keeps its own round backdrop
-            if (canTranslate && url != null) HeaderPill { buttons(false) } else buttons(true)
         }
     }
 }
@@ -359,3 +375,6 @@ private fun FollowButton(following: Boolean, onClick: () -> Unit) {
         )
     }
 }
+
+// The page of the site where the profile is changed, which the pencil opens, since AniList lets only its site change it
+private const val EditProfileUrl = "https://anilist.co/settings"

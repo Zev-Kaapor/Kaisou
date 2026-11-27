@@ -498,12 +498,30 @@
     <string name="user_tab_community">Comunidade</string>
     <string name="user_tab_soon">Em breve</string>
     <string name="user_list_anime">Lista de anime</string>
+    <string name="user_list_anime_of">Lista de anime de %1$s</string>
+    <string name="user_list_manga_of">Lista de mangá de %1$s</string>
     <string name="user_list_manga">Lista de mangá</string>
     <string name="user_list_all">Todos</string>
     <string name="user_list_tab">%1$s (%2$d)</string>
     <string name="user_list_search">Buscar na lista</string>
     <string name="user_list_filter">Filtrar</string>
+    <string name="user_filter_year">Ano</string>
+    <string name="user_filter_apply">Aplicar</string>
+    <string name="user_filter_category">Categoria da tag</string>
+    <string name="user_filter_tag">Tags</string>
+    <string name="user_filter_pick">Escolher</string>
+    <plurals name="user_filter_picked">
+        <item quantity="one">%1$d marcada</item>
+        <item quantity="many">%1$d marcadas</item>
+        <item quantity="other">%1$d marcadas</item>
+    </plurals>
+    <string name="user_filter_country">País</string>
+    <string name="user_filter_mine">Na minha lista</string>
+    <string name="user_filter_mine_in">Na minha lista</string>
+    <string name="user_filter_mine_out">Fora da minha lista</string>
     <string name="user_list_empty">Nada por aqui</string>
+    <string name="user_list_empty_silly">Nada por aqui, bobinho!</string>
+    <string name="user_list_reset">Limpar os filtros</string>
     <string name="user_list_progress">%1$d / %2$d</string>
     <string name="user_row_watching">Assistindo agora</string>
     <string name="user_row_reading">Lendo agora</string>
@@ -518,10 +536,22 @@
     <string name="user_sort_updated">Última atualização</string>
     <string name="user_sort_score">Nota</string>
     <string name="user_sort_title">Título</string>
-    <string name="user_sort_release">Lançamento</string>
+    <string name="user_sort_release">Data de lançamento</string>
+    <string name="user_sort_progress">Progresso</string>
+    <string name="user_sort_added">Última adição</string>
+    <string name="user_sort_started">Data de início</string>
+    <string name="user_sort_completed">Data de conclusão</string>
+    <string name="user_sort_weighted">Nota ponderada</string>
+    <string name="user_sort_popularity">Popularidade</string>
+    <string name="user_sort_reverse">Inverter a ordem</string>
+    <string name="user_sort_up">Crescente</string>
+    <string name="user_sort_down">Decrescente</string>
     <string name="user_sort_sheet">Ordenar por</string>
     <string name="cd_list_search">Buscar na lista</string>
     <string name="cd_list_random">Abrir um título aleatório</string>
+    <string name="cd_list_filter">Filtrar por gênero</string>
+    <string name="cd_list_sort">Ordenar a lista</string>
+    <string name="cd_list_clear">Limpar as palavras</string>
     <string name="cd_list_grid">Mostrar em grade</string>
     <string name="cd_list_lines">Mostrar em lista</string>
     <string name="user_previous_names">Antes: %s</string>
@@ -625,6 +655,7 @@
     <string name="title_cards_filter">Filtrar por</string>
     <string name="title_error">Não foi possível carregar o título</string>
     <string name="cd_share">Compartilhar</string>
+    <string name="cd_edit_profile">Editar o perfil no AniList</string>
     <string name="home_hero_meta">%1$d • %2$s</string>
     <string-array name="age_rating_names">
         <item>Livre para todos os públicos</item>
@@ -669,6 +700,461 @@
         <item>Esportes</item>
         <item>Sobrenatural</item>
         <item>Suspense</item>
+        <item>Hentai</item>
+    </string-array>
+    <string-array name="tag_category_names">
+        <item>Demografia</item>
+        <item>Elenco</item>
+        <item>Personagens</item>
+        <item>Identidade</item>
+        <item>Romance</item>
+        <item>Família</item>
+        <item>Cotidiano</item>
+        <item>Artes</item>
+        <item>Esportes</item>
+        <item>Jogos</item>
+        <item>Fantasia</item>
+        <item>Sci-Fi</item>
+        <item>Ação</item>
+        <item>Veículos</item>
+        <item>Cenário</item>
+        <item>Drama</item>
+        <item>Comédia</item>
+        <item>Horror</item>
+        <item>Formato</item>
+        <item>Adulto</item>
+    </string-array>
+    <string-array name="tag_names">
+        <item>Boys\' Love</item>
+        <item>Gekiga</item>
+        <item>Josei</item>
+        <item>Infantil</item>
+        <item>Seinen</item>
+        <item>Shoujo</item>
+        <item>Shounen</item>
+        <item>Teens\' Love</item>
+        <item>Yuri</item>
+        <item>Protagonista idoso</item>
+        <item>Elenco coral</item>
+        <item>Protagonista feminina</item>
+        <item>Protagonista masculino</item>
+        <item>Elenco majoritariamente adulto</item>
+        <item>Elenco majoritariamente animal</item>
+        <item>Elenco majoritariamente infantil</item>
+        <item>Elenco majoritariamente feminino</item>
+        <item>Elenco majoritariamente masculino</item>
+        <item>Elenco majoritariamente adolescente</item>
+        <item>Anti-herói</item>
+        <item>Mordomo</item>
+        <item>Chuunibyou</item>
+        <item>Delinquentes</item>
+        <item>DILF</item>
+        <item>Femboy</item>
+        <item>Busto pequeno</item>
+        <item>Gyaru</item>
+        <item>Hikikomori</item>
+        <item>Kemonomimi</item>
+        <item>Kuudere</item>
+        <item>Seios grandes</item>
+        <item>Empregadas</item>
+        <item>MILF</item>
+        <item>Garoto monstro</item>
+        <item>Garota monstro</item>
+        <item>Nekomimi</item>
+        <item>Ninja</item>
+        <item>Office lady</item>
+        <item>Oiran</item>
+        <item>Ojou-sama</item>
+        <item>Samurai</item>
+        <item>Sacerdotisa de santuário</item>
+        <item>Suor</item>
+        <item>Pele bronzeada</item>
+        <item>Moleca</item>
+        <item>Tsundere</item>
+        <item>Vilã</item>
+        <item>Yandere</item>
+        <item>Agênero</item>
+        <item>Arromântico</item>
+        <item>Assexual</item>
+        <item>Bissexual</item>
+        <item>Crossdressing</item>
+        <item>Troca de gênero</item>
+        <item>Heterossexual</item>
+        <item>Temas LGBTQ+</item>
+        <item>Transgênero</item>
+        <item>Diferença de idade</item>
+        <item>Casamento arranjado</item>
+        <item>Traição</item>
+        <item>Coabitação</item>
+        <item>Relacionamento falso</item>
+        <item>Harém feminino</item>
+        <item>Entre espécies</item>
+        <item>Triângulo amoroso</item>
+        <item>Harém masculino</item>
+        <item>Casamento</item>
+        <item>Arranjo de encontros</item>
+        <item>Harém misto</item>
+        <item>Omegaverse</item>
+        <item>Poliamor</item>
+        <item>Amor não correspondido</item>
+        <item>Virgindade</item>
+        <item>Adoção</item>
+        <item>Família distante</item>
+        <item>Vida familiar</item>
+        <item>Família escolhida</item>
+        <item>Órfão</item>
+        <item>Paternidade</item>
+        <item>Gêmeos</item>
+        <item>Agricultura</item>
+        <item>Bar</item>
+        <item>Internato</item>
+        <item>Faculdade</item>
+        <item>Garotos fofos fazendo coisas fofas</item>
+        <item>Garotas fofas fazendo coisas fofas</item>
+        <item>Moda</item>
+        <item>Comida</item>
+        <item>Horticultura</item>
+        <item>Pousada</item>
+        <item>Iyashikei</item>
+        <item>Konbini</item>
+        <item>Maquiagem</item>
+        <item>Medicina</item>
+        <item>Freira</item>
+        <item>Escritório</item>
+        <item>Cultura otaku</item>
+        <item>Restaurante</item>
+        <item>Rural</item>
+        <item>Escola</item>
+        <item>Clube escolar</item>
+        <item>Desenvolvimento de software</item>
+        <item>Professor</item>
+        <item>Veterinário</item>
+        <item>Trabalho</item>
+        <item>Atuação</item>
+        <item>Balé</item>
+        <item>Banda</item>
+        <item>Caligrafia</item>
+        <item>Circo</item>
+        <item>Literatura clássica</item>
+        <item>Música clássica</item>
+        <item>Cosplay</item>
+        <item>Artesanato</item>
+        <item>Dança</item>
+        <item>Desenho</item>
+        <item>Cinema</item>
+        <item>Hip-hop</item>
+        <item>Idol</item>
+        <item>Jazz</item>
+        <item>Kabuki</item>
+        <item>Manzai</item>
+        <item>Heavy metal</item>
+        <item>Modelo</item>
+        <item>Teatro musical</item>
+        <item>Fotografia</item>
+        <item>Fantoches</item>
+        <item>Rakugo</item>
+        <item>Rock</item>
+        <item>Sintetizador vocal</item>
+        <item>VTuber</item>
+        <item>Escrita</item>
+        <item>Acrobacia</item>
+        <item>Futebol americano</item>
+        <item>Arco e flecha</item>
+        <item>Atletismo</item>
+        <item>Badminton</item>
+        <item>Beisebol</item>
+        <item>Basquete</item>
+        <item>Boliche</item>
+        <item>Boxe</item>
+        <item>Cheerleading</item>
+        <item>Ciclismo</item>
+        <item>Esgrima</item>
+        <item>Fitness</item>
+        <item>Futebol</item>
+        <item>Golfe</item>
+        <item>Handebol</item>
+        <item>Esportes de gelo</item>
+        <item>Judô</item>
+        <item>Lacrosse</item>
+        <item>Artes marciais</item>
+        <item>Montanhismo</item>
+        <item>Parkour</item>
+        <item>Rúgbi</item>
+        <item>Mergulho</item>
+        <item>Skate</item>
+        <item>Combate com lanças</item>
+        <item>Sumô</item>
+        <item>Surfe</item>
+        <item>Natação</item>
+        <item>Combate com espadas</item>
+        <item>Tênis de mesa</item>
+        <item>Tênis</item>
+        <item>Vôlei</item>
+        <item>Luta livre</item>
+        <item>Airsoft</item>
+        <item>Jogo de tabuleiro</item>
+        <item>Acampamento</item>
+        <item>Batalha de cartas</item>
+        <item>E-Sports</item>
+        <item>Pesca</item>
+        <item>Apostas</item>
+        <item>Go</item>
+        <item>Karuta</item>
+        <item>Mahjong</item>
+        <item>Atividades ao ar livre</item>
+        <item>Pôquer</item>
+        <item>Batalha por procuração</item>
+        <item>Shogi</item>
+        <item>Videogames</item>
+        <item>Vida após a morte</item>
+        <item>Alquimia</item>
+        <item>Anjos</item>
+        <item>Antropomorfismo</item>
+        <item>Centauro</item>
+        <item>Quimera</item>
+        <item>Domesticação de criaturas</item>
+        <item>Cultivação</item>
+        <item>Maldições</item>
+        <item>Demônios</item>
+        <item>Dragões</item>
+        <item>Dullahan</item>
+        <item>Masmorra</item>
+        <item>Elfo</item>
+        <item>Exorcismo</item>
+        <item>Fada</item>
+        <item>Conto de fadas</item>
+        <item>Fantasma</item>
+        <item>Goblin</item>
+        <item>Deuses</item>
+        <item>Henshin</item>
+        <item>Isekai</item>
+        <item>Magia</item>
+        <item>Sereia</item>
+        <item>Mitologia</item>
+        <item>Necromancia</item>
+        <item>Profecia</item>
+        <item>Reencarnação</item>
+        <item>Isekai reverso</item>
+        <item>Metamorfose</item>
+        <item>Esqueleto</item>
+        <item>Superpoderes</item>
+        <item>Super-herói</item>
+        <item>Fantasia urbana</item>
+        <item>Vampiro</item>
+        <item>Lobisomem</item>
+        <item>Bruxa</item>
+        <item>Wuxia</item>
+        <item>Youkai</item>
+        <item>Alienígenas</item>
+        <item>Inteligência artificial</item>
+        <item>Realidade aumentada</item>
+        <item>Clone</item>
+        <item>Cyberpunk</item>
+        <item>Ciborgue</item>
+        <item>Distopia</item>
+        <item>Kaiju</item>
+        <item>Manipulação de memória</item>
+        <item>Pós-apocalíptico</item>
+        <item>Robô realista</item>
+        <item>Robôs</item>
+        <item>Espaço</item>
+        <item>Ópera espacial</item>
+        <item>Steampunk</item>
+        <item>Super robô</item>
+        <item>Loop temporal</item>
+        <item>Manipulação do tempo</item>
+        <item>Tokusatsu</item>
+        <item>Mundo virtual</item>
+        <item>Assassinos</item>
+        <item>Battle royale</item>
+        <item>Chantagem</item>
+        <item>Conspiração</item>
+        <item>Crime</item>
+        <item>Organização criminosa</item>
+        <item>Jogo mortal</item>
+        <item>Detetive</item>
+        <item>Espionagem</item>
+        <item>Bombeiros</item>
+        <item>Fugitivo</item>
+        <item>Gangues</item>
+        <item>Armas de fogo</item>
+        <item>Máfia</item>
+        <item>Militar</item>
+        <item>Noir</item>
+        <item>Piratas</item>
+        <item>Polícia</item>
+        <item>Prisão</item>
+        <item>Resgate</item>
+        <item>Sobrevivência</item>
+        <item>Terrorismo</item>
+        <item>Tríades</item>
+        <item>Guerra</item>
+        <item>Yakuza</item>
+        <item>Aviação</item>
+        <item>Carros</item>
+        <item>Ciclomotores</item>
+        <item>Motocicletas</item>
+        <item>Navios</item>
+        <item>Tanques</item>
+        <item>Trens</item>
+        <item>Universo alternativo</item>
+        <item>China antiga</item>
+        <item>Animais</item>
+        <item>Astronomia</item>
+        <item>Litoral</item>
+        <item>Cowboys</item>
+        <item>Deserto</item>
+        <item>Dinossauros</item>
+        <item>Estrangeiro</item>
+        <item>Histórico</item>
+        <item>Culturas indígenas</item>
+        <item>Barreira linguística</item>
+        <item>Civilização perdida</item>
+        <item>Medieval</item>
+        <item>Oriente Médio</item>
+        <item>Paisagem nevada</item>
+        <item>Viagem</item>
+        <item>Urbano</item>
+        <item>Vikings</item>
+        <item>Natureza selvagem</item>
+        <item>Regressão de idade</item>
+        <item>Amnésia</item>
+        <item>Imagem corporal</item>
+        <item>Troca de corpos</item>
+        <item>Lavagem cerebral</item>
+        <item>Bullying</item>
+        <item>Luta de classes</item>
+        <item>Amadurecimento</item>
+        <item>Seita</item>
+        <item>Denpa</item>
+        <item>Deficiência</item>
+        <item>Identidades dissociativas</item>
+        <item>Drogas</item>
+        <item>Economia</item>
+        <item>Meio ambiente</item>
+        <item>Exilado</item>
+        <item>Sem-teto</item>
+        <item>Gestão de reino</item>
+        <item>Matriarcado</item>
+        <item>Desastre natural</item>
+        <item>Pandemia</item>
+        <item>Filosofia</item>
+        <item>Política</item>
+        <item>Pobreza</item>
+        <item>Reabilitação</item>
+        <item>Religião</item>
+        <item>Vingança</item>
+        <item>Assuntos reais</item>
+        <item>Escravidão</item>
+        <item>Tragédia</item>
+        <item>Paródia</item>
+        <item>Sátira</item>
+        <item>Pastelão</item>
+        <item>Comédia surreal</item>
+        <item>Amputação</item>
+        <item>Horror corporal</item>
+        <item>Canibalismo</item>
+        <item>Horror cósmico</item>
+        <item>Eco-horror</item>
+        <item>Ero guro</item>
+        <item>Gore</item>
+        <item>Experimentos humanos</item>
+        <item>Suicídio</item>
+        <item>Tortura</item>
+        <item>Zumbi</item>
+        <item>4-koma</item>
+        <item>Acromático</item>
+        <item>Ordem acronológica</item>
+        <item>Publicidade</item>
+        <item>Anacronismo</item>
+        <item>Antologia</item>
+        <item>Autobiográfico</item>
+        <item>Biográfico</item>
+        <item>CGI</item>
+        <item>Chibi</item>
+        <item>Crossover</item>
+        <item>Educacional</item>
+        <item>Episódico</item>
+        <item>Flash</item>
+        <item>CGI completo</item>
+        <item>Colorido</item>
+        <item>Projeto de formatura</item>
+        <item>Tira longa</item>
+        <item>Metalinguagem</item>
+        <item>Mídia mista</item>
+        <item>Sem diálogos</item>
+        <item>Não ficção</item>
+        <item>Primeira pessoa</item>
+        <item>Rotoscopia</item>
+        <item>Capítulo curto</item>
+        <item>Stop motion</item>
+        <item>Salto temporal</item>
+        <item>Vídeo vertical</item>
+        <item>Ahegao</item>
+        <item>Sexo anal</item>
+        <item>Axilas</item>
+        <item>Ashikoki</item>
+        <item>Asfixia</item>
+        <item>Bondage</item>
+        <item>Espanhola</item>
+        <item>Penetração cervical</item>
+        <item>Cumflação</item>
+        <item>Cunilíngua</item>
+        <item>Garganta profunda</item>
+        <item>Desfloramento</item>
+        <item>Dupla penetração</item>
+        <item>Piercings eróticos</item>
+        <item>Exibicionismo</item>
+        <item>Facial</item>
+        <item>Pés</item>
+        <item>Felação</item>
+        <item>Femdom</item>
+        <item>Dedilhado</item>
+        <item>Fisting</item>
+        <item>Futanari</item>
+        <item>Sexo em grupo</item>
+        <item>Puxar cabelo</item>
+        <item>Masturbação manual</item>
+        <item>Pet humano</item>
+        <item>Hipersexualidade</item>
+        <item>Incesto</item>
+        <item>Inseki</item>
+        <item>Irrumatio</item>
+        <item>Lactação</item>
+        <item>Gravidez masculina</item>
+        <item>Masoquismo</item>
+        <item>Masturbação</item>
+        <item>Mating press</item>
+        <item>Nakadashi</item>
+        <item>Netorare</item>
+        <item>Netorase</item>
+        <item>Netori</item>
+        <item>Nudez</item>
+        <item>Oyakodon</item>
+        <item>Pet play</item>
+        <item>Gravidez</item>
+        <item>Prostituição</item>
+        <item>Psicossexual</item>
+        <item>Sexo em público</item>
+        <item>Estupro</item>
+        <item>Anilíngua</item>
+        <item>Sadismo</item>
+        <item>Escatologia</item>
+        <item>Tribadismo</item>
+        <item>Brinquedos sexuais</item>
+        <item>Shimaidon</item>
+        <item>69</item>
+        <item>Squirting</item>
+        <item>Strap-on</item>
+        <item>Súcubo</item>
+        <item>Sumata</item>
+        <item>Troca de casais</item>
+        <item>Tentáculos</item>
+        <item>Ménage</item>
+        <item>Vore</item>
+        <item>Voyeurismo</item>
+        <item>Chuva dourada</item>
+        <item>Zoofilia</item>
     </string-array>
     <string-array name="weekday_short">
         <item>Seg</item>

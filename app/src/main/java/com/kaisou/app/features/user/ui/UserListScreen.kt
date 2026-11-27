@@ -62,8 +62,6 @@ import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
 import com.kaisou.app.features.home.ui.HomeDimens
 import com.kaisou.app.features.home.ui.components.HeaderAction
-import com.kaisou.app.features.settings.ui.components.Choice
-import com.kaisou.app.features.settings.ui.components.ChoiceSheet
 import com.kaisou.app.features.title.data.Load
 import com.kaisou.app.features.title.ui.TitleDimens
 import com.kaisou.app.features.title.ui.components.CardsGridSkeleton
@@ -71,11 +69,12 @@ import com.kaisou.app.features.title.ui.components.CastRowsSkeleton
 import com.kaisou.app.features.title.ui.components.DetailsError
 import com.kaisou.app.features.title.ui.components.PickerPill
 import com.kaisou.app.features.user.data.ListPreference
-import com.kaisou.app.features.user.data.ListSort
+import com.kaisou.app.features.user.data.ListFilter
 import com.kaisou.app.features.user.data.ListTabs
 import com.kaisou.app.features.user.data.UserListEntry
 import com.kaisou.app.features.user.ui.components.ListLineCard
 import com.kaisou.app.features.user.ui.components.KindSwitch
+import com.kaisou.app.features.user.ui.components.EmptyList
 import com.kaisou.app.features.user.ui.components.ListPosterCard
 
 // The Library, the whole list of the user as Dantotsu shows it: a tab per state, search, genre, order, random and grid or lines
@@ -90,15 +89,11 @@ fun UserListScreen(onOpenTitle: (Int) -> Unit, modifier: Modifier = Modifier, vi
     var searching by rememberSaveable { mutableStateOf(state.search.isNotEmpty()) }
     val keys = stringArrayResource(R.array.title_list_keys)
     val names = stringArrayResource(if (state.manga) R.array.title_list_names_manga else R.array.title_list_names_anime)
-    val genreKeys = stringArrayResource(R.array.genre_keys)
-    val genreNames = stringArrayResource(R.array.genre_names)
     val allLabel = stringResource(R.string.user_list_all)
     val filterTitle = stringResource(R.string.user_list_filter)
-    val sortTitle = stringResource(R.string.user_sort_sheet)
 
     // The name of a tab: the state in the language of the app, the name the person gave to a list of their own, or all
     val tabName: (String) -> String = { key -> if (key == ListTabs.All) allLabel else names.getOrNull(keys.indexOf(key)) ?: key }
-    val genreName: (String) -> String = { genre -> genreNames.getOrNull(genreKeys.indexOf(genre)) ?: genre }
 
     Column(
         modifier = modifier
@@ -180,16 +175,17 @@ fun UserListScreen(onOpenTitle: (Int) -> Unit, modifier: Modifier = Modifier, vi
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val all = remember(sections) { ListTabs.all(sections) }
-                    val genres = remember(all) { all.flatMap { it.genres }.distinct().sortedBy { genreName(it).lowercase() } }
                     PickerPill(
-                        text = state.genre?.let(genreName) ?: filterTitle,
+                        text = filterTitle,
                         icon = KaisouIcons.Filter,
                         onClick = {
                             OverlaySheet.show {
-                                ChoiceSheet(
-                                    title = filterTitle,
-                                    choices = listOf(Choice(allLabel, state.genre == null) { viewModel.pickGenre(null) }) +
-                                        genres.map { genre -> Choice(genreName(genre), state.genre == genre) { viewModel.pickGenre(genre) } },
+                                ListFilterSheet(
+                                    filter = state.filter,
+                                    entries = all,
+                                    canFilterMine = state.mine != null,
+                                    manga = state.manga,
+                                    onApply = viewModel::pickFilter,
                                     onDismiss = OverlaySheet::dismiss
                                 )
                             }
@@ -201,35 +197,36 @@ fun UserListScreen(onOpenTitle: (Int) -> Unit, modifier: Modifier = Modifier, vi
                         icon = KaisouIcons.ArrowUpDown,
                         onClick = {
                             OverlaySheet.show {
-                                ChoiceSheet(
-                                    title = sortTitle,
-                                    choices = ListSort.entries.map { sort -> Choice(stringResource(sort.label), state.sort == sort) { viewModel.pickSort(sort) } },
-                                    onDismiss = OverlaySheet::dismiss
-                                )
+                                ListSortSheet(sort = state.sort, reversed = state.reversed, onApply = viewModel::pickSort, onDismiss = OverlaySheet::dismiss)
                             }
                         }
                     )
                 }
+                val onClear: (() -> Unit)? = if (state.filter.active || state.search.isNotBlank()) {
+                    {
+                        viewModel.pickFilter(ListFilter())
+                        viewModel.search("")
+                    }
+                } else {
+                    null
+                }
                 HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { tabs[it].first }) { page ->
-                    ListPage(entries = state.shown(tabs[page].first), grid = grid, onOpenTitle = onOpenTitle)
+                    // What the page shows is worked out again only when what shapes it changes, not on every draw of the screen
+                    val entries = remember(state.sections, state.search, state.filter, state.mine, state.sort, state.reversed) { state.shown(tabs[page].first) }
+                    ListPage(entries = entries, grid = grid, onOpenTitle = onOpenTitle, onClear = onClear)
                 }
             }
         }
     }
 }
 
-// The titles of a tab, in a grid of covers or in lines, or the words that say there is nothing
+// The titles of a tab, in a grid of covers or in lines, or the face that says there is nothing
 @Composable
-private fun ListPage(entries: List<UserListEntry>, grid: Boolean, onOpenTitle: (Int) -> Unit) {
+private fun ListPage(entries: List<UserListEntry>, grid: Boolean, onOpenTitle: (Int) -> Unit, onClear: (() -> Unit)?) {
     val dimens = KaisouTheme.dimens
 
     if (entries.isEmpty()) {
-        Text(
-            text = stringResource(R.string.user_list_empty),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.screenPadding, vertical = dimens.spaceLarge)
-        )
+        EmptyList(onClear = onClear)
         return
     }
     val gridState = rememberLazyGridState()
@@ -255,7 +252,7 @@ private fun ListPage(entries: List<UserListEntry>, grid: Boolean, onOpenTitle: (
 
 // The field of the words to look for, which opens with the keyboard
 @Composable
-private fun SearchField(value: String, onChange: (String) -> Unit) {
+internal fun SearchField(value: String, onChange: (String) -> Unit) {
     val dimens = KaisouTheme.dimens
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }

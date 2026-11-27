@@ -1,0 +1,430 @@
+Demographic	Boys' Love
+Demographic	Gekiga
+Demographic	Josei
+Demographic	Kids
+Demographic	Seinen
+Demographic	Shoujo
+Demographic	Shounen
+Demographic	Teens' Love
+Demographic	Yuri
+Cast	Elderly Protagonist
+Cast	Ensemble Cast
+Cast	Female Protagonist
+Cast	Male Protagonist
+Cast	Primarily Adult Cast
+Cast	Primarily Animal Cast
+Cast	Primarily Child Cast
+Cast	Primarily Female Cast
+Cast	Primarily Male Cast
+Cast	Primarily Teen Cast
+Characters	Anti-Hero
+Characters	Butler
+Characters	Chuunibyou
+Characters	Delinquents
+Characters	DILF
+Characters	Femboy
+Characters	Flat Chest
+Characters	Gyaru
+Characters	Hikikomori
+Characters	Kemonomimi
+Characters	Kuudere
+Characters	Large Breasts
+Characters	Maids
+Characters	MILF
+Characters	Monster Boy
+Characters	Monster Girl
+Characters	Nekomimi
+Characters	Ninja
+Characters	Office Lady
+Characters	Oiran
+Characters	Ojou-sama
+Characters	Samurai
+Characters	Shrine Maiden
+Characters	Sweat
+Characters	Tanned Skin
+Characters	Tomboy
+Characters	Tsundere
+Characters	Villainess
+Characters	Yandere
+Identity	Agender
+Identity	Aromantic
+Identity	Asexual
+Identity	Bisexual
+Identity	Crossdressing
+Identity	Gender Bending
+Identity	Heterosexual
+Identity	LGBTQ+ Themes
+Identity	Transgender
+Romance	Age Gap
+Romance	Arranged Marriage
+Romance	Cheating
+Romance	Cohabitation
+Romance	Fake Relationship
+Romance	Female Harem
+Romance	Interspecies
+Romance	Love Triangle
+Romance	Male Harem
+Romance	Marriage
+Romance	Matchmaking
+Romance	Mixed Gender Harem
+Romance	Omegaverse
+Romance	Polyamorous
+Romance	Unrequited Love
+Romance	Virginity
+Family	Adoption
+Family	Estranged Family
+Family	Family Life
+Family	Found Family
+Family	Orphan
+Family	Parenthood
+Family	Twins
+Daily Life	Agriculture
+Daily Life	Bar
+Daily Life	Boarding School
+Daily Life	College
+Daily Life	Cute Boys Doing Cute Things
+Daily Life	Cute Girls Doing Cute Things
+Daily Life	Fashion
+Daily Life	Food
+Daily Life	Horticulture
+Daily Life	Inn
+Daily Life	Iyashikei
+Daily Life	Konbini
+Daily Life	Makeup
+Daily Life	Medicine
+Daily Life	Nun
+Daily Life	Office
+Daily Life	Otaku Culture
+Daily Life	Restaurant
+Daily Life	Rural
+Daily Life	School
+Daily Life	School Club
+Daily Life	Software Development
+Daily Life	Teacher
+Daily Life	Veterinarian
+Daily Life	Work
+Arts	Acting
+Arts	Ballet
+Arts	Band
+Arts	Calligraphy
+Arts	Circus
+Arts	Classic Literature
+Arts	Classical Music
+Arts	Cosplay
+Arts	Crafts
+Arts	Dancing
+Arts	Drawing
+Arts	Filmmaking
+Arts	Hip-hop Music
+Arts	Idol
+Arts	Jazz Music
+Arts	Kabuki
+Arts	Manzai
+Arts	Metal Music
+Arts	Modeling
+Arts	Musical Theater
+Arts	Photography
+Arts	Puppetry
+Arts	Rakugo
+Arts	Rock Music
+Arts	Vocal Synth
+Arts	VTuber
+Arts	Writing
+Sports	Acrobatics
+Sports	American Football
+Sports	Archery
+Sports	Athletics
+Sports	Badminton
+Sports	Baseball
+Sports	Basketball
+Sports	Bowling
+Sports	Boxing
+Sports	Cheerleading
+Sports	Cycling
+Sports	Fencing
+Sports	Fitness
+Sports	Football
+Sports	Golf
+Sports	Handball
+Sports	Ice Sports
+Sports	Judo
+Sports	Lacrosse
+Sports	Martial Arts
+Sports	Mountaineering
+Sports	Parkour
+Sports	Rugby
+Sports	Scuba Diving
+Sports	Skateboarding
+Sports	Spearplay
+Sports	Sumo
+Sports	Surfing
+Sports	Swimming
+Sports	Swordplay
+Sports	Table Tennis
+Sports	Tennis
+Sports	Volleyball
+Sports	Wrestling
+Games	Airsoft
+Games	Board Game
+Games	Camping
+Games	Card Battle
+Games	E-Sports
+Games	Fishing
+Games	Gambling
+Games	Go
+Games	Karuta
+Games	Mahjong
+Games	Outdoor Activities
+Games	Poker
+Games	Proxy Battle
+Games	Shogi
+Games	Video Games
+Fantasy	Afterlife
+Fantasy	Alchemy
+Fantasy	Angels
+Fantasy	Anthropomorphism
+Fantasy	Centaur
+Fantasy	Chimera
+Fantasy	Creature Taming
+Fantasy	Cultivation
+Fantasy	Curses
+Fantasy	Demons
+Fantasy	Dragons
+Fantasy	Dullahan
+Fantasy	Dungeon
+Fantasy	Elf
+Fantasy	Exorcism
+Fantasy	Fairy
+Fantasy	Fairy Tale
+Fantasy	Ghost
+Fantasy	Goblin
+Fantasy	Gods
+Fantasy	Henshin
+Fantasy	Isekai
+Fantasy	Magic
+Fantasy	Mermaid
+Fantasy	Mythology
+Fantasy	Necromancy
+Fantasy	Prophecy
+Fantasy	Reincarnation
+Fantasy	Reverse Isekai
+Fantasy	Shapeshifting
+Fantasy	Skeleton
+Fantasy	Super Power
+Fantasy	Superhero
+Fantasy	Urban Fantasy
+Fantasy	Vampire
+Fantasy	Werewolf
+Fantasy	Witch
+Fantasy	Wuxia
+Fantasy	Youkai
+Sci-Fi	Aliens
+Sci-Fi	Artificial Intelligence
+Sci-Fi	Augmented Reality
+Sci-Fi	Clone
+Sci-Fi	Cyberpunk
+Sci-Fi	Cyborg
+Sci-Fi	Dystopian
+Sci-Fi	Kaiju
+Sci-Fi	Memory Manipulation
+Sci-Fi	Post-Apocalyptic
+Sci-Fi	Real Robot
+Sci-Fi	Robots
+Sci-Fi	Space
+Sci-Fi	Space Opera
+Sci-Fi	Steampunk
+Sci-Fi	Super Robot
+Sci-Fi	Time Loop
+Sci-Fi	Time Manipulation
+Sci-Fi	Tokusatsu
+Sci-Fi	Virtual World
+Action	Assassins
+Action	Battle Royale
+Action	Blackmail
+Action	Conspiracy
+Action	Crime
+Action	Criminal Organization
+Action	Death Game
+Action	Detective
+Action	Espionage
+Action	Firefighters
+Action	Fugitive
+Action	Gangs
+Action	Guns
+Action	Mafia
+Action	Military
+Action	Noir
+Action	Pirates
+Action	Police
+Action	Prison
+Action	Rescue
+Action	Survival
+Action	Terrorism
+Action	Triads
+Action	War
+Action	Yakuza
+Vehicles	Aviation
+Vehicles	Cars
+Vehicles	Mopeds
+Vehicles	Motorcycles
+Vehicles	Ships
+Vehicles	Tanks
+Vehicles	Trains
+Setting	Alternate Universe
+Setting	Ancient China
+Setting	Animals
+Setting	Astronomy
+Setting	Coastal
+Setting	Cowboys
+Setting	Desert
+Setting	Dinosaurs
+Setting	Foreign
+Setting	Historical
+Setting	Indigenous Cultures
+Setting	Language Barrier
+Setting	Lost Civilization
+Setting	Medieval
+Setting	Middle East
+Setting	Snowscape
+Setting	Travel
+Setting	Urban
+Setting	Vikings
+Setting	Wilderness
+Drama	Age Regression
+Drama	Amnesia
+Drama	Body Image
+Drama	Body Swapping
+Drama	Brainwashing
+Drama	Bullying
+Drama	Class Struggle
+Drama	Coming of Age
+Drama	Cult
+Drama	Denpa
+Drama	Disability
+Drama	Dissociative Identities
+Drama	Drugs
+Drama	Economics
+Drama	Environmental
+Drama	Exiled
+Drama	Homeless
+Drama	Kingdom Management
+Drama	Matriarchy
+Drama	Natural Disaster
+Drama	Pandemic
+Drama	Philosophy
+Drama	Politics
+Drama	Poverty
+Drama	Rehabilitation
+Drama	Religion
+Drama	Revenge
+Drama	Royal Affairs
+Drama	Slavery
+Drama	Tragedy
+Comedy	Parody
+Comedy	Satire
+Comedy	Slapstick
+Comedy	Surreal Comedy
+Horror	Amputation
+Horror	Body Horror
+Horror	Cannibalism
+Horror	Cosmic Horror
+Horror	Eco-Horror
+Horror	Ero Guro
+Horror	Gore
+Horror	Human Experimentation
+Horror	Suicide
+Horror	Torture
+Horror	Zombie
+Format	4-koma
+Format	Achromatic
+Format	Achronological Order
+Format	Advertisement
+Format	Anachronism
+Format	Anthology
+Format	Autobiographical
+Format	Biographical
+Format	CGI
+Format	Chibi
+Format	Crossover
+Format	Educational
+Format	Episodic
+Format	Flash
+Format	Full CGI
+Format	Full Color
+Format	Graduation Project
+Format	Long Strip
+Format	Meta
+Format	Mixed Media
+Format	No Dialogue
+Format	Non-fiction
+Format	POV
+Format	Rotoscoping
+Format	Short-Form Chapter
+Format	Stop Motion
+Format	Time Skip
+Format	Vertical Video
+Adult	Ahegao
+Adult	Anal Sex
+Adult	Armpits
+Adult	Ashikoki
+Adult	Asphyxiation
+Adult	Bondage
+Adult	Boobjob
+Adult	Cervix Penetration
+Adult	Cumflation
+Adult	Cunnilingus
+Adult	Deepthroat
+Adult	Defloration
+Adult	Double Penetration
+Adult	Erotic Piercings
+Adult	Exhibitionism
+Adult	Facial
+Adult	Feet
+Adult	Fellatio
+Adult	Femdom
+Adult	Fingering
+Adult	Fisting
+Adult	Futanari
+Adult	Group Sex
+Adult	Hair Pulling
+Adult	Handjob
+Adult	Human Pet
+Adult	Hypersexuality
+Adult	Incest
+Adult	Inseki
+Adult	Irrumatio
+Adult	Lactation
+Adult	Male Pregnancy
+Adult	Masochism
+Adult	Masturbation
+Adult	Mating Press
+Adult	Nakadashi
+Adult	Netorare
+Adult	Netorase
+Adult	Netori
+Adult	Nudity
+Adult	Oyakodon
+Adult	Pet Play
+Adult	Pregnancy
+Adult	Prostitution
+Adult	Psychosexual
+Adult	Public Sex
+Adult	Rape
+Adult	Rimjob
+Adult	Sadism
+Adult	Scat
+Adult	Scissoring
+Adult	Sex Toys
+Adult	Shimaidon
+Adult	Sixty-nine
+Adult	Squirting
+Adult	Strap-on
+Adult	Succubus
+Adult	Sumata
+Adult	Swapping
+Adult	Tentacles
+Adult	Threesome
+Adult	Vore
+Adult	Voyeur
+Adult	Watersports
+Adult	Zoophilia
