@@ -8,6 +8,7 @@ import com.kaisou.app.core.language.TagOrderPreference
 import com.kaisou.app.core.cache.AppStore
 import com.kaisou.app.core.designsystem.components.Toasts
 import com.kaisou.app.core.net.Gates
+import com.kaisou.app.features.home.data.HiddenOnHome
 import com.kaisou.app.features.settings.data.UpdateStore
 import com.kaisou.app.features.user.data.ListPreference
 // Java files and math
@@ -24,6 +25,7 @@ class KaisouApplication : Application() {
         ReleaseAlerts.init(this)
         TagOrderPreference.init(this)
         ListPreference.init(this)
+        HiddenOnHome.init(this)
 
         // When AniList asks the app to rest, the island says so and for how long, since pages would otherwise just take long or fail
         Gates.AniList.onRest = { millis ->

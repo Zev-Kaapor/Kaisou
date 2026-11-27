@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,7 +52,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -69,6 +73,7 @@ import java.util.Locale
 // Project resources
 import com.kaisou.app.R
 import com.kaisou.app.core.artwork.ArtworkRepository
+import com.kaisou.app.core.auth.AniListSession
 import com.kaisou.app.core.designsystem.components.AgeRatingBadge
 import com.kaisou.app.core.designsystem.components.SkeletonHost
 import com.kaisou.app.core.designsystem.components.skeleton
@@ -83,6 +88,7 @@ import com.kaisou.app.features.home.data.CardUi
 import com.kaisou.app.features.home.data.StoryUi
 import com.kaisou.app.features.home.data.ShelfUi
 import com.kaisou.app.features.home.ui.HomeDimens
+import com.kaisou.app.features.title.ui.components.ListEditing
 
 // The user and the people they follow, as on Dantotsu: a picture in a ring with a piece for each activity, gray when seen
 @Composable
@@ -218,7 +224,19 @@ fun TitleCard(card: CardUi, width: Dp, ratio: Float, showWide: Boolean, onClick:
     val colors = KaisouTheme.colors
     val accent = MaterialTheme.colorScheme.primary
 
-    Column(modifier = modifier.width(width).clickable(onClick = onClick)) {
+    // A long touch opens the editor of the list, in any place of the app that shows the card, when the user is signed in
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    val onLongClick: (() -> Unit)? = if (AniListSession.viewer != null) {
+        {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            ListEditing.open(context, card.anilistId)
+        }
+    } else {
+        null
+    }
+
+    Column(modifier = modifier.width(width).combinedClickable(onClick = onClick, onLongClick = onLongClick)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()

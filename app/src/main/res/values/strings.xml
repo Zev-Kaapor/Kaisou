@@ -459,6 +459,7 @@
     <string name="title_list_other">More options</string>
     <string name="title_list_private">Private (only you see it)</string>
     <string name="title_list_hidden">Hide from the lists by status</string>
+    <string name="title_list_home_hidden">Hide on the Home</string>
     <string name="title_list_delete">Delete</string>
     <string name="title_list_clear">Clear</string>
     <string name="title_list_started_ask">When did you start?</string>

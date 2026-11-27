@@ -38,6 +38,7 @@ import kotlinx.coroutines.delay
 import com.kaisou.app.R
 import com.kaisou.app.core.anilist.AniViewer
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
+import com.kaisou.app.features.home.data.HiddenOnHome
 import com.kaisou.app.features.home.data.HomeStatus
 import com.kaisou.app.features.home.data.StoryUi
 import com.kaisou.app.features.home.ui.components.HomeHeader
@@ -107,6 +108,12 @@ fun HomeScreen(
         var openStory by viewModel::openStory
 
 
+        // The shelves without the titles the user hid, and without the shelves left with none
+        val hiddenOnHome by HiddenOnHome.ids.collectAsState()
+        val shelves = remember(state.shelves, hiddenOnHome) {
+            state.shelves.map { shelf -> shelf.copy(cards = shelf.cards.filterNot { it.anilistId in hiddenOnHome }) }.filter { it.cards.isNotEmpty() }
+        }
+
         when (state.status) {
             // The placeholders of the hero and of what is under it, with no pulling to refresh while they are there
             HomeStatus.Loading -> LazyColumn(
@@ -159,7 +166,7 @@ fun HomeScreen(
 
                 // What is under the hero: the user and the friends, then the shelves that have something on them
                 item(key = "friends") { HomeFriends(own = own, friends = state.friends, seen = state.seen, onOpen = { openStory = it.userId }, onAdd = viewModel::openComposer) }
-                items(state.shelves, key = { it.id.name }) { shelf -> HomeShelf(shelf = shelf, onOpenTitle = onOpenTitle) }
+                items(shelves, key = { it.id.name }) { shelf -> HomeShelf(shelf = shelf, onOpenTitle = onOpenTitle) }
               }
             }
         }

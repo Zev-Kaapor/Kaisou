@@ -84,6 +84,7 @@ import com.kaisou.app.core.designsystem.components.scrollIndicator
 import com.kaisou.app.core.designsystem.icons.KaisouIcons
 import com.kaisou.app.core.designsystem.theme.KaisouMotion
 import com.kaisou.app.core.designsystem.theme.KaisouTheme
+import com.kaisou.app.features.home.data.HiddenOnHome
 import com.kaisou.app.features.title.data.ListDraft
 import com.kaisou.app.features.title.data.ListOptions
 import com.kaisou.app.features.title.data.ListStatus
@@ -120,6 +121,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
     var notes by rememberSaveable { mutableStateOf(entry?.notes.orEmpty()) }
     var isPrivate by rememberSaveable { mutableStateOf(entry?.isPrivate ?: false) }
     var hidden by rememberSaveable { mutableStateOf(entry?.hidden ?: false) }
+    var hideOnHome by rememberSaveable { mutableStateOf(HiddenOnHome.contains(title.anilistId)) }
     var moreOpen by rememberSaveable { mutableStateOf(false) }
     val density = LocalDensity.current
     val scroll = rememberScrollState()
@@ -361,6 +363,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                     }
                     SwitchLine(stringResource(R.string.title_list_private), isPrivate) { isPrivate = it }
                     SwitchLine(stringResource(R.string.title_list_hidden), hidden) { hidden = it }
+                    SwitchLine(stringResource(R.string.title_list_home_hidden), hideOnHome) { hideOnHome = it }
                     BasicTextField(
                         value = notes,
                         onValueChange = { notes = it },
@@ -394,6 +397,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                         icon = KaisouIcons.Trash,
                         contentDescription = stringResource(R.string.title_list_delete),
                         onClick = {
+                            HiddenOnHome.set(title.anilistId, false)
                             onRemove()
                             close()
                         }
@@ -402,6 +406,7 @@ fun ListEditorSheet(title: TitleUi, options: ListOptions?, onSave: (ListDraft) -
                 PrimaryButton(
                     text = stringResource(R.string.title_list_save),
                     onClick = {
+                        HiddenOnHome.set(title.anilistId, hideOnHome)
                         onSave(
                             ListDraft(
                                 status = status,

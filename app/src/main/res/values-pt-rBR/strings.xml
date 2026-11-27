@@ -394,6 +394,7 @@
     <string name="title_list_other">Mais opções</string>
     <string name="title_list_private">Privado (só você vê)</string>
     <string name="title_list_hidden">Esconder das listas por status</string>
+    <string name="title_list_home_hidden">Ocultar na tela inicial</string>
     <string name="title_list_delete">Excluir</string>
     <string name="title_list_clear">Limpar</string>
     <string name="title_list_started_ask">Quando você começou?</string>
