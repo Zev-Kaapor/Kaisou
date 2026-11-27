@@ -43,7 +43,7 @@
 </details>
 
 > [!WARNING]
-> **Early version** - Kaisou is being built one screen at a time. Version 0.8.0 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, the page of each anime and manga with the editor of your list, the pages of the characters, the staff and the studios, the pages with all the related titles, the order to watch and read and all the people of a title, the episodes of an anime with their scores, the community of a title, with its reviews and its forum, the page of a person, with its overview, its lists, its favourites and what it did lately, the Library with your whole list, and the posters, the backdrops and the logos of an anime, and some tabs and buttons are still empty. It is a version to be tested, not a finished app.
+> **Early version** - Kaisou is being built one screen at a time. Version 0.9.0 has the sign in with AniList, the Home with its shelves and the stories of the people you follow, the page of each anime and manga with the editor of your list, the pages of the characters, the staff and the studios, the pages with all the related titles, the order to watch and read and all the people of a title, the episodes of an anime with their scores, the community of a title, with its reviews and its forum, the page of a person, with its overview, its lists, its favourites and what it did lately, the Library with your whole list, the page of the list of anime or manga of a person with its filter and its order, the posters, the backdrops and the logos of an anime, and the choice of seeing only adult titles or none, and some tabs and buttons are still empty. It is a version to be tested, not a finished app.
 
 > [!NOTE]
 > **Your privacy** - Kaisou has no server of its own and does not track you. Your AniList access key is kept only on your phone and is left out of the Android backups. The app only talks to the services it needs: AniList for your account and your lists, TMDB, TheTVDB and ani.zip to find the posters, the logos, the ratings and the seasons of each title (the name and the id of the title are sent), IMDb for the score of each episode (the id of IMDb is sent), Jikan, or one of its public mirrors, for the score of each episode on MyAnimeList (the id of MyAnimeList is sent), TVmaze for the score of each episode when the others have none (the id of IMDb or of TheTVDB is sent), MyAnimeList for the age rating (the id of the title is sent), Jikan, or one of its public mirrors, for the openings and the endings of an anime (the id of MyAnimeList is sent), YouTube when a trailer is played, in its own player (the id of the video is sent), MangaDex for the covers of a manga (the name and the id of AniList of the manga are sent), Kuroiru for the news of an anime (the id of MyAnimeList is sent), MangaBaka for the news of a manga (the id of AniList is sent), Google Translate when a synopsis is translated (only the text of the synopsis is sent), the site that hosts a picture when a status of AniList shows one, and GitHub to look for a new version. More in the [FAQ](#faq).
@@ -88,7 +88,7 @@ Kaisou grows one small piece at a time, with every screen reviewed on a real pho
 | **Shelves of the Home:** what you are watching and reading, the new episodes, what you plan, the sequels you missed, the recommendations and the discovery of AniList | ✅ Done, version 0.1.0 |
 | **Stories:** the activity of the people you follow, to read, like, comment, share and delete, and a screen to write your own status with the formats of AniList | ✅ Done, version 0.1.0 |
 | **Explore and Calendar:** the other two tabs | 🔜 Planned |
-| **Library:** your whole list of anime and manga in the tab, with a switch between the two, a tab for each state, the search, the filter by genre, the order and a button to pick one by chance, in covers or in lines | ✅ Done, version 0.8.0 |
+| **Library:** your whole list of anime and manga in the tab, with a switch between the two, a tab for each state, the search, the filter, the order and a button to pick one by chance, in covers or in lines | ✅ Done, version 0.8.0, with the new filter and order in version 0.9.0 |
 | **Title page:** the top with your list and the heart, the synopsis, the data with its links, the tags, the trailer, the covers of a manga, the news, the places among the best and the friends that have it | ✅ Done, version 0.2.0 |
 | **Editor of your list:** put a title on your AniList list or change it, with the status, the progress, the score in the way your account gives it, the days, the notes and your own lists | ✅ Done, version 0.2.0 |
 | **Characters, staff and studios:** the page of each one, with the favourite, the voices in all the languages and all their titles | ✅ Done, version 0.2.0 |
@@ -104,7 +104,11 @@ Kaisou grows one small piece at a time, with every screen reviewed on a real pho
 | **Chapters of a manga:** the tab of the chapters, with its own care | 🚧 Basic, to be reviewed |
 | **Search and notifications:** the search and the notices of AniList | 🔜 Planned |
 | **Your lists:** the lists of anime and manga, with the progress, in the Library and in the page of a person | ✅ Done, version 0.8.0 |
-| **Editing your profile:** the about, the pictures and the account, apart from the settings of the site | 🔜 Planned |
+| **List of a person:** the page of their anime or manga, from the arrows and the cards of the lists, with the tabs of the states, the search, the filter, the order and a button to pick one by chance | ✅ Done, version 0.9.0 |
+| **Filter and order of the lists:** a sheet to filter by source, format, status, country, season, year, genres and tags by category, or by what is on your list, and a sheet to order in ten ways, each one turned round | ✅ Done, version 0.9.0 |
+| **Hold a card:** the editor of your list opens from any card of the app, with a switch to hide the title on the Home | ✅ Done, version 0.9.0 |
+| **Adult content:** the choice, in the settings, of seeing only adult titles or none | ✅ Done, version 0.9.0 |
+| **Editing your profile:** the pencil on your own page opens the profile settings of AniList in a browser inside the app, and the editing inside the app is next | 🚧 Basic, version 0.9.0 |
 | **Extensions:** support for the sources the user adds, with none of them included | 🔜 Planned |
 
 </details>
@@ -125,10 +129,10 @@ Everything the project does, in groups you can open. ✅ is already done, 🚧 i
 
 <br>
 
-- The other tabs: Explore, Calendar and Library
+- The other tabs: Explore and Calendar
 - The chapters of a manga, taken further, and the search
-- Your lists of anime and manga
-- The notices of AniList and your profile
+- The stats and the community of the page of a person
+- The notices of AniList and the editing of your profile inside the app
 - Extensions for the sources the user adds
 - A setting for the country of the age ratings, apart from the language
 
@@ -198,19 +202,29 @@ Nothing is being built right now.
 - Their **favourites** of each kind, with the arrow to the whole list of each
 - The **lists**: a card for the anime and another for the manga with the count and a bar split in the states, then rows of cards, as in the Home, for what they are watching and reading now, what is paused, dropped and planned, and last what they finished lately with the day, each card with the age rating and the scores, theirs and the one of everyone
 - What they did lately shows the title with what they did in the accent and the name in white, and under it the score you gave and the one of everyone with the time
-- The buttons over the banner to translate and to share sit on one pill
+- The buttons over the banner to translate and to share sit on one pill, and on your own page a pencil opens the profile settings of AniList in a browser inside the app
+- The arrows and the cards of the lists open the **page of the list** of anime or of manga of that person, with a tab for each state, the search, the filter, the order and a button to pick one by chance
 - The bar of the app shows the sections of the page, as in a title: the overview, the lists, the stats and the community
 
 #### 📚 Library
 - Your **whole list** in the tab, with a switch between **anime and manga** and a tab for each state, the one you were in kept
-- The **search** by name, the **filter by genre**, the **order** by the last change, the score, the name or the year, kept for each kind, and a button to **pick one by chance**
+- The **search** by name, the **filter** and the **order**, kept for each kind, and a button to **pick one by chance** among what is on the screen
 - In **covers** like the shelves of the Home, with your score and the one of everyone in the tab and the age rating, or in **lines**, as you choose
+- The lists ask again by themselves when you change something in your list, and a tab with nothing says so with a face and a way to clear the filters
+
+#### 🧰 Filter and order
+- The **filter** is a sheet as the search of Dantotsu has it: the source, the format, the status, the country, the season and the year, each in a field that only has what the list has, and, when you look at the list of someone else, whether the title is on your list
+- The **genres** in a wide field, and the **tags** in two: the category of the tag and the tags of it, all named and put in the order of the letters in your language. A touch picks one, the next leaves it out and the next takes it back, and what is picked shows under the fields
+- The **order** has ten ways, the title, the score, the progress, the last update, the last added, the start day, the day it was finished, the release day, the weighted score and the popularity, a switch to turn each one round, and what has nothing to compare stays last
+- The way and its direction are kept for the anime and for the manga apart
 
 #### 📝 Your list
 - Put a title on your **AniList list** or change it, from the page of the title or from the featured title of the Home
 - The status, the progress with the buttons and the number, the **score in the way your account gives it** (a number of 10 or of 100, stars or faces), the days it started and ended, the notes, the times done again and your own lists
 - A title made done gets the day it ended in one tap, and goes back if you change your mind
 - Your score shows on every card, next to the one of AniList, and the Home asks again as soon as your list changes
+- **Hold any card** with the score and the age rating, anywhere in the app, to open the editor of your list
+- A switch of the editor **hides the title on the Home**, kept only on the phone, and it is shown again if you take the title off your list
 
 #### 🎭 Characters, staff and studios
 - The page of each one with the picture, the **favourite**, share, the description in your language with the spoilers covered, and the data that came with it
@@ -260,6 +274,12 @@ Nothing is being built right now.
 - Each service has a limit of requests at once, and the app waits when one asks it to rest
 - AniList charges its limit by each part of a question, so the app **asks as little as it can**: it keeps the answers for a moment, puts the questions of the cards together, waits to ask what is lower on the Home and drops it if you leave, and keeps the pages you opened a few minutes
 - A small app, around 2 MB
+
+#### ⚙️ Settings of the content and of the Home
+- In **Manage NSFW**, **Only NSFW** shows only the titles AniList marks for adults and **Hide NSFW** hides them, the two never on together, and it acts on the featured titles, the shelves and the stories of the Home and on every list
+- In **Home**, a button called Show/Hide layouts opens the screen to **show or hide the parts of the Home**: a switch for the stories of the people you follow and one for each shelf, each with a line that says what it brings, kept on the phone
+- The shelves of the finished, paused and dropped titles of your list, anime and manga, start off, and AniList is only asked for the ones you turn on
+- The shelves of what you watch, read and plan have an **arrow** that opens that list, on the tab of its state
 
 #### ℹ️ About
 - The version, the author, the license and the page of the project
@@ -407,7 +427,7 @@ The workflow in `.github/workflows/release.yml` publishes a release when `appVer
 <details>
   <summary><b>Is the app ready to use?</b></summary>
   <br>
-  Not yet. Version 0.8.0 has the sign in, the Home with its shelves and the stories, the page of the title with the editor of your list, the episodes of an anime with their scores and the community with its reviews and its forum, the page of a person with its overview, its lists, its favourites and what it did lately, the Library with your whole list, the pictures of an anime, the pages of the characters, the staff and the studios, and the pages with the related titles, the order to watch and all the people of a title, and some tabs and buttons are still empty. See what it does in the <a href="#features">Features</a> section.
+  Not yet. Version 0.9.0 has the sign in, the Home with its shelves and the stories, the page of the title with the editor of your list, the episodes of an anime with their scores and the community with its reviews and its forum, the page of a person with its overview, its lists, its favourites and what it did lately, the Library with your whole list, the page of the list of anime or manga of a person with its filter and its order, the pictures of an anime, the pages of the characters, the staff and the studios, and the pages with the related titles, the order to watch and all the people of a title, and some tabs and buttons are still empty. See what it does in the <a href="#features">Features</a> section.
   <br>
 </details>
 
